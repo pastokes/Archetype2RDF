@@ -1,0 +1,1073 @@
+
+--- allograph ---
+id                            int64
+name                            str
+character_id                  int64
+default                        bool
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+hidden                         bool
+illustration                    str
+dtype: object
+   id      name  character_id  default                          created                         modified  hidden illustration
+0  58  2-shaped            30    False 2013-07-13 21:28:52.091756+00:00 2013-07-13 21:28:52.091784+00:00   False          NaN
+1  59     Round            18    False 2012-11-21 14:24:59.451494+00:00 2012-11-21 14:24:59.451523+00:00   False          NaN
+
+--- apitransform ---
+id                              int64
+title                             str
+slug                              str
+template                          str
+description                       str
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+mimetype                          str
+sample_request                    str
+webpage                          bool
+dtype: object
+   id                     title                     slug  ...  mimetype                                     sample_request webpage
+0   1  CHECK: Hand Descriptions  check-hand-descriptions  ...  text/xml  /handdescription/?_source=8&@format=xml&@selec...    True
+1  11            MSS With Latin           mss-with-latin  ...  text/xml  description/?_description__icontains=s.%20xi&_...    True
+
+[2 rows x 10 columns]
+
+--- appearance ---
+id                           int64
+legacy_id                    int64
+text                           str
+sort_order                   int64
+description                    str
+created        datetime64[us, UTC]
+modified       datetime64[us, UTC]
+dtype: object
+   id   legacy_id         text  sort_order description                          created                         modified
+0   1 -1214987120  Wulfstanian           0         --- 2012-05-22 13:06:40.319194+00:00 2012-05-22 13:06:40.319220+00:00
+1   2  -663836257    Scribbled           0         --- 2012-05-22 13:06:40.321932+00:00 2012-05-22 13:06:40.321947+00:00
+
+--- archive ---
+id                                  int64
+legacy_id                          object
+content_type_id                     int64
+object_id                           int64
+historical_item_id                  int64
+dubitable                          object
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+dtype: object
+   id legacy_id  content_type_id  object_id  historical_item_id dubitable                          created                         modified
+0   1      None               43         24                   1     False 2012-05-22 13:06:49.643876+00:00 2013-05-02 10:18:32.250117+00:00
+1   5      None               43         24                   5     False 2012-05-22 13:06:49.837381+00:00 2013-05-02 10:18:32.272976+00:00
+
+--- carouselitem ---
+id                           int64
+link                           str
+image                          str
+image_alt                      str
+image_title                    str
+sort_order                   int64
+title                          str
+created        datetime64[us, UTC]
+modified       datetime64[us, UTC]
+image_file                     str
+dtype: object
+   id                                               link  ...                         modified image_file
+0   3  /blog/anglo-saxon-mss-online-i-the-latin-colle...  ... 2014-03-19 12:03:08.444033+00:00        NaN
+1   7  /digipal/search/?terms=Eadwig+Basan&basic_sear...  ... 2014-03-19 12:08:11.707829+00:00        NaN
+
+[2 rows x 10 columns]
+
+--- county ---
+id                         int64
+legacy_id                  int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id          name                          created                         modified
+0   1          1  Bedfordshire 2012-05-22 13:06:44.564237+00:00 2012-05-22 13:06:44.564253+00:00
+1   2          5     Berkshire 2012-05-22 13:06:44.566169+00:00 2012-05-22 13:06:44.566185+00:00
+
+--- character_components ---
+id              int64
+character_id    int64
+component_id    int64
+dtype: object
+   id  character_id  component_id
+0   1            38             8
+1   2            38            11
+
+--- component ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                name                          created                         modified
+0  10  cross stroke (eth) 2012-05-22 13:06:40.925792+00:00 2012-07-03 15:37:10.207725+00:00
+1   2         a-component 2012-05-22 13:06:40.710385+00:00 2012-05-22 13:06:40.713170+00:00
+
+--- currentitem ---
+id                             int64
+legacy_id                    float64
+repository_id                  int64
+shelfmark                        str
+description                      str
+display_label                    str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+dtype: object
+   id  legacy_id  repository_id             shelfmark description            display_label                          created                         modified
+0   1        2.0            104  Additional Ch. 19797         NaN  BL Additional Ch. 19797 2012-05-22 13:06:49.603050+00:00 2013-05-02 10:18:34.872690+00:00
+1   3        6.0            104  Additional Ch. 19795         NaN  BL Additional Ch. 19795 2012-05-22 13:06:49.809329+00:00 2013-05-02 10:18:34.882752+00:00
+
+--- cataloguenumber ---
+id                                  int64
+historical_item_id                float64
+source_id                           int64
+number                                str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+text_id                           float64
+url                                   str
+number_slug                           str
+dtype: object
+     id  historical_item_id  source_id  number  ...                         modified text_id                                                url number_slug
+0  4297              1555.0         12  MS 578  ... 2016-09-13 22:50:17.553164+00:00     NaN  http://brbl-dl.library.yale.edu/vufind/Record/...      ms-578
+1  1790              1467.0          1  A.1822  ... 2016-09-13 22:50:17.586330+00:00     NaN                                                NaN       a1822
+
+[2 rows x 9 columns]
+
+--- collation ---
+id                                  int64
+historical_item_id                  int64
+fragment                           object
+leaves                            float64
+front_flyleaves                   float64
+back_flyleaves                    float64
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+dtype: object
+    id  historical_item_id fragment  leaves  front_flyleaves  back_flyleaves                          created                         modified
+0  814                 823    False   129.0              NaN             NaN 2012-05-22 13:07:37.684215+00:00 2012-05-24 14:12:11.039318+00:00
+1  816                 825    False     NaN              NaN             NaN 2012-05-22 13:07:37.809681+00:00 2012-05-24 14:12:11.218928+00:00
+
+--- category ---
+id                          int64
+name                          str
+sort_order                float64
+created       datetime64[us, UTC]
+modified      datetime64[us, UTC]
+dtype: object
+   id             name  sort_order                          created                         modified
+0   1  Psalter (Gall.)       320.0 2012-05-22 13:06:43.810400+00:00 2012-05-22 13:06:43.810417+00:00
+1   2  Gospels (Latin)       130.0 2012-05-22 13:06:43.812989+00:00 2012-05-22 13:06:43.813004+00:00
+
+--- characterform ---
+id      int64
+name      str
+dtype: object
+   id       name
+0   1        n/a
+1   2  minuscule
+
+--- hair ---
+id                         int64
+legacy_id                  int64
+label                        str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id label                          created                         modified
+0   1          1  HFFH 2012-05-22 13:06:44.484650+00:00 2012-05-22 13:06:44.484667+00:00
+1   2          2  HFHF 2012-05-22 13:06:44.486762+00:00 2012-05-22 13:06:44.486777+00:00
+
+--- format ---
+id                         int64
+legacy_id                  int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id          name                          created                         modified
+0   1          1  Single-sheet 2012-05-22 13:06:44.474083+00:00 2012-05-22 13:06:44.474100+00:00
+1   2          2     Cartulary 2012-05-22 13:06:44.476103+00:00 2012-05-22 13:06:44.476119+00:00
+
+--- graph ---
+id                             int64
+idiograph_id                   int64
+hand_id                        int64
+display_label                    str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+group_id                      object
+dtype: object
+    id  idiograph_id  hand_id                                      display_label                          created                         modified group_id
+0  339            74      637  a, Insular. DigiPal Scribe 4. Saec. xi1/4. Han... 2012-05-22 13:08:38.729090+00:00 2013-05-02 10:19:23.066900+00:00     None
+1  345            74      637  a, Insular. DigiPal Scribe 4. Saec. xi1/4. Han... 2012-05-22 13:08:38.832351+00:00 2013-05-02 10:19:23.109142+00:00     None
+
+--- date ---
+id                                int64
+legacy_id                         int64
+date                                str
+sort_order                      float64
+weight                          float64
+band                            float64
+additional_band                 float64
+post_conquest                      bool
+s_xi                               bool
+min_weight                      float64
+max_weight                      float64
+created             datetime64[us, UTC]
+modified            datetime64[us, UTC]
+legacy_reference                    str
+evidence                            str
+dtype: object
+   id  legacy_id           date  sort_order  weight  ...  max_weight                          created                         modified  legacy_reference  evidence
+0   4          4  Saec. xi med.       135.0  1050.0  ...      1066.0 2012-05-22 13:06:43.464135+00:00 2012-11-30 12:33:46.785995+00:00               NaN          
+1   5          5   Saec. xi ex.       215.0  1090.0  ...      1100.0 2012-05-22 13:06:43.466085+00:00 2012-11-30 12:33:46.866922+00:00               NaN          
+
+[2 rows x 15 columns]
+
+--- hand_images ---
+id          int64
+hand_id     int64
+image_id    int64
+dtype: object
+     id  hand_id  image_id
+0  1275     1450       736
+1     2      423         2
+
+--- historicalitem_categories ---
+id                   int64
+historicalitem_id    int64
+category_id          int64
+dtype: object
+     id  historicalitem_id  category_id
+0     1                  1          281
+1  1899               1393           17
+
+--- handdescription ---
+id                           int64
+hand_id                      int64
+source_id                  float64
+description                    str
+created        datetime64[us, UTC]
+modified       datetime64[us, UTC]
+label                          str
+dtype: object
+     id  hand_id  source_id                                        description                          created                         modified label
+0  1605      862       11.0  These notes were written with a thin pen in ve... 2013-06-07 17:28:18.374106+00:00 2015-04-22 16:52:30.251720+00:00   NaN
+1  1649      997       11.0  This script varies in weight but is mostly fai... 2013-06-07 17:28:19.197241+00:00 2015-04-22 16:52:31.713580+00:00   NaN
+
+--- idiographcomponent ---
+id                            int64
+idiograph_id                  int64
+component_id                  int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+dtype: object
+     id  idiograph_id  component_id                          created                         modified
+0   466          1290            17 2012-11-21 14:25:13.229075+00:00 2012-11-21 14:27:31.073152+00:00
+1  1356            81            17 2012-11-21 14:25:48.084303+00:00 2012-11-21 14:29:23.229663+00:00
+
+--- idiograph ---
+id                             int64
+allograph_id                   int64
+scribe_id                    float64
+display_label                    str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+dtype: object
+   id  allograph_id  scribe_id                 display_label                          created                         modified
+0   1            11      111.0  a, Insular. DigiPal Scribe 1 2012-05-22 13:08:33.511605+00:00 2013-05-02 10:18:44.219416+00:00
+1   2             4      111.0    ligature. DigiPal Scribe 1 2012-05-22 13:08:33.632182+00:00 2013-05-02 10:18:44.226677+00:00
+
+--- itempart ---
+id                               int64
+current_item_id                  int64
+locus                              str
+display_label                      str
+created            datetime64[us, UTC]
+modified           datetime64[us, UTC]
+pagination                        bool
+group_id                        object
+type_id                         object
+group_locus                        str
+notes                              str
+keywords_string                    str
+custom_label                       str
+dtype: object
+   id  current_item_id locus            display_label                          created  ... type_id  group_locus notes keywords_string custom_label
+0   1                1        BL Additional Ch. 19797 2012-05-22 13:06:49.605973+00:00  ...    None          NaN   NaN                          NaN
+1   5                3        BL Additional Ch. 19795 2012-05-22 13:06:49.811608+00:00  ...    None          NaN   NaN                          NaN
+
+[2 rows x 13 columns]
+
+--- historicalitemtype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id        name                          created                         modified
+0   1     charter 2012-05-22 13:06:44.498223+00:00 2012-05-22 13:06:44.498240+00:00
+1   2  manuscript 2012-05-22 13:06:44.500076+00:00 2012-05-22 13:06:44.500091+00:00
+
+--- historicalitemdate ---
+id                                  int64
+legacy_id                          object
+historical_item_id                  int64
+date_id                             int64
+evidence                              str
+vernacular                         object
+addition                           object
+dubitable                          object
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+dtype: object
+   id legacy_id  historical_item_id  date_id  ... addition dubitable                          created                         modified
+0   1      None                1829        2  ...    False     False 2013-05-08 14:26:26.358673+00:00 2013-05-08 14:26:26.358703+00:00
+1   2      None                 305       88  ...    False     False 2013-05-08 15:20:41.887118+00:00 2013-05-08 15:20:41.887147+00:00
+
+[2 rows x 10 columns]
+
+--- idiographcomponent_features ---
+id                       int64
+idiographcomponent_id    int64
+feature_id               int64
+dtype: object
+   id  idiographcomponent_id  feature_id
+0   1                      1          26
+1   2                      2          63
+
+--- institution ---
+id                                   int64
+legacy_id                          float64
+institution_type_id                  int64
+name                                   str
+founder_id                         float64
+reformer_id                        float64
+patron_id                          float64
+place_id                             int64
+foundation                             str
+refoundation                           str
+created                datetime64[us, UTC]
+modified               datetime64[us, UTC]
+dtype: object
+   id  legacy_id  institution_type_id      name  ...  foundation  refoundation                          created                         modified
+0   1        1.0                    3  Abingdon  ...    700s (?)     954 (ca.) 2012-05-22 13:06:47.014474+00:00 2012-05-22 13:06:47.014490+00:00
+1   2        2.0                    3    Exeter  ...         NaN           NaN 2012-05-22 13:06:47.019895+00:00 2012-05-22 13:06:47.019911+00:00
+
+[2 rows x 12 columns]
+
+--- institutiontype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                  name                          created                         modified
+0   1  medieval institution 2012-05-22 13:06:46.979836+00:00 2012-05-22 13:06:46.979852+00:00
+1   2     modern repository 2012-05-22 13:06:46.981711+00:00 2012-05-22 13:06:46.981726+00:00
+
+--- keyval ---
+id                        int64
+key                         str
+val                         str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                        key                                                val                          created                         modified
+0   3                    indexer  {"updated": "20-02-2026 16:00:40", "started": ... 2019-03-20 19:26:18.792443+00:00 2026-02-20 16:00:40.231269+00:00
+1   4  get_latest_docker_version  {"version": "2.8", "last_checked": 1780041757.... 2021-12-02 18:54:46.026787+00:00 2026-05-29 08:02:38.180360+00:00
+
+--- ownertype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id         name                          created                         modified
+0   1       Person 2014-09-08 10:51:07.305354+00:00 2014-09-08 10:51:07.305334+00:00
+1   2  Institution 2014-09-08 10:51:07.307056+00:00 2014-09-08 10:51:07.307036+00:00
+
+--- place ---
+id                                    int64
+legacy_id                           float64
+name                                    str
+eastings                            float64
+northings                           float64
+region_id                           float64
+current_county_id                   float64
+historical_county_id                float64
+created                 datetime64[us, UTC]
+modified                datetime64[us, UTC]
+type_id                              object
+other_names                             str
+dtype: object
+   id     legacy_id              name  eastings  ...                          created                         modified  type_id  other_names
+0   1           NaN            000000       NaN  ... 2012-05-22 13:06:44.675830+00:00 2012-05-22 13:06:44.675850+00:00     None          NaN
+1   2 -2.054568e+09  Unknown (Cerne?)       NaN  ... 2012-05-22 13:06:44.683067+00:00 2012-05-22 13:06:44.683084+00:00     None          NaN
+
+[2 rows x 12 columns]
+
+--- language ---
+id                         int64
+legacy_id                  int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id            name                          created                         modified
+0   1         10  (Undetermined) 2012-05-22 13:06:44.504624+00:00 2012-05-22 13:06:44.504640+00:00
+1   2          2         English 2012-05-22 13:06:44.507375+00:00 2012-05-22 13:06:44.507391+00:00
+
+--- ontograph ---
+id                                 int64
+name                                 str
+ontograph_type_id                  int64
+created              datetime64[us, UTC]
+modified             datetime64[us, UTC]
+nesting_level                      int64
+sort_order                         int64
+dtype: object
+   id name  ontograph_type_id                          created                         modified  nesting_level  sort_order
+0  10    A                  2 2012-05-22 13:06:41.895733+00:00 2013-11-04 13:10:48.868141+00:00              0         100
+1  17    Æ                  2 2012-05-22 13:06:42.014212+00:00 2013-11-04 13:10:51.433439+00:00              0         115
+
+--- owner ---
+id                              int64
+legacy_id                       int64
+date                              str
+evidence                          str
+rebound                          bool
+annotated                        bool
+dubitable                        bool
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+person_id                      object
+institution_id                 object
+repository_id                   int64
+display_label                     str
+dtype: object
+    id  legacy_id date  ... institution_id  repository_id                                      display_label
+0  781        930       ...           None            422  'Kenneth Spencer Pryce P2A :1' owned by  'Robi...
+1   89        998       ...           None            259  'BL Egerton 3314, fols. 45–72' owned by  'Butt...
+
+[2 rows x 13 columns]
+
+--- person ---
+id                         int64
+legacy_id                float64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id                          name                          created                         modified
+0   1        1.0  Talbot, Robert (1505?--1558) 2012-05-22 13:06:46.442730+00:00 2012-05-22 13:06:46.442755+00:00
+1   2        2.0    Nowell, Laurence (d. 1576) 2012-05-22 13:06:46.444946+00:00 2012-05-22 13:06:46.444962+00:00
+
+--- layout ---
+id                                      int64
+historical_item_id                      int64
+page_height                           float64
+page_width                            float64
+frame_height                          float64
+frame_width                           float64
+tramline_width                        float64
+lines                                 float64
+columns                               float64
+on_top_line                            object
+multiple_sheet_rulling                 object
+bilinear_ruling                          bool
+comments                                  str
+hair_arrangement_id                   float64
+insular_pricking                       object
+created                   datetime64[us, UTC]
+modified                  datetime64[us, UTC]
+item_part_id                           object
+dtype: object
+   id  historical_item_id  page_height  page_width  ...  insular_pricking                          created                         modified  item_part_id
+0  18                 394        203.0       140.0  ...             False 2012-05-22 13:07:12.451026+00:00 2012-05-24 14:11:40.826475+00:00          None
+1   1                 377          NaN         NaN  ...             False 2012-05-22 13:07:11.460472+00:00 2012-05-24 14:11:39.642818+00:00          None
+
+[2 rows x 18 columns]
+
+--- reference ---
+id                                int64
+legacy_id                       float64
+name                                str
+name_index                          str
+legacy_reference                    str
+full_reference                      str
+created             datetime64[us, UTC]
+modified            datetime64[us, UTC]
+dtype: object
+   id  legacy_id                                          name  ... full_reference                          created                         modified
+0   1      380.0                            (Cat. MSS Angliae)  ...                2012-05-22 13:06:42.383295+00:00 2013-05-02 10:17:57.227217+00:00
+1   2        1.0  (Course Notes) 'The Early English Book-Hand'  ...                2012-05-22 13:06:42.385343+00:00 2013-05-02 10:17:57.231055+00:00
+
+[2 rows x 8 columns]
+
+--- requestlog ---
+id                            int64
+request                         str
+created         datetime64[us, UTC]
+result_count                  int64
+dtype: object
+    id                                            request                          created  result_count
+0  520  https://digipal-stg.cch.kcl.ac.uk/digipal/search/ 2013-11-06 10:41:35.316809+00:00             0
+1  521  https://digipal-stg.cch.kcl.ac.uk/digipal/search/ 2013-11-06 10:51:14.440051+00:00             0
+
+--- stewartrecord ---
+id                 int64
+scragg               str
+repository           str
+shelf_mark           str
+fols                 str
+gneuss               str
+sp                   str
+ker                  str
+locus                str
+selected             str
+adate                str
+location             str
+surrogates           str
+contents             str
+notes                str
+em                   str
+glosses              str
+minor                str
+charter              str
+cartulary            str
+eel                  str
+stokes_db            str
+ker_hand             str
+import_messages      str
+matched_hands        str
+dtype: object
+    id scragg         repository                            shelf_mark fols gneuss  ... cartulary eel stokes_db ker_hand import_messages matched_hands
+0  423         Exeter, Cathedral                                  2527              ...       NaN                                                     
+1  629                  + Oxford  Bodleian Library, Rawlinson Q. e. 20         355  ...       NaN                      3                              
+
+[2 rows x 25 columns]
+
+--- status ---
+id                        int64
+name                        str
+default                    bool
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id       name  default                          created                         modified
+0   1    chopper    False 2012-05-22 14:37:24.339073+00:00 2012-05-22 14:37:24.339092+00:00
+1   4  Completed    False 2012-11-28 14:36:03.359296+00:00 2012-11-28 14:36:03.359318+00:00
+
+--- source ---
+id                            int64
+name                            str
+label                           str
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+priority                      int64
+label_styled                    str
+label_slug                      str
+dtype: object
+   id                                        name             label  ... priority      label_styled        label_slug
+0  12  Beinecke Rare Book and Manuscript Library   Beinecke Library  ...      200  Beinecke Library  beinecke-library
+1   1                  Codices Latini Antiquiores               CLA  ...       90                                 cla
+
+[2 rows x 8 columns]
+
+--- repository ---
+id                                   int64
+legacy_id                            int64
+name                                   str
+short_name                             str
+place_id                             int64
+url                                    str
+comma                               object
+british_isles                         bool
+digital_project                     object
+created                datetime64[us, UTC]
+modified               datetime64[us, UTC]
+copyright_notice                       str
+media_permission_id                float64
+type_id                              int64
+part_of_id                         float64
+dtype: object
+    id  legacy_id                        name short_name  ...  copyright_notice media_permission_id type_id  part_of_id
+0  218       -469                      Aachen        NaN  ...               NaN                 NaN       1         NaN
+1  219       -472  Abbey of Anvin, near Douai        NaN  ...               NaN                 NaN       4         NaN
+
+[2 rows x 15 columns]
+
+--- scribe ---
+id                                int64
+legacy_id                       float64
+name                                str
+date                                str
+scriptorium_id                  float64
+created             datetime64[us, UTC]
+modified            datetime64[us, UTC]
+legacy_reference                    str
+dtype: object
+    id  legacy_id               name          date  scriptorium_id                          created                         modified legacy_reference
+0  165        NaN  DigiPal Scribe 55  Saec. xi in.            53.0 2013-07-12 14:52:50.096232+00:00 2013-07-12 14:52:50.096266+00:00                 
+1  166        NaN  DigiPal Scribe 56    Saec. x/xi            53.0 2013-07-12 14:56:52.137069+00:00 2013-07-12 14:56:52.137100+00:00                 
+
+--- script ---
+id                         int64
+legacy_id                float64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id                          name                          created                         modified
+0   1        NaN            Caroline minuscule 2012-09-24 11:06:54.555243+00:00 2012-09-24 11:06:54.555270+00:00
+1   2      999.0  English Vernacular minuscule 2012-09-24 11:09:12.937784+00:00 2012-09-24 11:09:12.937816+00:00
+
+--- region ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id        name                          created                         modified
+0   1      Wessex 2012-05-22 13:06:44.539091+00:00 2012-05-22 13:06:44.539107+00:00
+1   2  South West 2012-05-22 13:06:44.541034+00:00 2012-05-22 13:06:44.541050+00:00
+
+--- scribe_reference ---
+id              int64
+scribe_id       int64
+reference_id    int64
+dtype: object
+   id  scribe_id  reference_id
+0   4          4           248
+1   5          5           248
+
+--- django_content_type ---
+id           int64
+app_label      str
+model          str
+dtype: object
+    id app_label                 model
+0  179   digipal  itempartauthenticity
+1  180   digipal  authenticitycategory
+
+--- text_textcontentxmlstatus ---
+id                          int64
+name                          str
+created       datetime64[us, UTC]
+modified      datetime64[us, UTC]
+slug                          str
+sort_order                  int64
+dtype: object
+   id   name                          created                         modified   slug  sort_order
+0   1  Draft 2015-04-16 12:48:27.164873+00:00 2015-04-16 12:48:27.167550+00:00  draft          10
+1   2   Live 2015-04-16 12:48:27.171451+00:00 2015-04-16 12:48:27.172485+00:00   live         100
+
+--- allographcomponent ---
+id                            int64
+allograph_id                  int64
+component_id                  int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+dtype: object
+   id  allograph_id  component_id                          created                         modified
+0   1             2            11 2012-05-22 13:06:41.786335+00:00 2013-05-02 10:17:56.673202+00:00
+1   2             2            22 2012-05-22 13:06:41.788845+00:00 2013-05-02 10:17:56.678589+00:00
+
+--- annotation ---
+id                                   int64
+image_id                             int64
+cutout                                 str
+status_id                          float64
+before_id                          float64
+graph_id                           float64
+after_id                           float64
+vector_id                              str
+geo_json                               str
+display_note                           str
+internal_note                          str
+author_id                            int64
+created                datetime64[us, UTC]
+modified               datetime64[us, UTC]
+rotation                           float64
+holes                                  str
+clientid                               str
+type                                   str
+illustration_ductus                    str
+dtype: object
+      id  image_id                                             cutout  status_id  before_id  ...  rotation  holes clientid type illustration_ductus
+0  37223       587  http://digipal-stg.cch.kcl.ac.uk/iip/iipsrv.fc...        NaN        NaN  ...       0.0    NaN      NaN  NaN                 NaN
+1  37224       587  http://digipal-stg.cch.kcl.ac.uk/iip/iipsrv.fc...        NaN        NaN  ...       0.0    NaN      NaN  NaN                 NaN
+
+[2 rows x 19 columns]
+
+--- imageannotationstatus ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                            name                          created                         modified
+0   2                   Boxes checked 2014-02-17 16:14:36.893192+00:00 2014-02-17 16:14:36.893216+00:00
+1   3  Feature descriptions completed 2014-02-17 16:14:51.591763+00:00 2014-02-17 16:14:51.591788+00:00
+
+--- image ---
+id                                    int64
+item_part_id                        float64
+locus                                   str
+caption                                 str
+image                                   str
+display_label                           str
+created                 datetime64[us, UTC]
+modified                datetime64[us, UTC]
+folio_side                              str
+folio_number                            str
+iipimage                                str
+media_permission_id                 float64
+transcription                           str
+internal_notes                          str
+custom_label                            str
+annotation_status_id                float64
+width                                 int64
+height                                int64
+size                                  int64
+keywords_string                         str
+quire                                   str
+page_boundaries                         str
+dtype: object
+   id  item_part_id  locus               caption                                image  ... height size keywords_string quire page_boundaries
+0  21         303.0  dorse  S1021-1_original.jpg  uploads/images/S1021-1_original.jpg  ...   4465    0                   NaN             NaN
+1  58         575.0     1v                    1v          uploads/images/557_001v.jpg  ...   4704    0                   NaN             NaN
+
+[2 rows x 22 columns]
+
+--- component_features ---
+id                              int64
+component_id                    int64
+feature_id                      int64
+set_by_default                   bool
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+dtype: object
+    id  component_id  feature_id  set_by_default                   created                  modified
+0  491            26          37           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
+1  492            26          39           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
+
+--- feature ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id        name                          created                         modified
+0   1    3-shaped 2012-05-22 13:06:40.403469+00:00 2012-05-22 13:06:40.403486+00:00
+1   2  3/4 closed 2012-05-22 13:06:40.405797+00:00 2012-05-22 13:06:40.405813+00:00
+
+--- character ---
+id                             int64
+name                             str
+unicode_point                    str
+ontograph_id                   int64
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+form_id                        int64
+dtype: object
+   id  name unicode_point  ontograph_id                          created                         modified  form_id
+0   2  wynn          01bf             2 2012-05-22 13:06:41.783363+00:00 2012-05-22 13:06:41.790620+00:00        2
+1   3    ./          f1f0             3 2012-05-22 13:06:41.795503+00:00 2012-05-22 13:06:41.802245+00:00        1
+
+--- hand ---
+id                                  int64
+legacy_id                         float64
+num                                 int64
+item_part_id                        int64
+script_id                         float64
+scribe_id                         float64
+assigned_date_id                  float64
+assigned_place_id                 float64
+scragg                                str
+em_title                              str
+label                                 str
+display_note                          str
+internal_note                         str
+appearance_id                     float64
+relevant                           object
+latin_only                         object
+gloss_only                         object
+membra_disjecta                    object
+num_glosses                       float64
+num_glossing_hands                float64
+glossed_text_id                   float64
+scribble_only                      object
+imitative                          object
+latin_style_id                    float64
+comments                              str
+display_label                         str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+locus                                 str
+surrogates                            str
+selected_locus                        str
+stewart_record_id                 float64
+ker                                   str
+dtype: object
+     id  legacy_id         num  item_part_id  script_id  scribe_id  ...                         modified  locus surrogates selected_locus stewart_record_id  ker
+0   908      425.0  1121511382          1138        NaN        NaN  ... 2013-06-06 16:32:47.060396+00:00                                                NaN  NaN
+1  1249      130.0  1121759104          1793        NaN        3.0  ... 2013-06-06 16:32:47.067905+00:00                                                NaN  NaN
+
+[2 rows x 33 columns]
+
+--- historicalitem ---
+id                                         int64
+legacy_id                                float64
+historical_item_type_id                    int64
+historical_item_format_id                float64
+date                                         str
+name                                         str
+hair_id                                  float64
+language_id                              float64
+url                                          str
+vernacular                                object
+neumed                                    object
+catalogue_number                             str
+display_label                                str
+created                      datetime64[us, UTC]
+modified                     datetime64[us, UTC]
+legacy_reference                             str
+date_sort                                    str
+dtype: object
+     id  legacy_id  historical_item_type_id  ...                         modified legacy_reference date_sort
+0  1829        NaN                        2  ... 2013-05-08 14:26:26.007452+00:00                        NaN
+1  1073     1330.0                        2  ... 2014-03-12 12:06:21.829579+00:00                        NaN
+
+[2 rows x 17 columns]
+
+--- dateevidence ---
+id                                  int64
+legacy_id                           int64
+hand_id                             int64
+date_id                           float64
+date_description                      str
+reference_id                      float64
+evidence                              str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+historical_item_id                 object
+is_firm_date                         bool
+dtype: object
+   id  legacy_id  hand_id  date_id  ...                          created                         modified historical_item_id is_firm_date
+0  42         35      247      7.0  ... 2012-05-22 13:09:49.866914+00:00 2013-05-02 10:19:13.705025+00:00               None        False
+1  64         57      287      NaN  ... 2012-05-22 13:09:50.004887+00:00 2013-05-02 10:19:13.791364+00:00               None        False
+
+[2 rows x 11 columns]
+
+--- decoration ---
+id                                    int64
+historical_item_id                    int64
+illustrated                            bool
+decorated                            object
+illuminated                            bool
+num_colours                         float64
+colours                                 str
+num_inks                            float64
+inks                                    str
+style                                   str
+description                             str
+catalogue_references                    str
+created                 datetime64[us, UTC]
+modified                datetime64[us, UTC]
+dtype: object
+   id  historical_item_id  illustrated decorated  ...  description  catalogue_references                          created                         modified
+0   1                 377        False     False  ...                                    2012-05-22 13:07:11.454258+00:00 2012-05-24 14:11:39.634292+00:00
+1   2                 378        False     False  ...          NaN                   NaN 2012-05-22 13:07:11.495656+00:00 2012-05-24 14:11:39.676468+00:00
+
+[2 rows x 14 columns]
+
+--- description ---
+id                                  int64
+historical_item_id                float64
+source_id                           int64
+description                           str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+text_id                           float64
+comments                              str
+summary                               str
+dtype: object
+     id  historical_item_id  source_id                           description  ...                         modified text_id  comments summary
+0   347               576.0          2                  <p>[see no. 173]</p>  ... 2014-04-28 16:25:41.681150+00:00     NaN       NaN     NaN
+1  1008              1274.0          2  <p>Unidentified fragment: s. xi.</p>  ... 2014-04-28 16:25:43.976358+00:00     NaN       NaN     NaN
+
+[2 rows x 9 columns]
+
+--- graphcomponent ---
+id                            int64
+graph_id                      int64
+component_id                  int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+dtype: object
+    id  graph_id  component_id                          created                         modified
+0  267      4091            28 2012-06-21 09:10:14.449367+00:00 2012-06-21 09:10:14.460575+00:00
+1  168      7055             5 2012-06-07 13:13:38.769305+00:00 2012-06-07 13:13:38.778153+00:00
+
+--- graphcomponent_features ---
+id                   int64
+graphcomponent_id    int64
+feature_id           int64
+dtype: object
+    id  graphcomponent_id  feature_id
+0  326                197          97
+1  327                198         100
+
+--- latinstyle ---
+id                         int64
+legacy_id                float64
+style                        str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id         style                          created                         modified
+0   1        1.0          None 2012-05-22 13:06:46.369983+00:00 2012-05-22 13:06:46.369999+00:00
+1   2        2.0  Pre-Caroline 2012-05-22 13:06:46.371928+00:00 2012-05-22 13:06:46.371944+00:00
+
+--- itempart_owners ---
+id             int64
+itempart_id    int64
+owner_id       int64
+dtype: object
+   id  itempart_id  owner_id
+0   1          482         1
+1   2         1512         2
+
+--- itemorigin ---
+id                                  int64
+legacy_id                         float64
+historical_item_id                  int64
+evidence                              str
+dubitable                            bool
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+place_id                          float64
+institution_id                    float64
+dtype: object
+   id  legacy_id  historical_item_id evidence  dubitable                          created                         modified  place_id  institution_id
+0  25       24.0                 432               False 2012-05-22 13:07:15.043332+00:00 2014-07-03 17:20:04.770137+00:00      30.0             NaN
+1  32       30.0                 438               False 2012-05-22 13:07:15.620919+00:00 2014-07-03 17:20:04.776213+00:00      86.0             NaN
+
+--- ontographtype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id         name                          created                         modified
+0   1  punctuation 2012-05-22 13:06:41.768102+00:00 2012-05-22 13:06:41.768119+00:00
+1   2       letter 2012-05-22 13:06:41.780215+00:00 2012-05-22 13:06:41.780231+00:00
+
+--- proportion ---
+id                              int64
+legacy_id                       int64
+hand_id                         int64
+measurement_id                  int64
+description                       str
+cue_height                    float64
+value                         float64
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+dtype: object
+   id  legacy_id  hand_id  measurement_id description  cue_height  value                          created                         modified
+0   1          3      753               1         NaN        24.0   34.0 2012-05-22 13:10:01.009031+00:00 2013-05-02 10:21:30.450060+00:00
+1   7          9      753               2         NaN        25.0   28.0 2012-05-22 13:10:01.052132+00:00 2013-05-02 10:21:30.475468+00:00
+
+--- measurement ---
+id                         int64
+legacy_id                  int64
+label                        str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id      label                          created                         modified
+0   1          1   Ascender 2012-05-22 13:10:00.975748+00:00 2012-05-22 13:10:00.975772+00:00
+1   2          2  Descender 2012-05-22 13:10:00.977938+00:00 2012-05-22 13:10:00.977953+00:00
+
+--- script_allographs ---
+id              int64
+script_id       int64
+allograph_id    int64
+dtype: object
+   id  script_id  allograph_id
+0   1          1             1
+1   2          1             2
+
+--- text_categories ---
+id             int64
+text_id        int64
+category_id    int64
+dtype: object
+   id  text_id  category_id
+0   1        1          283
+1   2        2          279
+
+--- text_languages ---
+id             int64
+text_id        int64
+language_id    int64
+dtype: object
+   id  text_id  language_id
+0   1        1            2
+1   2        2            2
+
+--- text ---
+id                         int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+legacy_id                float64
+date                         str
+url                          str
+date_sort                    str
+dtype: object
+   id            name                          created                         modified  legacy_id                         date  url date_sort
+0   1  charter P. 101 2013-11-04 17:13:22.258568+00:00 2013-11-04 17:13:22.281508+00:00      323.0  11 June 1096 × 18 June 1102  NaN       NaN
+1   2  charter P. 102 2013-11-04 17:13:22.289874+00:00 2013-11-04 17:13:22.317003+00:00      485.0                               NaN       NaN
+
+--- itempartitem ---
+id                                  int64
+historical_item_id                  int64
+item_part_id                        int64
+locus                                 str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+dtype: object
+   id  historical_item_id  item_part_id locus                          created                         modified
+0   1                 377           451       2013-08-29 17:17:18.118911+00:00 2013-08-29 17:17:18.118942+00:00
+1   2                 378           452       2013-08-29 17:17:18.121744+00:00 2013-08-29 17:17:18.121766+00:00
+
+--- textitempart ---
+id                            int64
+locus                           str
+item_part_id                  int64
+text_id                       int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+date                            str
+name                            str
+dtype: object
+   id locus  item_part_id  text_id                          created                         modified date name
+0   1   NaN           762        1 2013-11-04 17:13:22.275274+00:00 2013-11-04 17:13:22.275303+00:00  NaN  NaN
+1   3   NaN           762        3 2013-11-04 17:13:22.337034+00:00 2013-11-04 17:13:22.337058+00:00  NaN  NaN
+
+--- mediapermission ---
+id                 int64
+label                str
+display_message      str
+permission         int64
+dtype: object
+   id         label                                    display_message  permission
+0   3  Have Licence                                                            300
+1   1    No Licence  A full image of this page is not yet available...         200
