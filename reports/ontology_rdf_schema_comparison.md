@@ -1,4 +1,4 @@
-# Schema-Level Comparison: Conceptual Diagram vs. RDF Export vs. CIDOC-CRM/CRMtex (v3)
+# Schema-Level Comparison: Conceptual Diagram vs. RDF Export vs. CIDOC-CRM/CRMtex (v3) — v4
 
 **Sources compared:**
 - `Ont_diagram_260519.svg` — the conceptual model
@@ -8,6 +8,8 @@
 Scope: **schema-level only** — every distinct `rdf:type` and property used in the RDF, checked against the diagram and against the official specifications. Individual instance data was not audited. This supersedes the earlier report run against the previous RDF export (`data_rdf_digipal_cidoc.rdf`); that export is no longer current and this document stands on its own.
 
 **Note on currency (this sync pass)**: the conceptual model has moved substantially beyond what §§1–8 below describe, through an extended live-design phase covering P95, Hand/Writing/Attribute Assignment, the Annotation cluster, P56/Feature/Component, `arch:GraphComponent`, Text/Hand language routing, and more. That work is recorded in full in the companion report, `domain_range_compliance_v3.md`, and in an updated conceptual diagram, `Archetype_ontology_updated.drawio`. This document has been synced (§9) to reflect that work at the schema level — new/changed classes and properties — without duplicating the full conceptual reasoning, which stays in the companion report.
+
+**v4 note (2026-09-22, Phase 2 Step 8 — standalone OWL file):** one correction to §9.5 below — `HistoricalItemDate` is no longer deferred future work, it's dropped from the export entirely (confirmed an abandoned, 17-row experiment; see `domain_range_compliance_v3.md` v4 update, §2.7). Separately, and not the same item: the remaining ~57 genuine Bucket 4 `EX:`/`archetype:` datatype properties have since been given formal `owl:DatatypeProperty` declarations in `archetype_ontology_0.1.ttl` (see `ex_properties_alignment_v1.2.md` §9 and `datatype_properties_batch_v1.md`) — §9.5's own "`EX:` literal property review against core CIDOC-CRM" bullet is a different, still-open question (whether any of these could still be swapped for a standard vocabulary term rather than kept custom) and remains open. Nothing else in this document has been re-verified for this pass.
 
 ---
 
@@ -187,9 +189,9 @@ Fully assessed. `oa:Annotation` deliberately stays outside CIDOC-CRM's type syst
 
 ### 9.5 Deferred, not yet implemented (see companion report §7 for full detail)
 
-- Language/vernacular unification (`historicalitem.language`/`.vernacular`, `historicalitemdate.vernacular`, `hand.latin_only` → routed via each entity's own Writing System) — design fully settled (§9.2), consistency-checked (mapping confirmed correct, ~7% data-entry error rate found and needs correcting first).
+- Language/vernacular unification (`historicalitem.language`/`.vernacular`, ~~`historicalitemdate.vernacular`~~, `hand.latin_only` → routed via each entity's own Writing System) — design fully settled (§9.2), consistency-checked (mapping confirmed correct, ~7% data-entry error rate found and needs correcting first). **v4: `historicalitemdate.vernacular` drops out of scope — the whole `HistoricalItemDate` table is now excluded from the export (see below); `historicalitem.vernacular` and `hand.latin_only` are unaffected.**
 - `component_features` (Component/Feature controlled vocabulary) — moving to a standalone SKOS file, sharing URIs with the core RDF; not yet built. Candidates flagged for the same treatment: `Ontograph`, `Allograph`.
-- `dateevidence`/`HistoricalItemDate`/`ItemOrigin` evidentiary trails (who/reference behind each dating/origin claim) — target `E13 Attribute Assignment` shape settled, data not yet exposed in the export.
+- `dateevidence`/~~`HistoricalItemDate`~~/`ItemOrigin` evidentiary trails (who/reference behind each dating/origin claim) — target `E13 Attribute Assignment` shape settled, data not yet exposed in the export. **v4: `HistoricalItemDate` removed from this item — investigated and confirmed an abandoned experiment (17 rows, ~1% of Historical Items, empty in Models of Authority too), not a genuine data-loss case. Dropped from the export entirely rather than staged for future population.**
 - Hand vs. Hand Instance (scribal identity vs. item-part-bound occurrence) — conceptual design agreed, not implemented.
 - Systemic float-ID bug — **fully fixed for URI construction** (139 interpolations wrapped in `int()`, verified complete); the same issue in plain `Literal(...)` values not scanned, logged as lower-severity future work.
 - `EX:` literal property review against core CIDOC-CRM — not yet done.
