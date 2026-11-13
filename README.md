@@ -15,3 +15,8 @@ This work was completed in the context of [Biblissima+ Cluster 4](https://projet
 <img width="206" height="60" alt="logo_AOROCtutelles_RVB-small" src="https://github.com/user-attachments/assets/6ea628e8-3ebc-48dd-98c3-57ecfa32d879" />
 </p>
 
+---
+# Model diagram
+
+
+![Model diagram](diagram.drawio.svg)
