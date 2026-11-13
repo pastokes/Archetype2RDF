@@ -1,4 +1,4 @@
-# Archetype Ontology mapping and RDF export
+# Archetype ontology, mapping and RDF export
 
 Project to map the [original (v2) Archetype](https://github.com/kcl-ddh/digipal) data model to a formal ontology based on CIDOC-CRM, and to export data with RDF, building on but entirely replacing the [Archetype-Ontology repository](https://github.com/pastokes/archetype-ontology).
 
