@@ -32,9 +32,17 @@
 # Fixed issue with Appearance being conflated with Script: added new Appearance class and linked to Hand via P2_has_type. Appearance is now used for the appearance of a Hand, and Script is used for the Writing activity.
 #.  Also fixed hand.script to associate with Writing (activity), and removed Writing System which was a misunderstanding of the data model.
 #.  Likewise for Latin Style, since this is more or less formalised at the same level of hand.script.
-#   TODO: Should unify the treatment of Latin and English in regard to arch:Script, arch:Style and arch:Appearance, and explicitly define relatinship between LatinStyle and Script.
+#   TODO: Should unify the treatment of Latin and English in regard to arch:Script, arch:Style and arch:Appearance, and explicitly define relatinship between LatinStyle and Script, presumably via P69.
 # Added missing export of digipal_script and historical_item_type tables
 # Fixed handling of CurrentCounty (since both CurrentCounty and HistoricalCounty point to the same County table so should use a single County class)
+# image.keywords_string dropped as I'm pretty sure it's never used in any version of Archetype, and in any case it doesn't seem useful as LOD.
+# legacy_reference fields removed from export, since they are legacy data and no longer useful.
+# Removed rdfs.comment to align better with CIDOC, and added distinction between P3 has note for genuine notes (e.g. Hand.description) and new ARCH.has_evidence_note 
+#    to distingush notes that are specifically providing evidence for an assertion without going into the complexity of reifying the property or using the full CIDOC model.
+# Promoted Locus throughout from simple field to full CIDOC Appelation Type LOCUS_TYPE structure (formerly E46 + P58, following recommended migration pattern after deprecation)
+# URL fields systematically dropped, since now out of date and not always semantically correct. Instead should now use proper LOD, for instance pointing to IIIF via Biblissima+
+# Image.transcription omitted from export because not used in Digipal and should probably be incorporated into text app export
+# TODO: Need to model, map and code the export for the text app.
 # TODO: should really change everything to braket notation for consistency
 # TODO: Problem of typing: some columns are typed as int64 but contain NaN, which is a float. This causes problems when creating URIs, so need to convert to int first, then to str. – Fixed (see above) but CHECK!
 # TODO: Modelling of Layout and Collation (and probably other 'minor' DigiPal tables) is not valid CIDOC-CRM and needs revision.
@@ -114,6 +122,7 @@ ARCH = Namespace("https://digipal.eu/")
 EX   = Namespace("http://digipal.eu/ontology#")            
 XSD_ = Namespace("http://www.w3.org/2001/XMLSchema#")
 DCTERMS = Namespace("http://purl.org/dc/terms/")    # PAS: Added for annotation creators
+SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")   # PAS: Added for altLabel
 
 g.bind("crm",    CRM)
 g.bind("frbroo", FRBRoo)
@@ -125,6 +134,7 @@ g.bind("ex",     EX)
 g.bind("owl",    OWL)
 g.bind("xsd",    XSD_)
 g.bind("dcterms", DCTERMS)
+g.bind("skos",  SKOS)
 
 # --- Déclaration de l'ontologie ---
 ontologie = URIRef("http://digipal.eu/ontology")
@@ -238,6 +248,9 @@ g.add((CRM['E57_Material'], RDFS.subClassOf, CRM['E55_Type']))
 g.add((CRM['E58_Measurement_Unit'], RDFS.subClassOf, CRM['E55_Type']))
 g.add((FRBRoo.F3_Manifestation, RDFS.subClassOf, CRM['E55_Type']))
 
+g.add((ARCH.has_evidence_note, RDFS.subPropertyOf, CRM['P3_has_note']))
+g.add((ARCH.has_evidence_note, RDFS.label, Literal("has evidence note", lang="en")))
+
 # --- E89 Propositional Object / E73 Information Object ---
 g.add((CRM['E89_Propositional_Object'], RDFS.subClassOf, CRM['E28_Conceptual_Object']))
 g.add((CRM['E73_Information_Object'], RDFS.subClassOf, CRM['E89_Propositional_Object']))
@@ -280,6 +293,10 @@ TYPE_HISTITEM = URIRef("http://digipal.eu/ontology#TYPE_Historical_Item")
 g.add((TYPE_HISTITEM, RDF.type, CRM['E55_Type']))
 g.add((TYPE_HISTITEM, RDFS.label, Literal("Type", lang="en")))
 
+LOCUS_TYPE = URIRef("http://digipal.eu/ontology#Type_Locus")
+g.add((LOCUS_TYPE, RDF.type, CRM['E55_Type']))
+g.add((LOCUS_TYPE, RDFS.label, Literal("Locus", lang="en")))
+
 FORMAT_TYPE = URIRef("http://digipal.eu/ontology#Type_Format")
 g.add((FORMAT_TYPE, RDF.type, CRM['E55_Type']))
 g.add((FORMAT_TYPE, RDFS.label, Literal("Format", lang="en")))
@@ -290,19 +307,65 @@ ACCEPTED_TYPE = URIRef("http://digipal.eu/ontology#Type_Accepted")
 g.add((ACCEPTED_TYPE, RDF.type, CRM['E55_Type']))
 g.add((ACCEPTED_TYPE, RDFS.label, Literal("Accepted", lang="en")))
 
+# Added 'dubitable' as type that can be associated with E13 Attribute Assignments,
+# as compromise between custom attribute and the full, very heavy CIDOC-CRM model for evidence and uncertainty.
+TYPE_DUBITABLE = URIRef("http://digipal.eu/ontology#Type_Dubitable")
+g.add((TYPE_DUBITABLE, RDF.type, CRM['E55_Type']))
+g.add((TYPE_DUBITABLE, RDFS.label, Literal("Dubitable", lang="en")))
+
+# PAS: Added full implementation of CIDOC-CRM measurement model
+MEASUREMENT_UNIT = URIRef("http://digipal.eu/ontology#Measurement_Unit_millimeter")
+g.add((MEASUREMENT_UNIT, RDF.type, CRM['E58_Measurement_Unit']))
+g.add((MEASUREMENT_UNIT, RDFS.label, Literal("Millimeter", lang="en")))
+
+TYPE_PAGE_HEIGHT = URIRef("http://digipal.eu/ontology#Type_Page_Height")
+g.add((TYPE_PAGE_HEIGHT, RDF.type, CRM['E55_Type']))
+g.add((TYPE_PAGE_HEIGHT, RDFS.label, Literal("Page Height", lang="en")))
+
+TYPE_PAGE_WIDTH = URIRef("http://digipal.eu/ontology#Type_Page_Width")
+g.add((TYPE_PAGE_WIDTH, RDF.type, CRM['E55_Type']))
+g.add((TYPE_PAGE_WIDTH, RDFS.label, Literal("Page Width", lang="en")))
+
+TYPE_FRAME_HEIGHT = URIRef("http://digipal.eu/ontology#Type_Frame_Height")
+g.add((TYPE_FRAME_HEIGHT, RDF.type, CRM['E55_Type']))
+g.add((TYPE_FRAME_HEIGHT, RDFS.label, Literal("Frame Height", lang="en")))
+
+TYPE_FRAME_WIDTH = URIRef("http://digipal.eu/ontology#Type_Frame_Width")
+g.add((TYPE_FRAME_WIDTH, RDF.type, CRM['E55_Type']))
+g.add((TYPE_FRAME_WIDTH, RDFS.label, Literal("Frame Width", lang="en")))
+
+TYPE_TRAMLINE_WIDTH = URIRef("http://digipal.eu/ontology#Type_Tramline_Width")
+g.add((TYPE_TRAMLINE_WIDTH, RDF.type, CRM['E55_Type']))
+g.add((TYPE_TRAMLINE_WIDTH, RDFS.label, Literal("Tramline Width", lang="en")))
+
+# List of dimension fields for layout table — maps each Layout dimension field to its Type resource and URI fragment.
+# (Used under layout loop below)
+DIMENSION_FIELDS = [
+    ('page_height', TYPE_PAGE_HEIGHT, 'Page_Height'),
+    ('page_width', TYPE_PAGE_WIDTH, 'Page_Width'),
+    ('frame_height', TYPE_FRAME_HEIGHT, 'Frame_Height'),
+    ('frame_width', TYPE_FRAME_WIDTH, 'Frame_Width'),
+    ('tramline_width', TYPE_TRAMLINE_WIDTH, 'Tramline_Width'),
+]
+
+# PAS: Helper function to build locus URIs
+def get_locus_appellation_uri(item_part_id, locus_text):
+    locus_clean = re.sub(r'[^a-zA-Z0-9_-]', '_', str(locus_text))
+    return URIRef(f"http://digipal.eu/ontology#Locus_Item_Part_{int(item_part_id)}_{locus_clean}")
+
 for _, row in data['historicalitem'].iterrows():
 
     hist_item = URIRef(f"http://digipal.eu/ontology#Historical_Item_{int(row['id'])}")
     g.add((hist_item, RDF.type,      ARCH.Historical_Item))
     if pd.notna(row['name']):
         g.add((hist_item, RDFS.label, Literal(row['name'])))
-    if pd.notna(row['catalogue_number']):
+    if pd.notna(row['catalogue_number']) and str(row['catalogue_number']).strip() != '':
         # Nettoyer la valeur pour l'URI : remplacer les caractères invalides par _
         catalogue_clean = re.sub(r'[^a-zA-Z0-9_-]', '_', str(row['catalogue_number']))
         catalogue_number_uri = URIRef(f"http://digipal.eu/ontology#CatalogueNumber_{catalogue_clean}")
 
         g.add((catalogue_number_uri, RDF.type,   CRM['E42_Identifier']))
-        g.add((catalogue_number_uri, EX.cataloguenumber, Literal(str(row['catalogue_number']))))  # valeur originale conservée ici
+        g.add((catalogue_number_uri, RDF.value, Literal(str(row['catalogue_number']))))  # valeur originale conservée ici
         g.add((hist_item, CRM['P1_is_identified_by'], catalogue_number_uri))
 
     # --- Type de manuscrit → E55 Type (lien vers Historical_Item_Type) ---
@@ -319,17 +382,16 @@ for _, row in data['historicalitem'].iterrows():
         g.add((hist_item,  CRM['P72_has_language'], langue_uri))     
 
     if pd.notna(row['date']):
-        g.add((hist_item, EX.date, Literal(str(row['date']))))
+        g.add((hist_item, DCTERMS.date, Literal(str(row['date']))))
 
-    if pd.notna(row['url']):
-        g.add((hist_item, EX.url, Literal(str(row['url']))))
+# PAS: URL omitted; see comments above
+#    if pd.notna(row['url']):
+#        g.add((hist_item, EX.url, Literal(str(row['url']))))
 
     if pd.notna(row['vernacular']):
         g.add((hist_item, EX.vernacular, Literal(bool(row['vernacular']))))
     if pd.notna(row['neumed']):
         g.add((hist_item, EX.neumed, Literal(bool(row['neumed']))))
-    if pd.notna(row['legacy_reference']):
-        g.add((hist_item, EX.legacy_reference, Literal(str(row['legacy_reference']))))
     
     if pd.notna(row['historical_item_format_id']):
         format_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_Format_{int(row['historical_item_format_id'])}")
@@ -355,8 +417,9 @@ for _, a in archive.iterrows():
     g.add((attr_assignment, RDF.type, CRM['E13_Attribute_Assignment']))
     g.add((attr_assignment, CRM['P140_assigned_attribute_to'], hist_uri))
     # PAS: Added notna() guard and conversion to bool() for dubitable, since it is a boolean field in the database but can be NaN
-    if pd.notna(a['dubitable']):
-        g.add((attr_assignment, EX.dubitable, Literal(bool(a['dubitable']))))
+    # Also use new Dubitable type
+    if pd.notna(a['dubitable']) and bool(a['dubitable']):
+        g.add((attr_assignment, CRM['P2_has_type'], TYPE_DUBITABLE))
     if pd.notna(a['object_id']) and str(a['content_type_id']) == '43':
         place_uri = URIRef(f"http://digipal.eu/ontology#Place_{int(a['object_id'])}")
         g.add((attr_assignment, CRM['P141_assigned'], place_uri))
@@ -427,7 +490,7 @@ for _, i in data['institution'].iterrows():
         insti_foundation = URIRef(f"http://digipal.eu/ontology#InstiFoundation_{int(i['id'])}")
         g.add((insti_foundation, RDF.type, CRM['E66_Formation']))
         g.add((insti_foundation, CRM['P95_has_formed'], insti))
-        g.add((insti_foundation, EX['foundation'], Literal(str(i['foundation']))))
+        g.add((insti_foundation, DCTERMS.date, Literal(str(i['foundation']))))
         if pd.notna(i['founder_id']):
             founder_insti = URIRef(f"http://digipal.eu/ontology#Person_{int(i['founder_id'])}")
             g.add((insti_foundation, CRM['P14_carried_out_by_founder'], founder_insti))
@@ -437,7 +500,7 @@ for _, i in data['institution'].iterrows():
         insti_refoundation = URIRef(f"http://digipal.eu/ontology#InstiRefoundation_{int(i['id'])}")
         g.add((insti_refoundation, RDF.type, CRM['E66_Formation']))
         g.add((insti_refoundation, CRM['P95_has_formed'], insti))
-        g.add((insti_refoundation, EX['refoundation'], Literal(str(i['refoundation']))))
+        g.add((insti_refoundation, DCTERMS.date, Literal(str(i['refoundation']))))
         if pd.notna(i['founder_id']):
             founder_insti = URIRef(f"http://digipal.eu/ontology#Person_{int(i['founder_id'])}")
             g.add((insti_refoundation, CRM['P14_carried_out_by_founder'], founder_insti))
@@ -473,7 +536,7 @@ for _, item in data['itempart'].iterrows():
     if pd.notna(item['pagination']):
         g.add((itempart, EX.pagination, Literal(item['pagination'])))
     if pd.notna(item['notes']):
-        g.add((itempart, RDFS.comment, Literal(item['notes'])))
+        g.add((itempart, CRM.P3_has_note, Literal(item['notes'])))
     if pd.notna(item['current_item_id']):
         F5_Item_uri = URIRef(f"http://digipal.eu/ontology#Item_{int(item['id'])}")
         current_item_uri = URIRef(f"http://digipal.eu/ontology#Current_Item_{int(item['current_item_id'])}")
@@ -485,16 +548,6 @@ for _, part in data['itempartitem'].iterrows():
     item= URIRef(f"http://digipal.eu/ontology#Item_Part_{int(part['item_part_id'])}")
     g.add((hist,  CRM['P46_is_composed_of'], item))
 
-    #Création F5 item et F3 Manifestation 
-    F5_Item_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(part['item_part_id'])}")
-    F3_Manifestation_uri = URIRef(f"http://digipal.eu/ontology#Manifestation_{int(part['item_part_id'])}")
-    g.add((F3_Manifestation_uri, RDF.type, FRBRoo['F3_Manifestation']))
-    g.add((F5_Item_uri, RDF.type, FRBRoo['F5_Item']))
-    g.add((hist, OWL['sameAs'], F5_Item_uri))
-    g.add((item, OWL['sameAs'], F5_Item_uri))
-    g.add((hist, OWL['sameAs'], F3_Manifestation_uri))
-    g.add((item, OWL['sameAs'],F3_Manifestation_uri))
-
 # PAS: ItemOrigin migrated onto E13 Attribute Assignment to use the same pattern as Archive and MSOrigin
 for _, origin in data['itemorigin'].iterrows():
     hist_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{int(origin['historical_item_id'])}")
@@ -502,18 +555,14 @@ for _, origin in data['itemorigin'].iterrows():
     g.add((attr_assignment, RDF.type, CRM['E13_Attribute_Assignment']))
     g.add((attr_assignment, CRM['P140_assigned_attribute_to'], hist_uri))
     # PAS: Added notna() guard and conversion to bool() for dubitable, since it is a boolean field in the database but can be NaN
-    if pd.notna(origin['dubitable']):
-        g.add((attr_assignment, EX.dubitable, Literal(bool(origin['dubitable']))))
+    if pd.notna(origin['dubitable']) and bool(origin['dubitable']):
+        g.add((attr_assignment, CRM['P2_has_type'], TYPE_DUBITABLE))
     if pd.notna(origin['place_id']):
         place_uri = URIRef(f"http://digipal.eu/ontology#Place_{int(origin['place_id'])}")
         g.add((attr_assignment, CRM['P141_assigned'], place_uri))
     if pd.notna(origin['institution_id']):
         institution_uri = URIRef(f"http://digipal.eu/ontology#Institution_{int(origin['institution_id'])}")
         g.add((attr_assignment, CRM['P141_assigned'], institution_uri))
-
-MEASUREMENT_UNIT = URIRef("http://digipal.eu/ontology#Measurement_Unit_millimeter")
-g.add((MEASUREMENT_UNIT, RDF.type, CRM['E58_Measurement_Unit']))
-g.add((MEASUREMENT_UNIT, RDFS.label, Literal("Millimeter", lang="en")))
 
 for _, layout in data['layout'].iterrows():
     # PAS: Very many rows (close to 80%) in digipal_layout have no real content: all the measurement fields are null or
@@ -542,25 +591,23 @@ for _, layout in data['layout'].iterrows():
 
     # PAS: NB layout and dimension URIs assume linking to Historical Item since that is how DigiPal's data is structured.
     #  If other Archetype-based projects use Layout elsewhere, e.g. linked to Item Part, the URI naming should be changed accordingly.
+    # - Changed model to implement full CIDOC-CRM Measurement structure
+    # - Fixed issue of converting float to int for dimensions, since should be integers for these properties.
     layout_uri = URIRef(f"http://digipal.eu/ontology#Layout_Historical_Item_{int(layout['historical_item_id'])}") 
-    dimension_uri = URIRef(f"http://digipal.eu/ontology#Dimension_Historical_Item_{int(layout['historical_item_id'])}")
     g.add((layout_uri, RDF.type, CRM['E18_Physical_Thing']))
-    g.add((dimension_uri, RDF.type, CRM['E54_Dimension']))
-
     g.add((layout_uri, RDFS.label, Literal(f"Layout {layout['id']}")))
-    g.add((dimension_uri, RDFS.label, Literal(f"Dimension {layout['id']}")))
 
-    # PAS: Fixed issue of converting float to int for dimensions, since should be integers for these properties.
-    if pd.notna(layout['page_height']):
-        g.add((dimension_uri, EX['page_height'], Literal(int(layout['page_height']))))
-    if pd.notna(layout['page_width']):
-        g.add((dimension_uri, EX['page_width'], Literal(int(layout['page_width']))))
-    if pd.notna(layout['frame_height']):
-        g.add((dimension_uri, EX['frame_height'], Literal(int(layout['frame_height']))))
-    if pd.notna(layout['frame_width']):
-        g.add((dimension_uri, EX['frame_width'], Literal(int(layout['frame_width']))))
-    if pd.notna(layout['tramline_width']):
-        g.add((dimension_uri, EX['tramline_width'], Literal(int(layout['tramline_width']))))
+    dimension_uris = []
+    for field_name, type_uri, uri_fragment in DIMENSION_FIELDS:
+        if pd.notna(layout[field_name]):
+            dim_uri = URIRef(f"http://digipal.eu/ontology#Dimension_Historical_Item_{int(layout['historical_item_id'])}_{uri_fragment}")
+            g.add((dim_uri, RDF.type, CRM['E54_Dimension']))
+            g.add((dim_uri, RDFS.label, Literal(f"{uri_fragment.replace('_', ' ')} {layout['id']}")))
+            g.add((dim_uri, CRM['P2_has_type'], type_uri))
+            g.add((dim_uri, CRM['P90_has_value'], Literal(int(layout[field_name]))))
+            g.add((dim_uri, CRM['P91_has_unit'], MEASUREMENT_UNIT))
+            dimension_uris.append(dim_uri)
+
     if pd.notna(layout['lines']):
         g.add((layout_uri, EX['lines'], Literal(int(layout['lines']))))
     if pd.notna(layout['columns']):
@@ -572,7 +619,7 @@ for _, layout in data['layout'].iterrows():
     if pd.notna(layout['bilinear_ruling']):
         g.add((layout_uri, EX.bilinear_ruling, Literal(layout['bilinear_ruling'])))
     if pd.notna(layout['comments']):
-        g.add((layout_uri, RDFS.comment, Literal(layout['comments'])))
+        g.add((layout_uri, CRM.P3_has_note, Literal(layout['comments'])))
     if pd.notna(layout['insular_pricking']):
         # PAS: Fixed error in property name (was EX.columns)
         g.add((layout_uri, EX['insular_pricking'], Literal(layout['insular_pricking'])))
@@ -584,20 +631,21 @@ for _, layout in data['layout'].iterrows():
     # PAS: This loop is redundant in practice as Layout is only linked to Historical Items in DigiPal,
     # but it could well be used for Item Parts in other implementations, so keep it in case.
     # NB that if this is implemented then the naming of the layout and dimension URIs should be changed accordingly (see above)
+    # NB also that changed to implement full CIDOC-CRM Measurement model
     if pd.notna(layout['item_part_id']):
-        itempart_layout =  URIRef(f"http://digipal.eu/ontology#Item_Part_{int(layout['item_part_id'])}")
-        g.add((itempart_layout,  CRM['P46_is_composed_of'], layout_uri))
-
-        if pd.notna(layout['page_height']) or pd.notna(layout['page_width']) or pd.notna(layout['frame_height']) or pd.notna(layout['frame_width']) or pd.notna(layout['tramline_width']):
-            g.add((itempart_layout,  CRM['P43_has_dimension'], dimension_uri))
+        itempart_layout = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(layout['item_part_id'])}")
+        g.add((itempart_layout, CRM['P46_is_composed_of'], layout_uri))
+        for dim_uri in dimension_uris:
+            g.add((itempart_layout, CRM['P43_has_dimension'], dim_uri))
 
     # PAS: added — historical_item_id is the field actually populated in DigiPal's data;
     # item_part_id above is kept as a fallback for other Archetype-based projects that may use it.
+    # Also: changed to implement full CIDOC-CRM Measurement model
     if pd.notna(layout['historical_item_id']):
         hist_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{int(layout['historical_item_id'])}")
         g.add((hist_uri, CRM['P46_is_composed_of'], layout_uri))
-        if pd.notna(layout['page_height']) or pd.notna(layout['page_width']) or pd.notna(layout['frame_height']) or pd.notna(layout['frame_width']) or pd.notna(layout['tramline_width']):
-            g.add((hist_uri, CRM['P43_has_dimension'], dimension_uri))
+        for dim_uri in dimension_uris:
+            g.add((hist_uri, CRM['P43_has_dimension'], dim_uri))
 
 for _, hair in data['hair'].iterrows():
     hair_uri =  URIRef(f"http://digipal.eu/ontology#Hair_{int(hair['id'])}")
@@ -713,19 +761,19 @@ for _, hist_date in data['historicalitemdate'].iterrows():
         g.add((attr_assignment, CRM['P141_assigned'], date_uri))
 
     if pd.notna(hist_date['evidence']):
-        g.add((attr_assignment, CRM['P3_has_note'], Literal(hist_date['evidence'])))
+        g.add((attr_assignment, ARCH['has_evidence_note'], Literal(hist_date['evidence'])))
     if pd.notna(hist_date['vernacular']):
         g.add((attr_assignment, EX.vernacular, Literal(hist_date['vernacular'])))
     if pd.notna(hist_date['addition']):
         g.add((attr_assignment, EX.addition, Literal(hist_date['addition'])))
-    if pd.notna(hist_date['dubitable']):
-        g.add((attr_assignment, EX.dubitable, Literal(hist_date['dubitable'])))
+    if pd.notna(hist_date['dubitable']) and bool(hist_date['dubitable']):
+        g.add((attr_assignment, CRM['P2_has_type'], TYPE_DUBITABLE))
 
 for _, date in data['date'].iterrows():
     date_period_uri = URIRef(f"http://digipal.eu/ontology#Date_Period_{int(date['id'])}")
     g.add((date_period_uri, RDF.type,      CRM.E4_Period))
     g.add((date_period_uri, RDFS.label, Literal(f"Date {date['id']}")))
-    g.add((date_period_uri, EX.date, Literal(date['date'])))
+    g.add((date_period_uri, DCTERMS.date, Literal(date['date'])))
     g.add((date_period_uri, EX.weight, Literal(date['weight'])))
     # PAS: Added guards for NaN values to avoid adding triples with empty literals, and also converted to bool for post_conquest and s_xi since they are boolean fields in the database but can be NaN.
     if pd.notna(date['post_conquest']):
@@ -757,7 +805,7 @@ for _, date in data['date'].iterrows():
         date_document_uri = URIRef(f"http://digipal.eu/ontology#Date_Document_{int(date['id'])}")
         g.add((date_period_uri,  CRM.P70i_is_documented_in, date_document_uri))
         g.add((date_document_uri, RDF.type,      CRM.E31_Document)) 
-        g.add((date_document_uri, EX.evidence, Literal(date['evidence'])))
+        g.add((date_document_uri, ARCH.has_evidence_note, Literal(date['evidence'])))
 
 for _, desc in data['description'].iterrows():
     description_uri = URIRef(f"http://digipal.eu/ontology#Description_{int(desc['id'])}")
@@ -767,7 +815,7 @@ for _, desc in data['description'].iterrows():
         # PAS: Changed to use DCTERMS.description instead of EX.description for better semantic alignment.
         g.add((description_uri, DCTERMS.description, Literal(desc['description'])))
     if pd.notna(desc['comments']):
-        g.add((description_uri, EX.comments, Literal(desc['comments'])))
+        g.add((description_uri, CRM.P3_has_note, Literal(desc['comments'])))
     if pd.notna(desc['summary']): # Never used in practice...
         g.add((description_uri, EX.summary, Literal(desc['summary'])))
     if pd.notna(desc['source_id']): 
@@ -785,7 +833,10 @@ for _, current in data['currentitem'].iterrows():
     current_uri = URIRef(f"http://digipal.eu/ontology#Current_Item_{int(current['id'])}")
     g.add((current_uri, RDF.type,      ARCH.Current_Item)) 
     if pd.notna(current['shelfmark']):
-        g.add((current_uri, EX.shelfmark, Literal(current['shelfmark'])))
+        shelfmark_uri = URIRef(f"http://digipal.eu/ontology#Shelfmark_Current_Item_{int(current['id'])}")
+        g.add((shelfmark_uri, RDF.type, CRM['E42_Identifier']))
+        g.add((shelfmark_uri, RDF.value, Literal(current['shelfmark'])))
+        g.add((current_uri, CRM['P1_is_identified_by'], shelfmark_uri))
     if pd.notna(current['description']):
         g.add((current_uri, DCTERMS.description, Literal(current['description'])))
     if pd.notna(current['display_label']):
@@ -800,9 +851,10 @@ for _, repository in data['repository'].iterrows():
     if pd.notna(repository['name']):
         g.add((repository_uri, RDFS.label, Literal(repository['name'])))
     if pd.notna(repository['short_name']):
-        g.add((repository_uri, EX.short_name, Literal(repository['short_name'])))
-    if pd.notna(repository['url']):
-        g.add((repository_uri, EX.url, Literal(repository['url'])))
+        g.add((repository_uri, SKOS.altLabel, Literal(repository['short_name'])))
+    # PAS: URL removed from export, for reasons discussed in comments above
+#    if pd.notna(repository['url']):
+#        g.add((repository_uri, EX.url, Literal(repository['url'])))
     if pd.notna(repository['comma']):
         g.add((repository_uri, EX.comma, Literal(repository['comma'])))
     if pd.notna(repository['british_isles']):
@@ -810,7 +862,7 @@ for _, repository in data['repository'].iterrows():
     if pd.notna(repository['digital_project']):
         g.add((repository_uri, EX.digital_project, Literal(repository['digital_project'])))
     if pd.notna(repository['copyright_notice']):
-        g.add((repository_uri, EX.copyright_notice, Literal(repository['copyright_notice'])))
+        g.add((repository_uri, DCTERMS.rights, Literal(repository['copyright_notice'])))
     if pd.notna(repository['place_id']):
         place_uri = URIRef(f"http://digipal.eu/ontology#Place_{int(repository['place_id'])}")
         g.add((repository_uri,  CRM.P74_has_current_or_former_residence, place_uri))
@@ -832,11 +884,13 @@ for _, text in data['text'].iterrows():
     if pd.notna(text['name']):
         g.add((text_uri, RDFS.label, Literal(text['name'])))
     if pd.notna(text['date']):
-        g.add((text_uri, EX.date, Literal(text['date'])))
-    if pd.notna(text['url']):
-        g.add((text_uri, EX.url, Literal(text['url'])))
+        g.add((text_uri, DCTERMS.date, Literal(text['date'])))
+
+    # PAS: URL omitted from export; see comments above
+    #    if pd.notna(text['url']):
+    #        g.add((text_uri, EX.url, Literal(text['url'])))
     if pd.notna(text['date_sort']):
-        g.add((text_uri, EX.date, Literal(text['date_sort'])))
+        g.add((text_uri, EX.date_sort, Literal(text['date_sort'])))
 
 for _, text_cat in data['text_categories'].iterrows():
     text_uri = URIRef(f"http://digipal.eu/ontology#Text_{int(text_cat['text_id'])}")
@@ -857,42 +911,45 @@ for _, text_item in data['textitempart'].iterrows():
     if pd.notna(text_item['name']):
         g.add((text_item_uri, RDFS.label, Literal(text_item['name'])))
     if pd.notna(text_item['date']):
-        g.add((text_item_uri, EX.date, Literal(text_item['date'])))
-    if pd.notna(text_item['locus']):
-        g.add((text_item_uri, EX.locus, Literal(text_item['locus'])))
+        g.add((text_item_uri, DCTERMS.date, Literal(text_item['date'])))
+    if pd.notna(text_item['locus']) and str(text_item['locus']).strip() != '' and pd.notna(text_item['item_part_id']):
+        locus_uri = get_locus_appellation_uri(text_item['item_part_id'], text_item['locus'])
+        g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
+        g.add((locus_uri, RDFS.label, Literal(text_item['locus'])))
+        g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
+        g.add((text_item_uri, CRM['P1_is_identified_by'], locus_uri))
+        itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(text_item['item_part_id'])}")
+        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
     if pd.notna(text_item['text_id']):
         text_uri = URIRef(f"http://digipal.eu/ontology#Text_{int(text_item['text_id'])}")
         # PAS: fixed reversed link. The text item is a segment of the text, so the text should have the segment, not the other way around.
         g.add((text_uri,  CRMtx.TXP4_has_segment, text_item_uri))
 
+# PAS: Owner migrated to E13 Attribute Assignment to use the same pattern as Archive, MSOrigin etc.
 for _, owner in data['owner'].iterrows():
     owner_uri = URIRef(f"http://digipal.eu/ontology#Owner_{int(owner['id'])}")
-    g.add((owner_uri, RDF.type,      CRM.E39_Actor))
+    g.add((owner_uri, RDF.type,      CRM['E13_Attribute_Assignment']))
     if pd.notna(owner['date']):
-        g.add((owner_uri, EX.date, Literal(owner['date'])))
+        g.add((owner_uri, DCTERMS.date, Literal(owner['date'])))
     if pd.notna(owner['evidence']):
-        g.add((owner_uri, EX.evidence, Literal(owner['evidence'])))
+        g.add((owner_uri, ARCH.has_evidence_note, Literal(owner['evidence'])))
     if pd.notna(owner['rebound']):
         g.add((owner_uri, EX.rebound, Literal(owner['rebound'])))
     if pd.notna(owner['annotated']):
         g.add((owner_uri, EX.annotated, Literal(owner['annotated'])))
-    if pd.notna(owner['dubitable']):
-        g.add((owner_uri, EX.dubitable, Literal(owner['dubitable'])))
+    if pd.notna(owner['dubitable']) and bool(owner['dubitable']):
+        g.add((owner_uri, CRM['P2_has_type'], TYPE_DUBITABLE))
     if pd.notna(owner['display_label']):
         g.add((owner_uri, RDFS.label, Literal(owner['display_label'])))
     if pd.notna(owner['person_id']):
         person_uri = URIRef(f"http://digipal.eu/ontology#Person_{int(owner['person_id'])}") 
-        g.add((owner_uri,  OWL.sameAs, person_uri))
+        g.add((owner_uri,  CRM['P141_assigned'], person_uri))
     if pd.notna(owner['institution_id']):
         institution_uri = URIRef(f"http://digipal.eu/ontology#Institution_{int(owner['institution_id'])}") 
-        g.add((owner_uri,  OWL.sameAs, institution_uri))
+        g.add((owner_uri,  CRM['P141_assigned'], institution_uri))
     if pd.notna(owner['repository_id']):
         repository_uri = URIRef(f"http://digipal.eu/ontology#Repository_{int(owner['repository_id'])}") 
-        # PAS: Can't see why P74 is used here, so changed to OWL.sameAs to match the others.
-        # However, this isn't really correct either as a digipal_owner record is in fact a linking table which
-        # also includes information about the ownership itself (so the name is misleading: it's less 'owner' than 'ownership').
-        # TODO: Revise and fix the model, perhaps using full CIDOC-CRM Acquisition pattern (E8 Acquisition, E10 Transfer of Custody, E39 Actor, E53 Place, etc.) to model the ownership event and its participants.
-        g.add((owner_uri,  OWL.sameAs, repository_uri))
+        g.add((owner_uri,  CRM['P141_assigned'], repository_uri))
     
 for _, hand in data['hand'].iterrows():
     hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(hand['id'])}")
@@ -907,8 +964,9 @@ for _, hand in data['hand'].iterrows():
         g.add((hand_uri, RDFS.label, Literal(hand['label'])))
     if pd.notna(hand['display_note']):
         g.add((hand_uri, EX.display_note, Literal(hand['display_note'])))
-    if pd.notna(hand['internal_note']):
-        g.add((hand_uri, EX.internal_note, Literal(hand['internal_note'])))
+    # PAS: Don't export internal notes, as they are not part of the public data and are only for internal use in DigiPal.
+#    if pd.notna(hand['internal_note']):
+#        g.add((hand_uri, EX.internal_note, Literal(hand['internal_note'])))
     if pd.notna(hand['relevant']):
         g.add((hand_uri, EX.relevant, Literal(hand['relevant'])))
     if pd.notna(hand['latin_only']):
@@ -927,15 +985,25 @@ for _, hand in data['hand'].iterrows():
     if pd.notna(hand['imitative']):
         g.add((hand_uri, EX.imitative, Literal(hand['imitative'])))
     if pd.notna(hand['comments']):
-        g.add((hand_uri, EX.comments, Literal(hand['comments'])))
+        g.add((hand_uri, CRM.P3_has_note, Literal(hand['comments'])))
     if pd.notna(hand['display_label']):
         g.add((hand_uri, EX.display_label, Literal(hand['display_label'])))
-    if pd.notna(hand['locus']):
-        g.add((hand_uri, EX.locus, Literal(hand['locus'])))
+    if pd.notna(hand['locus']) and str(hand['locus']).strip() != '' and pd.notna(hand['item_part_id']):
+        locus_uri = get_locus_appellation_uri(hand['item_part_id'], hand['locus'])
+        g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
+        g.add((locus_uri, RDFS.label, Literal(hand['locus'])))
+        g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
+        g.add((hand_uri, CRM['P1_is_identified_by'], locus_uri))
+        itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(hand['item_part_id'])}")
+        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
+
     if pd.notna(hand['surrogates']):
         g.add((hand_uri, EX.surrogates, Literal(hand['surrogates'])))
-    if pd.notna(hand['selected_locus']):
-        g.add((hand_uri, EX.selected_locus, Literal(hand['selected_locus'])))
+
+    # PAS: selected_locus removed — always identical to locus in DigiPal, and is internal
+    # bookkeeping rather than a distinct fact (see report). Logged as a deliberate omission.
+#    if pd.notna(hand['selected_locus']):
+#        g.add((hand_uri, EX.selected_locus, Literal(hand['selected_locus'])))
     if pd.notna(hand['ker']):
         g.add((hand_uri, EX.ker, Literal(hand['ker'])))
 
@@ -979,9 +1047,6 @@ for _, hand in data['hand'].iterrows():
         script_uri = URIRef(f"http://digipal.eu/ontology#Script_{int(hand['script_id'])}")
         g.add((writing_uri, CRM.P33_used_specific_technique, script_uri))   # not TXP12, not hand_uri
     if pd.notna(hand['item_part_id']):
-        item_uri = URIRef(f"http://digipal.eu/ontology#Item_{int(hand['item_part_id'])}")
-        g.add((item_uri, RDF.type,      FRBRoo.F5_Item))
-        g.add((hand_uri,  CRM.P46_is_composed_of, item_uri))
         itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(hand['item_part_id'])}") 
         # PAS: Fixed itempart - hand relationship.
         g.add((itempart_uri, CRM['P56_bears_feature'], hand_uri))
@@ -1011,8 +1076,16 @@ repository_to_media_permission = data['repository'].set_index('id')['media_permi
 for _, image in data['image'].iterrows():
     image_uri = URIRef(f"http://digipal.eu/ontology#Image_{int(image['id'])}")
     g.add((image_uri, RDF.type,      CRM.E36_Visual_Item))
-    if pd.notna(image['locus']):
-        g.add((image_uri, EX.locus, Literal(image['locus'])))
+
+    if pd.notna(image['locus']) and str(image['locus']).strip() != '' and pd.notna(image['item_part_id']):
+        locus_uri = get_locus_appellation_uri(image['item_part_id'], image['locus'])
+        g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
+        g.add((locus_uri, RDFS.label, Literal(image['locus'])))
+        g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
+        g.add((image_uri, CRM['P138_represents'], locus_uri))
+        itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(image['item_part_id'])}")
+        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
+
     if pd.notna(image['caption']):
         g.add((image_uri, EX.caption, Literal(image['caption'])))
     if pd.notna(image['image']):
@@ -1023,10 +1096,9 @@ for _, image in data['image'].iterrows():
         g.add((image_uri, EX.folio_side, Literal(image['folio_side'])))
     if pd.notna(image['iipimage']):
         g.add((image_uri, EX.iipimage, Literal(image['iipimage'])))
-    if pd.notna(image['transcription']):
-        g.add((image_uri, EX.transcription, Literal(image['transcription'])))
-    if pd.notna(image['internal_notes']):
-        g.add((image_uri, EX.internal_notes, Literal(image['internal_notes'])))
+# PAS: Don't display internal notes, as they are not part of the public data and are only for internal use in DigiPal.
+#    if pd.notna(image['internal_notes']):
+#        g.add((image_uri, EX.internal_notes, Literal(image['internal_notes'])))
     if pd.notna(image['custom_label']):
         g.add((image_uri, EX.custom_label, Literal(image['custom_label'])))
     if pd.notna(image['width']): # à mettre dans un truc dimension 
@@ -1035,8 +1107,6 @@ for _, image in data['image'].iterrows():
         g.add((image_uri, EX.height, Literal(image['height'])))
     if pd.notna(image['size']): # à mettre dans un truc dimension
         g.add((image_uri, EX.size, Literal(image['size'])))
-    if pd.notna(image['keywords_string']):
-        g.add((image_uri, EX.keywords_string, Literal(image['keywords_string'])))
     if pd.notna(image['quire']):
         g.add((image_uri, EX.quire, Literal(image['quire'])))
     if pd.notna(image['page_boundaries']):
@@ -1131,8 +1201,9 @@ for _, annotation in data['annotation'].iterrows():
         g.add((annotation_uri, EX.geo_json, Literal(annotation['geo_json'])))
     if pd.notna(annotation['display_note']):
         g.add((annotation_uri, EX.display_note, Literal(annotation['display_note'])))
-    if pd.notna(annotation['internal_note']):
-        g.add((annotation_uri, EX.internal_note, Literal(annotation['internal_note'])))
+# PAS: Don't display internal notes, as they are not part of the public data and are only for internal use in DigiPal.
+#    if pd.notna(annotation['internal_note']):
+#        g.add((annotation_uri, EX.internal_note, Literal(annotation['internal_note'])))
     if pd.notna(annotation['rotation']):
         g.add((annotation_uri, EX.rotation, Literal(annotation['rotation'])))
     if pd.notna(annotation['holes']):
@@ -1242,12 +1313,16 @@ for _, gcf in gc_features.iterrows():
     feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{int(gcf['feature_id'])}")
     g.add((graphcomponent_uri, CRM['P2_has_type'], feature_uri))
 
-
+# PAS: Remember, the Archetype Owners table does *not* record owners, but rather assertions of current or historical 
+# Ownership.
 for _, item_owner in data['itempart_owners'].iterrows():
     itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(item_owner['itempart_id'])}")
     owner_uri = URIRef(f"http://digipal.eu/ontology#Owner_{int(item_owner['owner_id'])}")
-    g.add((itempart_uri,  CRM.P50_has_current_keeper, owner_uri)) 
+    g.add((owner_uri,  CRM['P140_assigned_attribute_to'], itempart_uri)) 
 
+# TODO: Unify Descriptions across the database? CHECK if makes sense.
+# TODO: Need to add type/class for HandDescription.
+# TODO: Double-check DCTERMS.description vs E62 String for the description
 for _, hand_desc in data['handdescription'].iterrows():
     hand_desc_uri = URIRef(f"http://digipal.eu/ontology#HandDescription_{int(hand_desc['id'])}")
     g.add((hand_desc_uri, RDF.type, CRM.E62_String))
@@ -1259,6 +1334,8 @@ for _, hand_desc in data['handdescription'].iterrows():
         hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(hand_desc['hand_id'])}")
         g.add((hand_uri,  CRM.P3_has_note, hand_desc_uri))
     if pd.notna(hand_desc['source_id']):
+        # TODO: isn't this backwards? Surely the source documents the description, not the other way around? CHECK!
+        # (Is P70 really right here anyway?) CHECK!
         source_uri = URIRef(f"http://digipal.eu/ontology#Source_{int(hand_desc['source_id'])}")
         g.add((source_uri,  CRM.P70i_is_documented_in, hand_desc_uri))
 
@@ -1272,8 +1349,6 @@ for _, reference in data['reference'].iterrows():
     g.add((ref_uri, RDF.type, CRM.E31_Document))
     if pd.notna(reference['name_index']):
         g.add((ref_uri, RDFS.label, Literal(reference['name_index'])))
-    if pd.notna(reference['legacy_reference']):
-        g.add((ref_uri, EX.legacy_reference, Literal(reference['legacy_reference'])))
     if pd.notna(reference['full_reference']):
         g.add((ref_uri, EX.full_reference, Literal(reference['full_reference'])))
 
