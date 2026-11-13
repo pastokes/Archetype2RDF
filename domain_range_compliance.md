@@ -1,0 +1,701 @@
+# Domain/Range Compliance — RDF v3 (`data_rdf_digipal_cidoc_20260827.rdf`)
+
+Companion to `ontology_rdf_schema_comparison_v3.md`. Each property's real CIDOC-CRM domain/range (verified against the official CIDOC-CRM specification, cidoc-crm.org) is checked against what this RDF export actually asserts as subject/object types. "Domain" = required class of the subject; "range" = required class of the object. This document reflects the current state of v3 and stands on its own — it does not require the earlier compliance report to be read first, though relevant history is noted inline where useful.
+
+---
+
+## 1. Summary of remaining work
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | **P95 has formed used backwards** — `Group → Formation` (and, in the founder branch, `Person → Formation/Acquisition`) in all cases; should be `Formation → Group` | **Resolved and verified in the current export** (P95 direction, E8→E66, founder/reformer moved to role-qualified P14, URI collision fixed). Confirmed: `E66_Formation` instances are the subject of `P95_has_formed` throughout (both foundation and refoundation), `E8_Acquisition` has zero real instances (one leftover subClassOf schema declaration only), and founder/reformer are linked via `P14_carried_out_by_founder`/`P14_carried_out_by_reformer`. *(Status corrected in Step 1 review — the earlier "not yet re-verified" status was stale.)* |
+| 2 | **P72 has language** attached to the Historical Item (`Historical Item → Language`, 231 triples) rather than to its linguistic content | Left as-is (Historical Item side unchanged); superseded by a broader, tangled situation (§2.2) — a related bug (`text_languages`/`text_categories` links silently missing) is **fixed**; full `Hand → Text → Language` unification **consistency-checked, mapping confirmed correct, ~7% data-entry error rate found**; **Text's own classification and language route now fully resolved** — stays `TX1 Written Text` (no reclassification), gets its own `TXP9`/`TXP6`-via-Writing-System route, decoupled from Hand's; Hand's language handled the same way via its own pre-existing Writing System. Remaining blocker: the ~30 known data-entry errors need correcting before full unification |
+| 3 | **P50 has current keeper, Archive→Place case** (180 triples, `Information Object → Place`) — still the wrong property for presumed place of production | **Fully resolved (Step 2, item 1 — implemented and verified in export):** both `Archive` and `ItemOrigin` now produce `E13_Attribute_Assignment` nodes (`Archive_<id>` / `ItemOrigin_<id>`), each with `P140_assigned_attribute_to` → Historical Item and `P141_assigned` → Place and/or Institution as applicable. Confirmed in the regenerated export: 476 new `ItemOrigin_*` E13 nodes, `P7_took_place_at`/`P11_had_participant` (the old ItemOrigin pattern) fully retired (0 occurrences). A pre-existing URI bug in the Archive block (`HistoricalItem_<id>` missing an underscore, silently orphaning all 180 Archive attribute-assignment nodes from the actual Historical Item resource) was also found and fixed as part of this change — confirmed 0 occurrences of the buggy form in the current export. Per the project lead: each `ItemOrigin` row is a scholarly assertion naming either a place or an institution (rarely both in practice); a single `E13 Attribute Assignment` node carrying both via separate `P141_assigned` triples when both are present is an accepted simplification. |
+| 4 | **P198i/patron-saint data** (41 triples) still present despite the decision to drop it | **Resolved by removal** — code commented out; flagged as a deliberate point of data loss vs. the original DigiPal database |
+| 5 | **Reformer / E8 Acquisition inconsistency** — refoundation events now sometimes dual-typed as both `E66 Formation` and `E8 Acquisition` simultaneously | **Resolved as part of the P95 fix** (see #1) — E8 Acquisition dropped in favour of E66 Formation throughout |
+| 6 | **New: P65 shows visual item range/domain violations** — `F5 Item → Item Part` (687, range violation), `Allograph → Component` (131) and `Character → Component` (4) (domain violations) | **Fully resolved** (§2.6, §2.7) — `F5 Item → Item Part` fixed via phantom-resource removal + `P56 bears feature`; `Allograph/Character → Component` fixed via property swap to `P148 has component` (type-level composition), no new class needed. `Historical Item → TX2 Writing` (17) also resolved, via the Attribute Assignment redesign |
+| 7 | **Hand's Scribe/Date/Place attributions, Historical Item's Date/Place, and the untyped Writing events** — originally three separate items (P108/P8 on Hand; untyped `Writing_<id>`; P196i/E92 Spacetime Volume) | **Consolidated design agreed** (§2.7): Writing moves to Hand-level (`TX2 Writing` for Scribe/Item Part); Hand's and Historical Item's date/place both go via `E13 Attribute Assignment` (accepted value + evidentiary trail, kept separate, not inferred from each other); E92 dropped; Production/Creation question made moot. **Status as of Step 2 (item 2) — fully implemented and verified in export, remaining items unchanged:** <br>• E92 Spacetime Volume: **confirmed dropped** — the code path is commented out; only dead class-hierarchy scaffold triples remain, no instances. <br>• Historical Item's Date: **confirmed implemented** — `historicalitemdate` now produces `HistItemDate_<id>` typed `E13_Attribute_Assignment`, linked via `P140_assigned_attribute_to`/`P141_assigned`. <br>• Historical Item's Date **evidentiary trail**: **confirmed implemented, not lost** — `hist_date['evidence']` is captured via `P3_has_note` on the same `E13_Attribute_Assignment` node (plus `vernacular`/`addition`/`dubitable` as literals). <br>• **Writing moving to Hand-level (`TX2 Writing`): now implemented and verified** — one `Writing_<hand_id>` per Hand, typed `TX2_Writing`, `P108_has_produced` → Hand, `P14_carried_out_by` → Scribe where present (1,478 instances, matching Hand count exactly); no direct edge to Item Part (Option B, per the conceptual justification recorded above). Hand's accepted date/place now via their own `E13 Attribute Assignment` nodes (`HandDate_<id>`/`HandPlace_<id>`, `P2_has_type` → `Type_Accepted`; 1,323/1,311 instances respectively), not on the Writing event — old direct `P8`/`P74`/`P108` on Hand fully retired (0 occurrences). **A collision bug was found and fixed along the way**: the pre-existing `itempartitem`-loop `Writing_<historical_item_id>` resource (untyped, `P92_brought_into_existence` only) was not automatically retired by this change and, since Hand IDs and Historical Item IDs are separate but overlapping numeric sequences, was silently merging with 68% of the new Hand-keyed `Writing_<id>` resources under the same URI. Confirmed resolved: removing the dead `itempartitem` lines brought the `Writing_*` count from 1,801 down to 1,478 (exactly matching the Hand count), with 0 remaining collisions. <br>• `ItemOrigin`'s place/institution data: **resolved** — see finding #3 above (Step 2, item 1). <br>• Remaining evidentiary trail (Hand's `DateEvidence`) genuinely still deferred, per the "fix now / add later" staging in §2.7. |
+| 8 | **New: systemic float-ID bug** affecting ~20 entity types (see §4) | **Resolved for URIs** — all 139 unguarded ID interpolations in URI construction wrapped in `int()`, verified complete (re-scan found none remaining) and syntactically valid. **Literal values (Step 2): resolved for the 18 at-risk fields identified** — cross-checked every `Literal(...)` call in the script against the Django model (nullable `IntegerField`/`PositiveIntegerField` = at risk; `FloatField` and non-nullable integers = correctly left alone). 3 of the 18 (`collation.leaves`/`front_flyleaves`/`back_flyleaves`) were fixed earlier alongside the Collation predicate-collision fix; the remaining 15 (`Layout` ×7, `category.sort_order`, `Decoration` ×2, `Date.sort_order`/`band`/`additional_band`, `Hand.num_glosses`/`num_glossing_hands`) fixed and verified in this export — confirmed no float-suffixed (`.0`) values remain on any of the 18. **A related, separate defect found and fixed along the way**: `Date.sort_order`/`band`/`additional_band` were written with no `pd.notna()` guard at all (unlike every other field on this list), producing 51 literal `"nan"^^xsd:double` values in the export prior to this fix — not just wrong-typed but genuinely meaningless. Guards added; confirmed 0 remaining. **Broader finding, not yet actioned**: the same unconditional-`Literal()`-without-`pd.notna()` pattern is confirmed present elsewhere too (e.g. `Date.min_weight`/`max_weight`, 2 more `"nan"` literals found spot-checking) — per the project lead, this needs a systematic scan across the whole script, not just the fields checked for the float-ID issue specifically. See Future Work. |
+| 9 | **New: Annotation cluster** — `Annotation` never linked to `Graph` (acknowledged TODO in code); `Image —P138→ Annotation` forcing a CRM property where a native one fits; no creator property | **Resolved** (§2.10) — `oa:hasTarget`/`oa:hasBody`, keeping Annotation deliberately outside CRM. Creator property (`dcterms:creator`) and `before_id`/`after_id` adjacency both investigated and confirmed, but **not implemented — logged as lost data** (§7) |
+| 10 | **New: P56 bears feature, never previously checked** (9,514+ triples) — three distinct patterns, see §2.11 | `Description → Historical Item`/`Text` (2,053) **resolved** — retyped Description as E31 Document, moved to `P70 documents`. `Component → Feature` (336) and `GraphCompo_<id> → Feature` (7,125) both **resolved** (§2.12) — P2 has type for the type-level pairing, new `arch:GraphComponent` class for the instance-level one. `component_features`'s "applicable vs. typical" question **resolved** — moved out of CRM entirely into a separate SKOS vocabulary file, sharing URIs with the core RDF; logged as future work (§7) |
+| 11 | **New (Step 3): P106 is composed of** — `Hand → Graph`, 64,028 triples, the single largest relationship in the export; domain/range requires `E90 Symbolic Object`, but Hand/Graph are `E25 Man-Made Feature` (physical) | **Resolved** (§2.13) — swapped to `P46_is_composed_of`, matching CRMtex's own distinction between `TXP7`/`P106` (symbolic composition) and `TXP8`/`P46` (physical composition) for this exact case. Likely oversight — the two properties look near-identical on the surface |
+| 12 | **New (Step 3): P107 has current or former member** — reversed direction, `Scribe → Institution` instead of `Institution → Scribe` | **Resolved** (§2.14) — same class of bug as the earlier P95 direction issue. Fixed and verified |
+| 13 | **New (Step 3): P10 falls within** — misused for institutional hierarchy (`Repository → parent Repository`); domain/range should be `E4 Period`, not organisational containment | **Deferred, one instance dropped** (§2.15) — the single DigiPal occurrence is also a literal self-reference (`Repository_60 → Repository_60`), confirmed a data error independent of the property question. No satisfactory CIDOC-CRM property identified for genuine institutional hierarchy (e.g. "Durham Cathedral Library is part of Durham Cathedral"); logged as future work (§7) rather than force an imperfect fix |
+| 14 | **New (Step 3): P104 is subject to** — `Repository → MediaPermission` asserts the institution as legal subject of its own default policy, which is a category error (a repository doesn't hold rights over itself) | **Resolved** (§2.16) — removed the Repository-level assertion; each `Image`'s effective permission now computed at export time (own override, else inherited via `Item_Part → Current_Item → Repository`). 974 of 995 Images now correctly carry `P104`; `Image`/`MediaPermission` typing itself (`E36 Visual Item ⊑ E72 Legal Object`, `E30 Right`) confirmed correct throughout |
+| 15 | **New (Step 3): dead duplicate `GraphCompo_<id>`/`P56_bears_feature` loop** — leftover from the `GraphComponent` refactoring (§2.12), producing 7,125 orphaned, never-typed, wrong-property duplicate triples of a fact already correctly captured elsewhere | **Resolved** — confirmed the project lead's own suspicion (recorded as a code TODO) was correct; loop removed. `GraphComponent`'s own class declaration (no `rdfs:subClassOf` at all, needed to simultaneously satisfy `P46`'s range and `P138`'s domain) remains genuinely open — see §2.12 |
+
+| 16 | **New (Step 3): P33 used specific technique** — `Hand → Appearance`, wrong domain (`Hand` isn't `E7 Activity`); investigating surfaced `Appearance` mistyped as `ARCH.Script`, conflating two distinct concepts | **Fully resolved, in three rounds** (§2.17). Round 1: `Appearance` correctly modelled as its own `E55 Type` class, linked via `P2_has_type` directly on `Hand`. Round 2: the `Script`/`TXP1`/`Writing_System` chain built to fix this turned out itself wrong — no real `TX3 Writing System` data exists in Archetype, and `Script` ("Caroline minuscule") is a `TX10 Style` (letterform appearance), not `TX13 Script` (CRMtex's grapheme-set/"alphabet" concept) or `TXP12`'s implied result-level attachment. Resolved: `Writing_System`/`TXP1`/`TXP16` chain removed entirely; `Script` retyped `TX10_Style`, linked via generic `P33_used_specific_technique` from the `Writing` event (matching this project's own technique-vs-result distinction over CRMtex's own, internally inconsistent `TX10 Style` scope note — flagged for the CRMtex SIG). Round 3: `LatinStyle` (a formal Dumville-typology refinement of `Script`, distinct from informal `Appearance`) moved to match `Script`'s pattern exactly (`Writing —P33→ LatinStyle`, off `TXP12`/`Hand`). A future language-independent `Style`-refines-`Script` unification idea logged under Future Work. All `Script`/`LatinStyle`/`Appearance` values correctly typed, propertied, and reachable |
+
+| 17 | **New (Step 3): P89 falls within** — `Place → CurrentCounty_<id>`, an untyped, unlabelled resource (63 triples) | **Resolved** (§2.18) — same URI-prefix bug pattern as several earlier findings; `current_county_id` and `historical_county_id` are both FKs into the same `county` table, but used different, uncorrelated URI prefixes. Fixed by aligning to `County_<id>`; checked and confirmed not a real collision risk (62/63 correctly converge on the same pre/post-1971-unchanged county, 1/63 correctly resolves to two distinct counties for the one genuine 1971 boundary change) |
+
+| 18 | **New (Step 3): Historical_Item_Type untyped** — referenced 1,555 times via `P2_has_type` (essentially every Historical Item) but never itself given an `rdf:type`, found via a systematic untyped-resource scan across the whole export | **Resolved** (§2.19) — root cause was a commented-out `rdf:type` line; uncommented, plus a new standalone loop added to read the `historical_item_type` table (previously never read at all), correctly labelling the two real values ("manuscript", "charter"). Full untyped-resource scan otherwise clean — everything else without an `rdf:type` is legitimate class-hierarchy scaffold, not a bug |
+| 19 | **New (Step 3): Annotation → Graph (`oa:hasBody`) almost entirely missing** — only 81 of 64,030 annotations, found via the untyped-resource scan (undescribed `Author_<id>` objects led to it) | **Resolved** (§2.20) — a commented-out `if` with an un-commented body was silently absorbed into the *preceding* `if` block (a comment doesn't close a Python block); `hasBody` was accidentally gated on an unrelated field (`after_id`). Fixed; also corrected a stale inconsistency where `before_id`/`after_id` (already documented as excluded by decision) was still active in code. `oa:hasBody` now 64,028/64,030. Two further fixes surfaced and resolved at the same time: a `Current_Item.description`/`EX.shelfmark` predicate collision (128 resources affected), and a cleanup of the accumulated dead commented-out code across the file (the direct cause of this bug pattern), diffed against a pre-cleanup snapshot to confirm no unintended behaviour changes |
+
+Resolved issues are listed in §3 for the record but are not carried forward as open items.
+
+---
+
+## 2. Findings in detail
+
+### 2.1 P95 has formed — still reversed (open)
+
+Domain **E66 Formation**, range **E74 Group**. Current usage:
+- 28 triples: `E74 Group → E66 Formation`
+- 8 triples: `E74 Group → (E66 Formation, E8 Acquisition)` (dual-typed object — see §2.5)
+- 8 triples: `(untyped) → (E66 Formation, E8 Acquisition)` — subject is the founder Person, still untyped in this file
+- 2 triples: `(untyped) → E8 Acquisition`
+
+All four patterns have the Formation/Acquisition event in the *object* position and an Actor (Group or Person) in the *subject* position — the reverse of P95's real signature, in every single occurrence. Same underlying cause as previously identified: the export code adds `(actor, P95_has_formed, event)` instead of `(event, P95_has_formed, actor)`. Not yet corrected.
+
+### 2.2 P72 has language — immediate bug fixed; full unification deferred (partially open)
+
+Domain **E33 Linguistic Object**, range E56 Language. `Historical Item —[P72]→ E56 Language` (231 triples) — Historical Item is a physical manuscript, not a Linguistic Object; language belongs on its textual content. **Left as-is for now** (see below) rather than fixed directly, since it's one strand of a larger, genuinely tangled situation.
+
+**Investigated together with a related, concrete bug**: `Text` (`TX1 Written Text`) is properly implemented with real instances, and a `text_languages` many-to-many table exists specifically to link Text to Language — but the loop reading it never actually asserts the link:
+```python
+for _, text_lang in data['text_languages'].iterrows():
+    text_uri = URIRef(f"...Text_{text_lang['text_id']}")
+    lang_uri = URIRef(f"...Language_{text_lang['language_id']}")
+    # no g.add() call — built and discarded
+```
+Identical bug in the neighbouring `text_categories` loop. **Fixed** — both now assert their link (`P72 has language` for text_languages, `P2 has type` for text_categories), using data already read by the script. Noted honestly: this still leaves `P72` attached to `Text`, which isn't a fully clean domain fit either (`Text` is a physical feature, not strictly `E33 Linguistic Object`) — an improvement (captured, on a more accurate entity) rather than a complete fix.
+
+**Full picture, confirmed with the project lead — genuinely tangled, several overlapping mechanisms recording language/vernacular status, not yet unified:**
+- `historicalitem.language_id` → the P72 violation above (used only for charters; manuscripts can contain multiple languages).
+- `historicalitem.vernacular` and `historicalitemdate.vernacular` → two more, separate boolean flags (superseded at the Historical Item Date level by the Attribute Assignment redesign, §2.7).
+- `hand.latin_only` → a boolean on Hand (not `hand.vernacular` as first recalled — confirmed correct field name). History: DigiPal originally covered only vernacular (Old English, or Old English+Latin) hands, so no flag was needed; Latin-only hands were added later for specific reasons (e.g. matching a scribe's other, vernacular hand), hence the flag; the full Text/Language model came later still.
+- `text_languages` (the newest, finest-grained mechanism, now at least correctly exported) — the ideal target for all of the above, per the project lead: every Hand linked to one or more Texts, each Text with its own Language(s), retiring the other flags. `latin_only` maps to "all of this Hand's Text(s) are Latin"; not `latin_only` maps to "at least one Text is Old English or a mixed variant."
+- **Not yet confirmed whether the different tables are actually consistent with each other** — deferred to the same future-work item as the unification itself, since resolving that requires cross-checking real data, not just code.
+
+**Consistency check begun, and a genuine source-data quality issue found.** Started checking `hand.latin_only` against `Hand → Item Part → Text(s) → Language(s)`, which first required classifying the 11 real values in `Language.name` (e.g. "Latin", "Latin with English", "Latin and English Versions") into Latin-only vs. has-vernacular-content — straightforward for most values, but `language_id = 7` ("Latin with Bounds," ambiguous as to whether the unspecified bounds are in Latin or English) needed checking against the actual data. **Investigated via two known instances**: Historical Item **P63** — confirmed, via the external LangScape database, that its bounds are in English (so this instance should be "Latin with English bounds," not the plain "Latin with Bounds" it's currently labelled). Historical Item **S319** — confirmed, via the external eSawyer database, that its bounds are genuinely in Latin (correctly Latin-only as labelled). **So the category itself is unreliable — the same label covers two different real situations** in at least these two cases, meaning `language_id = 7` can't be treated as a clean, consistent category for the unification work without checking each instance individually. **Correcting the underlying data is out of scope for this exercise** (per the project lead) — logged here as a data-quality issue needing attention, separate from the modelling/RDF work this review otherwise covers.
+
+**Practical effect on the unification project**: the consistency check between `hand.latin_only` and `text_languages` needs to either exclude `language_id = 7` cases or treat them as unresolved pending a proper audit, rather than assuming a fixed mapping for that value the way the other 10 language values can be assumed. The broader question of whether other `Language.name` values might have similar hidden inconsistencies (only two spot-checked so far, both flagged specifically because "Latin with Bounds" was already suspected of being ambiguous) has not been investigated.
+
+**Full consistency check run, restricted to the one slice of data where it's actually decidable.** Two further confounds emerged before a clean check was possible: (1) bilingual texts typically have *two* Hands recorded (one per language), so comparing a single Hand's `latin_only` against its Item Part's full language set produces false mismatches when the Hand legitimately covers only part of a mixed-language text; (2) even single-Hand Item Parts don't resolve this, since the Latin-writing hand of a bilingual pair was frequently never catalogued at all — so "only one Hand recorded" doesn't imply "only one language present." Both confounds were avoided by restricting the check to **Item Parts whose Texts are unambiguously monolingual** (exactly one language, either purely "Latin" or purely "English") — for these, there's no other-language hand that could be missing, so any comparison is meaningful by construction.
+
+**Result: 423 Hands qualified for this check; 30 (≈7%) disagreed between `hand.latin_only` and the monolingual Text's language.** Spot-checked (hand label + item part label pulled for inspection) and **confirmed to be data-entry errors in most or all cases** — not a genuine third category or hidden distinction. This is a materially different, more optimistic conclusion than "these two fields measure independent things and can't be unified": the proposed mapping (`latin_only` ↔ Text language) is fundamentally correct, and full data consistency is blocked by an identifiable, fixable error rate rather than a conceptual mismatch. Since this was checked only against the *cleanest* slice of the data (monolingual Item Parts), the true error rate across the full, messier dataset (including bilingual and undercatalogued cases) is unknown but plausibly at least this high.
+
+**Revised recommendation**: the `Hand → Text → Language` unification remains the right target design, but should not proceed as a purely mechanical substitution — the ~30 known-erroneous Hands (and any equivalent errors elsewhere in the fuller dataset) need correcting first, or the unification would silently change the apparent language status of a real number of Hands. Correcting the source data is out of scope for this review (per the project lead, consistent with the `language_id = 7` decision above) — logged as a prerequisite for the future-work item below, not a reason to abandon it.
+
+**Logged as future work** (§7): retire `historicalitem.language`, `historicalitem.vernacular`, `historicalitemdate.vernacular`, and `hand.latin_only` in favour of routing everything through `Hand → Text → Language`, once (a) the ~30 identified data-entry errors (and any equivalent ones in the non-monolingual portion of the data) are corrected, (b) the `language_id = 7` ambiguity is resolved instance-by-instance, and (c) the fully clean CRM route for Text's language (via `TXP9`/`TXP6`/Writing System, or an `E33`-compatible parent for Text — both discussed earlier in this review) is settled.
+
+**Update — `Text`'s classification, and the language route for both Text and Hand, now fully resolved (supersedes the "kept open" update below).**
+
+The dual-parentage proposal (`Text ⊑ E33 Linguistic Object` alongside `TX1 Written Text`) was reconsidered and **rejected**: unlike the `Ontograph` precedent it was modelled on (whose two parents, `E90 Symbolic Object` and `TX8 Grapheme`, both sit on the intellectual/symbolic side), this would have blurred the physical-mark/intellectual-content distinction the rest of the model keeps carefully separate. `P62 depicts` and `P138 represents` were also both considered and rejected as bridges to a separate `E33` resource — both are fundamentally *visual* relationships in their own scope notes (artwork/subject-depiction for P62; visual-item representation for P138), not a good semantic fit for "text conveys linguistic content" even where the types happen to check out.
+
+**Resolution: stay entirely within CRMtex's own vocabulary, via the Writing System — confirmed as CRMtex's own intentional design, not just the best available workaround.** CRMtex's own literature is explicit that `TX1 Written Text` conveys its linguistic expression *through* `TX3 Writing System`, not via a direct content-class link: *"the TX1 Written Text class is the concrete graphical manifestation... of the conceptual level of encoding a linguistic expression through the semiotic activity of writing (TX2 Writing) by means of a TX3 Writing System."* No CRMtex property exists for a direct TX1-to-linguistic-content link — the Writing System is the deliberate bridge. This confirms the `TXP9`/`TXP6` pattern already settled on earlier in this review (§ Manifestation discussion) is correct on CRMtex's own terms, not merely convenient.
+
+**This raised a real question, though: the model already has a per-*Hand* Writing System (`Hand —TXP1 used writing system→ Writing_System_<hand_id>`, pre-existing in the code) — should Text's Writing System reuse that, via the officially-described "fully articulated path" (`TX1 —TXP5i was written by→ TX2 Writing —TXP1→ TX3 Writing System`)? No** — this would require knowing which specific Hand wrote a given Text, and that correspondence is exactly what was just shown to be unreliable (§ above: bilingual Item Parts often have two Hands, and the Latin-writing Hand of a pair is frequently never catalogued at all). Recognised as not just a data-availability problem but a conceptual mismatch too: a Text's language is a property of the Text, not of whichever Hand happened to write it — a bilingual Text could in principle be written by two different Hands without its own language changing. **So Text gets its own, separate Writing System resource, decoupled from any Hand's:**
+
+```
+Text (TX1 Written Text, unchanged — no reclassification)
+  —[TXP9 is encoded using]→ Writing_System_<text_id>   (new, Text's own)
+                              —[TXP6 encodes]→ Language   (subproperty of P2 has type)
+```
+
+**Hand's language handled in parallel, independently, using its own pre-existing Writing System resource rather than deriving from Text:**
+
+```
+Hand —[TXP1 used writing system]→ Writing_System_<hand_id>   (already existed)
+                                    —[TXP6 encodes]→ Language   (new, sourced from hand.latin_only)
+```
+
+This settles what "unification" actually means here: not deleting `hand.latin_only` in favour of deriving everything from `text_languages`, but expressing both facts through the identical CRM mechanism (`TXP6` off a Writing System) while accepting they remain two independently-sourced pieces of information that can, rarely, disagree — the ~30 known mismatches (§ above) are a data-quality issue to fix at the source, not something the RDF structure should paper over.
+
+**Noted for the record, not implemented**: Text's Writing System could also carry `TXP16 employs script → Script`, mirroring Hand's — this project's data doesn't include Script information at the Text level, but other Archetype-based projects may, so the property is available and worth using there if/when applicable.
+
+**Caveat on record, not blocking adoption**: CRMtex's notion of "Writing System" is a standard linguistic definition (a language's writing conventions), which doesn't map perfectly onto palaeographic practice — a reservation about the concept, not the implementation. Adopted anyway because it delivers real practical value: with Script (`TXP16`) and Language (`TXP6`) both hanging off the same Writing System resource, cross-cutting queries become possible that wouldn't be otherwise — e.g. "show me cases where English was written using the Caroline script."
+
+<details><summary>Original "kept open" update (superseded by the above)</summary>
+
+**Update — `Text`'s classification investigated in detail; a concrete option identified, kept open pending further thought.** Checked whether reclassifying `Text` from `TX1 Written Text` to `E33 Linguistic Object` would resolve the "Text isn't a fully clean domain fit" caveat above. It would, directly — E33 is P72's exact official domain. But it would also break something: `TXP4 has segment`, which the code already uses to link `Text` to its `Text_Item_Part` records (`textitempart` table, `TX7 Written Text Segment`), officially requires `TX1 Written Text` as its domain (*"TXP4 has segment... intended to correlate a text (TX1) and the different parts (TX7) of it"*) — so swapping `Text`'s class outright would break that link. **Proposed resolution, following the precedent already set by `Ontograph`'s existing dual parentage (`E90 Symbolic Object` and `TX8 Grapheme`)**: give `Text` both parents — `E33 Linguistic Object` *and* `TX1 Written Text` — rather than choosing one over the other, satisfying P72's domain while keeping TXP4 intact. **Not yet decided — kept open for further consideration**, not applied to the code.
+
+</details>
+
+**Separately confirmed and fixed while investigating this: `TXP4 has segment` was being used backwards**, independent of the classification question:
+```python
+g.add((text_item_uri, CRMtx.TXP4_has_segment, text_uri))   # was: Segment —TXP4→ Text (wrong direction)
+```
+corrected to:
+```python
+g.add((text_uri, CRMtx.TXP4_has_segment, text_item_uri))   # Text (whole) —TXP4→ Segment (part) — correct
+```
+
+### 2.3 P50 has current keeper — fully resolved
+
+Domain **E18 Physical Thing**, range **E39 Actor**.
+- `Current Item → Repository (E74 Group)` (1,490): compliant, unchanged.
+- `Item Part → Owner (E39 Actor)` (993): **newly populated and compliant** — the Owner data-loss issue from the previous review is resolved; Owner records now exist (993 of them, correctly typed E39 Actor) and are correctly linked from Item Part.
+- `Information Object (Archive) → Place` (180): **resolved.** `Archive` and `ItemOrigin` are both descended from the same legacy `MsOrigin` table (charters vs. manuscripts respectively — see the historical origin discussion under §2.7) and record the same kind of fact; `Archive` had simply never been brought in line. Unified onto the same `E13 Attribute Assignment` pattern already used for `ItemOrigin` (§2.7):
+  ```python
+  hist_uri = URIRef(f".../HistoricalItem_{a['historical_item_id']}")
+  attr_assignment = URIRef(f".../Archive_{a['id']}")
+  g.add((attr_assignment, RDF.type, CRM['E13_Attribute_Assignment']))
+  g.add((attr_assignment, CRM['P140_assigned_attribute_to'], hist_uri))
+  g.add((attr_assignment, CRM['P141_assigned'], place_uri))
+  ```
+  **A genuinely separate, previously-uncaught bug was found and fixed at the same time**: the original code never linked `Historical_Item_Archive_<id>` back to its owning Historical Item at all — `a['historical_item_id']` (a real column, per the Django model's `Archive.historical_item` FK) was never read anywhere in the loop, so all 180 of these Information Object resources were entirely disconnected from any Historical Item, not merely attached via the wrong property. This was missed in the original domain/range pass (which flagged the P50 misuse but didn't check whether the subject connected anywhere at all) and only surfaced when drafting this fix. **Verified directly against the live database** (SQL join of `digipal_archive` → `digipal_historicalitem`/`digipal_place` on `historical_item_id`/`object_id`): spot-checked historical-item/place pairs are correct, and — specific to the current DigiPal data — there are no null `historical_item_id`s, no null `object_id`s, and no `content_type_id` values other than 43, so the fix is safe to apply as-is with no edge cases currently present in the data. (No `P3 has note` line, unlike `ItemOrigin` — `Archive` has `dubitable` but no free-text evidence field to carry across.) The old `E73 Information Object`/`P50` framing, and the unlinked subject, are both dropped. The unhandled `content_type_id != 43` branch (institutions/persons as archive-holders, per the original Django model's generic FK) remains an acknowledged TODO in the code, unchanged by this fix — confirmed to never actually occur in the current DigiPal data, though it may in other Archetype instances.
+
+### 2.4 P198i is held or supported by / patron-saint data — still present (open)
+
+41 triples, `Group → ?`, unchanged from before. The earlier decision was that this data (the Institution's patron *saint*, not a CRM-modellable relationship) should be dropped from both the export and the diagram. It has not yet been removed.
+
+**Update: resolved by removal.** The three lines producing this data (the `patron_id` block in the Institution loop) have been commented out in the export code. Confirmed this is the only source of `P198i` anywhere in the file (41/41 triples, no other predicate in the P198 family present) — so this fully removes the property from the export, cleanly. **Flag for the record: this is a point of genuine data loss relative to the original DigiPal database** — the patron-saint data still exists in the source SQL and is simply no longer being carried into the RDF, by deliberate choice (confirmed not used anywhere in the project) rather than by omission or bug. Worth listing explicitly when the SQL-to-RDF mapping report (§7) is eventually produced, so this exclusion is documented rather than silently absent.
+
+### 2.5 Reformer / E8 Acquisition — partially touched, not resolved (open)
+
+The recommendation from the previous review was to normalise both refoundation branches to `E66 Formation` + `P14 carried out by`, replacing the founder-branch's `E8 Acquisition` + `P22 transferred title to`. In this export, the refoundation event is now **dual-typed** as both `E66 Formation` and `E8 Acquisition` simultaneously in most cases (8 of the P95 triples above, and 6 of 7 `P22 transferred title to` triples), rather than being switched cleanly to one or the other. This looks like an in-progress or incomplete change rather than a deliberate design — worth confirming which is intended.
+
+### 2.6 P65 shows visual item — largely fixed, with new violations in the remainder (mixed)
+
+Domain **E24 Physical Human-Made Thing**, range **E36 Visual Item**. Usage has grown enormously (349 → 69,750 triples) alongside the new annotation/image-region dataset:
+
+- `Graph → Idiograph` (64,028) and `Graph → Component` (4,883): **fully compliant.** Graph chains through TX7 Written Text Segment / TX1 Written Text / E25 Human-Made Feature to E24 Physical Human-Made Thing (domain ✓); Idiograph and Component both chain to E36 Visual Item (range ✓). This is the bulk of the new usage and it's correctly modelled.
+- `F5 Item → (F3_Item, Item_Part)` (687): **range violation** — Item Part is not E36 Visual Item (it chains through F5 Item/F3 Manifestation, not the Visual Item branch).
+- `Allograph → Component` (131) and `Character → Component` (4): **domain violations** — both Allograph and Character chain to E36 Visual Item themselves (via Generalised Allograph), and E36 Visual Item's own declared parent is E73 Information Object, not E24 Physical Human-Made Thing. So neither satisfies P65's domain.
+- `Historical Item → TX2 Writing` (17): **unchanged range violation** from before — TX2 Writing is a Production activity, not a Visual Item.
+
+The old F3 Manifestation domain violation (332 triples) from the previous review is gone — F3 Manifestation no longer appears as P65's subject at all.
+
+**Update — F5 Item → Item Part (687) resolved.** Traced to the Hand loop, not the Historical Item/Current Item loop (that loop's Item Part relationship is via `P46 is composed of` and is already compliant). The code was creating a phantom duplicate resource for the Item Part (`Item_<id>`, freshly re-typed `F5_Item`) instead of reusing the real, canonical `Item_Part_<id>` URI already created elsewhere, then using P65 to bridge the phantom back to the real entity — an artifact of copy/paste, not a deliberate property choice. Root cause: the definition of `arch:Hand` shifted between an earlier, more conceptual reading (Visual Item) and its current, more concrete one (Physical Feature), leaving this line pointing at the wrong property for the model's current state. **Fix agreed and being applied**: drop the phantom `item_uri` entirely; relate the real Item Part directly to Hand via `P56 bears feature` (domain E19 Physical Object ✓ via Item_Part⊑F5_Item⊑E22⊑E19; range E26 Physical Feature ✓ via Hand⊑TX7⊑TX1⊑E25⊑E26) — the same property already used elsewhere in the model for "a physical thing bears this feature" (Component/Stroke → Feature):
+  ```python
+  g.add((itempart_uri, CRM['P56_bears_feature'], hand_uri))
+  ```
+  Not yet re-verified in an export.
+
+**Still open**: ~~Historical Item → TX2 Writing (17 triples)~~ — **resolved, see §2.7's implementation update below.**
+
+**Update — Allograph/Character → Component (135 triples) resolved.** Checked the code: `Component` is a single, shared vocabulary of component *kinds* (a master table of just `id`+`name`), and `Graph`, `Allograph`, and `Character` all point at the *same* `Component_<id>` resources via separate junction tables (`graphcomponent`, `allographcomponent`, `character_components`) — confirmed as a deliberate, conscious design choice to use one shared vocabulary for both senses, not two conflated ones. What differs is the *level* of the claim, and CRM already has the right property for each level, using the existing class hierarchy with no new classes needed:
+- `Graph —[P65 shows visual item]→ Component` stays as-is — a physical thing (Graph, `E24`-compatible) materially showing an instance of a visual pattern-type. Already correct.
+- `Allograph/Character —[P148 has component]→ Component` — CRM's property for **type-level** composition (domain/range both `E89 Propositional Object`). Both ends already satisfy this via existing class chains: `Generalised Allograph ⊑ E36 Visual Item ⊑ E73 Information Object ⊑ E89 Propositional Object`, and `Component ⊑ E36 Visual Item` chains to the same place.
+
+This correctly captures the two senses intended — "this specific Graph shows this component" (instance-level, physical) vs. "this Allograph is normally composed of this component" (type-level, propositional/normative) — without a parallel class hierarchy. `Graph —P65→ Idiograph` and `Graph —P65→ Component` coexisting is not an ambiguity: disambiguation is by the object's `rdf:type`, the same way `P2 has type` routinely points at many different kinds of Type.
+
+```python
+g.add((allo_uri,  CRM['P148_has_component'], compo_uri))       # was P65_shows_visual_item
+...
+g.add((character_uri,  CRM['P148_has_component'], component_uri))   # was P65_shows_visual_item
+```
+
+Not yet re-verified in an export.
+
+### 2.7 Hand's Scribe/Date/Place, Historical Item's Date/Place, and the untyped Writing events — consolidated design (supersedes the earlier separate treatments of §2.7/§2.8/§2.9 below)
+
+This resolves three previously-separate items together, after a live design discussion that revisited where "Writing" and dating/origin belong. **This section supersedes the original, narrower fixes drafted earlier in this document for P108/P8 (Hand) and the untyped `Writing_<id>` events** — kept below for the record, but the design here is the current one.
+
+**The core realignment: Writing belongs at Hand-level, not Historical-Item-level.** `TX2 Writing` (CRMtex) is the act of writing — a scribal act — which is a better fit for Hand/Scribe/ItemPart than for the Historical Item as a whole (which is more naturally either an `E12 Production` event, if a documented-production fact is ever needed independently of dating, or nothing at all).
+
+**Hand cluster** — `TX2 Writing`, one per Hand, carries the currently-accepted values:
+```
+TX2 Writing (per Hand)
+  —[P14 carried out by]→ Scribe
+  —[P108 has produced]→ Hand
+```
+No direct property to Item Part — resolved by discussion. Considered three options: (A) a direct property (`P16 used specific object` was floated, but rejected — its scope fits tools like a pen, not the surface written on; `P31 has modified` would be the correct direct property if this route were taken); (B) no direct edge at all, relying on the transitive path already in place, `Writing —P108→ Hand ←P56— Item Part`; (C) linking at Historical Item level instead of Item Part. **Decided: Option B.** Rejected (A) because it would duplicate a fact already recoverable transitively, with the usual risk of the two drifting apart; rejected (C) because a Hand must trace to one unique Current Item, which requires going via Item Part specifically — a Historical Item can have multiple Item Parts (and, in principle, multiple Current Items once dispersed), so linking at the Historical Item level would lose that uniqueness. Under the current design a `TX2 Writing` is created per Hand, so every Writing instance already has exactly one Hand by construction — there is no "Writing without a Hand" case that would make the direct edge necessary. **Conceptual justification (confirmed with the project lead, Step 2 review, recorded here to avoid re-litigating this decision later):** Hand, as a Human-Made Feature (⊑ TX7 Written Text Segment), already sits conceptually between the Writing activity and the physical Item Part it's borne on — it *is* the link between the activity and the physical surface, not merely adjacent to it. A direct Writing→Item Part edge would therefore not be adding a missing relationship so much as duplicating one that Hand already embodies by definition.
+Resolves the original P108 domain/range violation (`Hand → Scribe`) by moving the Scribe relationship onto a genuine activity, where P108/P14 both fit correctly.
+
+**Dating and place — for both Hand and Historical Item — via `E13 Attribute Assignment`, not direct properties, and not inferred from each other:**
+
+Two considerations settled this shape:
+- `HistoricalItemDate` and `ItemOrigin` are structurally identical to `DateEvidence` (a `historical_item`/`hand` FK, `evidence` text, `dubitable`, no uniqueness constraint) — genuinely evidentiary, supporting multiple competing claims. So Historical Item's date and place need no event at all, just the same Attribute Assignment pattern as Hand.
+- The "accepted" value (`hand.assigned_date_id`, `hand.assigned_place_id`) is **not reliably derivable** from the evidentiary rows (confirmed: `is_firm_date` doesn't always agree with `assigned_date` in practice) — so it must be represented as its own explicit Attribute Assignment, sourced directly from the accepted-value field, not inferred. Both kinds coexist and may legitimately disagree.
+
+**Why `P140` direct to Hand, rather than dating/placing the Writing event itself (confirmed with the project lead, Step 2 review — recorded here to avoid re-litigating this decision later):** an alternative design would attach date/place to the `TX2 Writing` activity instead (arguably closer to a literal CIDOC-CRM reading — an activity is what has a time-span and location). Rejected in favour of `P140` direct to Hand because it better matches how palaeographers actually reason about the evidence: the field data is a scholarly judgement that *"this hand shows the style/characteristics of eleventh-century writing,"* not a documented fact about when or where the underlying writing act took place — the latter is merely assumed, not observed, from the former. `P140_assigned_attribute_to` on Hand captures that the attribution is about the Hand's characteristics; treating it as if it were an established property of the Writing event itself would overstate what the data actually asserts.
+
+```
+E13 Attribute Assignment   (one per DateEvidence/HistoricalItemDate/ItemOrigin row — the evidentiary trail)
+  —[P140 assigned attribute to]→ Hand / Historical Item
+  —[P141 assigned]→ Date / Place / Institution
+  —[P70i is documented in]→ Reference           (Hand only — no reference field for Historical Item's evidence, which uses a plain text field instead, see below)
+  —[P2 has type]→ "Firm"                         (Hand only, if is_firm_date is true)
+
+E13 Attribute Assignment   (one per accepted value — Hand's Date and Place both, from `hand.assigned_date_id`/`assigned_place_id`; Historical Item has no accepted-place field, see §2.7 note below)
+  —[P140 assigned attribute to]→ Hand
+  —[P141 assigned]→ Date / Place
+  —[P2 has type]→ "Accepted"
+```
+
+For Historical Item's `ItemOrigin`/`HistoricalItemDate` evidence (a plain `evidence` text field, not a `Reference` FK), attach via `P3 has note` instead of `P70i is documented in`. Historical Item has an accepted-date field (`date`/`date_sort`, from its `ModelWithDate` base) but **no equivalent accepted-place field** — only the evidentiary `ItemOrigin` layer — so only Historical Item's date gets an "Accepted"-type Attribute Assignment; its place only ever has the evidentiary kind.
+
+**This also resolves the Production/Creation question and drops E92 Spacetime Volume:**
+- **Production vs. Creation**: moot for current purposes. E65 Creation was only ever load-bearing for P4 (date) and P108i (produced-item), both jobs Attribute Assignment now does properly. If a documented-production fact independent of dating is ever wanted for its own sake, `E12 Production` is the correct class (Historical Item is unambiguously physical, so E65 Creation's conceptual/immaterial branch was never the right fit regardless) — but nothing currently in the data requires deciding this now.
+- **E92 Spacetime Volume: dropped.** Confirmed the original intent (bundling correlated date+place uncertainty) is never actually reflected in the data — date-range and place-range uncertainty are always independent in practice, so E92's joint-uncertainty mechanism isn't needed. `E52 Time-Span`'s own P81a/b–P82a/b bounds, and a broad `E53 Place` (Region/County, already used elsewhere), handle the fuzziness that does exist.
+
+**Also resolves the untyped `Writing_<id>` events and their ID-space collision** (previously §2.8): since Historical Item no longer has any Writing/Production event at all under this design, the `Writing_{historical_item_id}` (untyped, from `itemorigin`/`itempartitem`) and `Writing_{historicalitemdate_id}` (typed `TX2 Writing`, from `historicalitemdate`) resources are both superseded — replaced by Attribute Assignments as above. The collision risk between their two ID spaces becomes moot once neither exists.
+
+**Staged per project priority (fix current errors first, add missing data second):**
+- **Fix now**, using data already read by the script: the Hand-level `TX2 Writing` (Scribe only — no direct Item Part edge, see justification above), the "Accepted" Attribute Assignment for Hand's date *and place* (from `hand.assigned_date_id`/`assigned_place_id` — originally scoped for date only; place brought into the same fix in the Step 2 review, since both are the same kind of accepted-value field, §4 gap now closed), and Historical Item's date (from its own `date` field).
+- **Add later**, once the relevant tables are exposed in the export: the full evidentiary Attribute Assignments from `DateEvidence` (Hand), `HistoricalItemDate` (Historical Item date evidence), and `ItemOrigin` (Historical Item place evidence) — none of these are currently read by the script at all for this purpose. This substantially broadens the data-loss finding already logged: it's not just Hand's `dateevidence` (§2.7 original text below), but also Historical Item's own date and place evidentiary trails.
+
+**Implementation update — Historical Item date, both accepted and evidentiary, now worked through in full; the last remaining piece of the P65 cluster (§2.6, "Historical Item → TX2 Writing," 17 triples) is resolved as part of this.**
+
+**Correction to the staging above**: `historicalitemdate` was wrongly placed in "add later" — it's actually already read by the script (`historical_item_id`, `date_id`, `evidence`, `vernacular`, `addition`, `dubitable`, all currently feeding the now-superseded `Writing_<id>`/`TX2 Writing`/P65 mechanism), so it moves to `E13 Attribute Assignment` **now**, using only existing data — this is what removes the 17-triple P65 violation:
+
+```python
+for _, hist_date in data['historicalitemdate'].iterrows():
+    attr_assignment = URIRef(f"http://digipal.eu/ontology#HistItemDate_{hist_date['id']}")
+    g.add((attr_assignment, RDF.type, CRM['E13_Attribute_Assignment']))
+    if pd.notna(hist_date['historical_item_id']):
+        hist_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{hist_date['historical_item_id']}")
+        g.add((attr_assignment, CRM['P140_assigned_attribute_to'], hist_uri))
+    if pd.notna(hist_date['date_id']):
+        date_uri = URIRef(f"http://digipal.eu/ontology#Date_Period_{hist_date['date_id']}")
+        g.add((attr_assignment, CRM['P141_assigned'], date_uri))
+    if pd.notna(hist_date['evidence']):
+        g.add((attr_assignment, CRM['P3_has_note'], Literal(hist_date['evidence'])))
+    if pd.notna(hist_date['vernacular']):
+        g.add((attr_assignment, EX.vernacular, Literal(hist_date['vernacular'])))
+    if pd.notna(hist_date['addition']):
+        g.add((attr_assignment, EX.addition, Literal(hist_date['addition'])))
+    if pd.notna(hist_date['dubitable']):
+        g.add((attr_assignment, EX.dubitable, Literal(hist_date['dubitable'])))
+```
+
+(`P3 has note` for `evidence`, not `P70i is documented in` — this table's evidence is a plain text field, not a `Reference` FK, matching the distinction already drawn earlier in this section.)
+
+**The "Accepted" date turned out not to fit the Attribute Assignment pattern cleanly, and is handled differently from Hand's.** `historicalitem.date` (`date_sort` confirmed always empty in practice, dropped from consideration) is a **plain text field, not a foreign key to a `Date` record** — unlike `hand.assigned_date_id`. So there's no linked entity for `P141 assigned` to point at, only a display string. Two options were weighed: (a) keep the `E13 Attribute Assignment` wrapper regardless, attaching the text via a literal property instead of P141; (b) skip the wrapper entirely, treating it as a plain literal on the Historical Item itself. **Decided: (b).** Confirmed the field is genuinely display-only in practice — not used for searching or sorting, and structurally incapable of being so as a free-text string — so representing it as a formal scholarly assignment would overstate what it actually is. **Flagged accordingly**: the *intent* is an assigned/attributed date, matching every other date in this cluster, but it's represented more simply here because the underlying data doesn't support anything more structured. This replaces the dropped `E92 Spacetime Volume`/`P196i` block entirely:
+
+```python
+if pd.notna(row['date']):
+    g.add((hist_item, EX.date, Literal(str(row['date']))))
+```
+
+(`EX.date`, matching the identical pattern already used elsewhere in the script for the same kind of display-only text date, e.g. `Text.date_sort`.)
+
+### 2.7a Original P108/P8 (Hand) treatment — superseded by §2.7 above, kept for the record
+
+<details>
+Two related mis-fitted properties on Hand, worked through together (live discussion):
+
+- `Hand —[P108 has produced]→ Scribe` (401 triples) — domain violation (Hand isn't E12 Production) and range violation (Scribe, ⊑ E21 Person, isn't E24 Physical Human-Made Thing — a person can't be "produced" in the P108 sense).
+- `Hand —[P8 took place on or within]→ Date_Period` (1,323 triples) — domain violation (Hand isn't E4 Period).
+
+Initial resolution proposed routing both through `E13 Attribute Assignment` directly on Hand (P140/P141), without a Writing activity, since none appeared to exist to reuse. Superseded once it became clear Writing belongs at Hand-level after all (§2.7), with Attribute Assignment handling only the dating/attribution layer, not the Scribe/produced-item relationship.
+</details>
+
+### 2.8 Untyped `Writing_<id>` event resources — superseded, see §2.7
+
+<details>
+Resources like `Writing_544` carried real, meaningful triples — `P7 took place at → Place_40.0`, `P92 brought into existence → Item Part` — but no `rdf:type` at all. Initial diagnosis suggested unifying two colliding ID-space uses of the same URI pattern into one properly-typed event. Superseded once Historical Item's date/place were determined to need no event at all (§2.7) — both `Writing_<id>` uses are replaced by Attribute Assignments instead.
+</details>
+
+### 2.9 P196i is defined by / E92 Spacetime Volume — resolved, dropped (see §2.7)
+
+<details>
+`Historical Item —[P196i is defined by]→ SpacetimeVolume` (602 triples) was technically CRM-compliant (verified against the spec) but is superseded now that date and place are handled independently via Attribute Assignment (§2.7) — the joint-uncertainty mechanism E92 provides isn't needed, since the data never actually correlates date- and place-uncertainty.
+</details>
+
+### 2.10 Annotation cluster (oa:Annotation, Graph, Image) — resolved
+
+Not part of the original violation list (this cluster sits outside CIDOC-CRM entirely — `oa:Annotation` carried no CRM classification at all, so it never triggered the domain/range checks), but investigated together as a self-contained unit, live discussion:
+
+- **Confirmed, previously undiscovered gap**: `Annotation` (64,030 instances, Web Annotation vocabulary, `oa:Annotation`) never linked to its corresponding `Graph` (64,028 instances, a separate table/ID-space) despite `annotation.graph_id` being a real column. The code has this commented out, with a French TODO comment (`P_A_DEFINIR` — "property to be defined") acknowledging the gap.
+- **`Image —[P138 represents]→ Annotation`** — a CRM property forcing a CRM-shaped relationship where a native Web Annotation one fits better.
+- **`Annotation —[P148 has component]→ before_id/after_id Allograph`** — semantics unclear (correction history? shape transition? object-detection before/after?); not resolved this round, see below.
+
+**Resolution — keep Annotation deliberately outside CRM, in the Web Annotation vocabulary throughout**, per project intent: Annotation is meant to be the "pure," technical/geometric layer (manual today, but a future object-detection candidate), with `Graph` carrying the scholarly/CRM-integrated identification. Using CRM properties on Annotation would blur that intended separation. Fixed using the Web Annotation vocabulary's own native properties instead:
+
+```python
+g.add((annotation_uri, ANNO.hasTarget, image_uri))    # was: image_uri —P138 represents→ annotation_uri (wrong direction, wrong vocabulary)
+g.add((annotation_uri, ANNO.hasBody, graph_uri))       # was: missing entirely (the P_A_DEFINIR gap)
+```
+
+For the creator property: checked against the Web Annotation Vocabulary's history rather than assumed — the vocabulary's own early draft term `oa:annotatedBy` was explicitly dropped by the W3C Working Group before the final 2017 Recommendation, in favour of reusing `dcterms:creator` ("it's simpler, and doesn't invent new terms unnecessarily," per the WG's own decision thread) — so `dcterms:creator`, not an `oa:`-namespaced property, would be the correct choice if this is ever implemented. **Not implemented, by decision**: `annotation.author_id` exists (already commented out in the code, with a prior developer's own note questioning whether it was worth keeping) but responsibility/attribution information of this kind is systematically absent throughout the export, not just here — adding it in this one place while it's missing everywhere else wouldn't make sense. **Logged as data loss / future work**: annotation authorship is not recorded anywhere in the current export; `dcterms:creator` is the recommended property if and when this class of information (attribution/responsibility generally, not just for Annotation) is addressed.
+
+**Investigated in full and confirmed via the Django model, not left ambiguous**: `annotation.before`/`.after` are genuine direct foreign keys to `Allograph` (`before = models.ForeignKey(Allograph, ...)`), so the existing code's `Allograph_{before_id}`/`Allograph_{after_id}` construction is confirmed correct, not a bug — it denormalizes to "the *type* of the immediately preceding/following occurrence in the manuscript" (sufficient for the intended use case, e.g. "show me Caroline-s immediately before Caroline-t," but not sufficient to identify the specific neighbouring occurrence itself). Semantics confirmed directly with the project lead: `before`/`after` point to the Allograph/Graph/Annotation immediately preceding/following in the manuscript.
+
+**Not modelled, by decision — logged as lost data.** In practice this was almost never used, so it's excluded from the current export/model rather than fixed. **Proposed solution, if reinstated later**: CRMtex has purpose-built classes for a positioned occurrence — `TX11 Grapheme Occurrence`/`TX12 Grapheme Sequence` (*"a grapheme as it occurs at a particular point in a particular text,"* per the CRMtex spec) — but no property for "type of the adjacent occurrence" specifically; `TXP17 has part` was checked and rejected (domain/range both `TX12 Grapheme Sequence`, but it's a part-whole/containment relationship, not "precedes/follows" adjacency, and CRMtex's declared property list has no dedicated ordering property). A custom `arch:` property (e.g. `arch:immediately precedes`/`arch:immediately follows`) would be needed regardless, since "type of the adjacent occurrence" is an inherently project-specific denormalization with no standard ontological pattern to reuse.
+
+**Noted, not an action item, and refined via the Django model**: Graph↔Annotation is DB-enforced one-to-one whenever a Graph is linked (`graph = models.OneToOneField(Graph, ...)`), but not every Annotation has one — some are legitimately graph-less ("editorial" type annotations, per the model's own `AnnotationQuerySet.editorial()`). Doesn't affect the design (`oa:hasBody` doesn't need a functional constraint either way, and the existing `pd.notna()` guard in the code already handles graph-less annotations correctly), but worth knowing precisely if a data-quality check is ever wanted.
+
+
+### 2.11 P56 bears feature — a much bigger property than previously checked; three distinct patterns found
+
+P56 was never included in the original domain/range check list (its 9,514+ triples were never verified against domain E19 Physical Object / range E26 Physical Feature until this pass). Investigated in full, live discussion; three structurally distinct usage patterns found:
+
+1. **`Component —[P56]→ Feature`** (336 triples) — the original arch:Feature/TX8 Grapheme controlled-vocabulary question from early in this review (Option A/B/C, never finalized). Domain violation (Component ⊑ E36 Visual Item, not E19 Physical Object) and range violation (Feature ⊑ E55 Type, not E26 Physical Feature). **Resolved — see §2.12.**
+2. **`GraphCompo_<id> —[P56]→ Feature`** (7,125 triples — the large majority of all P56 usage) — `GraphComponent` resources are completely untyped (no `rdf:type` at all), the same class of bug as the untyped `Writing_<id>` events fixed earlier. **Resolved — see §2.12.**
+3. **`Description —[P56]→ Historical Item`** (2,053 triples) — **resolved, and unrelated to Feature/Component at all.** `Description` (textual commentary about a Historical Item or Text, from the `description` table) was typed `E26 Physical Feature` and linked via `P56 bears feature` — a serious mismatch (a written description isn't a physical feature; "bears feature" isn't the relationship for "this item has this description"). Retyped `Description` as `E31 Document` (matching `Reference` and `Source`, already correctly typed this way elsewhere in the script) and replaced both `P56` lines with `P70 documents` (domain E31 Document ✓, range E1 CRM Entity ✓, satisfied by both Text and Historical Item — a Description can document either or both, matching the Django model's independent optional FKs). A separate, smaller naming bug fixed at the same time: the Source-attribution line was called `P70_is_documented_in` (a hybrid combining the P70 code with the P70*i* inverse's label, matching neither real property) — corrected to `P70i_is_documented_in` (domain E1 CRM Entity ✓, range E31 Document ✓, since `Source` is already `E31 Document`), matching an existing correct precedent for the same pattern a few lines above in the `Date` evidence loop.
+
+   While fixing this, two further small issues were caught and corrected: `desc['description']` (HTML content) was being duplicated into `rdfs:label` as well as a literal property — labels should be short, and `description` can be arbitrarily long; and the Django model's `summary` field (intended for exactly this short-label purpose) was checked and confirmed **never populated in practice**, so it was dropped rather than relied on. **No `rdfs:label` is now generated for `Description` at all** (no suitable short-text source exists), and the content itself moved from a bespoke `EX.description` to the standard **`dcterms:description`** (Dublin Core Terms — *"An account of the resource... may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource,"* explicitly length-agnostic, matching that this field can be a one-line summary or a long catalogue entry). `comments` remains `EX.comments` — no confident standard-vocabulary match found for it. Requires adding a `DCTERMS` namespace binding, not previously present in the script.
+
+```python
+DCTERMS = Namespace("http://purl.org/dc/terms/")   # new binding
+
+for _, desc in data['description'].iterrows():
+    description_uri = URIRef(f"http://digipal.eu/ontology#Description_{desc['id']}")
+    g.add((description_uri, RDF.type, CRM['E31_Document']))
+    if pd.notna(desc['description']):
+        g.add((description_uri, DCTERMS.description, Literal(desc['description'])))
+    if pd.notna(desc['comments']):
+        g.add((description_uri, EX.comments, Literal(desc['comments'])))
+    if pd.notna(desc['text_id']):
+        text_uri = URIRef(f"http://digipal.eu/ontology#Text_{desc['text_id']}")
+        g.add((description_uri, CRM['P70_documents'], text_uri))
+    if pd.notna(desc['source_id']):
+        source_uri = URIRef(f"http://digipal.eu/ontology#Source_{desc['source_id']}")
+        g.add((description_uri, CRM['P70i_is_documented_in'], source_uri))
+    if pd.notna(desc['historical_item_id']):
+        historical_item_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{desc['historical_item_id']}")
+        g.add((description_uri, CRM['P70_documents'], historical_item_uri))
+```
+
+### 2.12 arch:Feature / TX8 Grapheme resolution, and the new arch:GraphComponent class
+
+Resolves the original controlled-vocabulary question from very early in this review (Option A/B/C, never finalized) and the two open P56 patterns from §2.11 above, together.
+
+**TX8 Grapheme needed no change.** Checked its actual usage: it's only ever a superclass declaration (`Ontograph ⊑ TX8 Grapheme`, `TX8 Grapheme ⊑ E55 Type`), never the range of any property — unlike Feature, nothing puts a domain/range requirement on it directly, so its `E55 Type` parentage causes no conflict. Originally grouped with Feature only because both were `E55 Type` subclasses in the diagram; the grouping doesn't reflect a shared problem in practice.
+
+**`Feature` and `Component`'s type-level pairing resolved via `P2 has type`, not `P56 bears feature`.** Checked P2/E55 Type's actual CIDOC-CRM scope directly against the intended meaning: P2's own definition (*"associates an instance of E1 CRM Entity with an instance of E55 Type for which it has been declared to be a **particularly characteristic example**"*) and CRM community guidance on P2 usage (explicitly including general descriptive qualities like "colour, shape" as legitimate E55 Type usage, and the core spec's own example of an `E3 Condition State` typed `"still not cooked"`) confirm that general characterizations — not just narrow taxonomic categories — are squarely within P2's intended use. `Component —[P2 has type]→ Feature` reads correctly as "this Component is a characteristic example of type Feature," matching this precisely; `P56 bears feature` (a genuinely physical, locatable-mark relationship) was overclaiming for what's really a qualitative tag. `Feature` needs no second parent class — it stays simply `⊑ E55 Type`, since P2's domain (`E1 CRM Entity`) is universal and applies equally at the type level (`Component`) and, once the same reasoning was pushed through, the instance level too:
+
+```python
+for _, compo_feature in data['component_features'].iterrows():
+    compo_uri = URIRef(f"http://digipal.eu/ontology#Component_{compo_feature['component_id']}")
+    feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{compo_feature['feature_id']}")
+    g.add((compo_uri, CRM['P2_has_type'], feature_uri))    # was P56_bears_feature
+```
+
+**New class: `arch:GraphComponent`, resolving the untyped-subject bug and the `Component`/`GraphCompo` classification question together.** Recognised as structurally identical to an existing, precedented pattern in this model — `Idiograph` (a Scribe's specific realization of an Allograph) via `Idiograph —[P138 represents]→ Allograph` — with `GraphComponent` doing the same job one level down (a Graph's specific realization of a Component):
+
+```python
+g.add((ARCH.GraphComponent, RDFS.subClassOf, CRM['E36_Visual_Item']))   # new class declaration, same branch as Component/Idiograph/Allograph/Character
+```
+
+Verified via SQL against the live database before finalising this design (two checks, both confirmed): (1) the separate `graphcomponent` table is redundant — a Graph's components are derivable from `Graph → Idiograph → Allograph → AllographComponent` in all but 5 of 139,455 cases, which were reviewed and judged to be input error (pre-dating the full interface) rather than genuine exceptions, so disregarded; (2) `graphcomponent_features` (the M2M table implementing `GraphComponent.features`) is confirmed to be Django's own auto-generated junction table (no explicit `through=` on the model), not a deliberate separate design — `graph_id`/`component_id` genuinely only live on `graphcomponent`, requiring a join, exactly as expected. Net result: the old `graphcomponent` loop (previously producing the redundant `Graph —P65→ Component` shortcut, now dropped per the "chain-only" decision below) is deleted entirely, and `graphcomponent_features` becomes the sole source for `GraphComponent`, joined back to `graphcomponent` for its `graph_id`/`component_id`:
+
+```python
+gc_features = data['graphcomponent_features'].merge(
+    data['graphcomponent'],
+    left_on='graphcomponent_id', right_on='id',
+    suffixes=('', '_gc')
+)
+
+for _, gcf in gc_features.iterrows():
+    graphcomponent_uri = URIRef(f"http://digipal.eu/ontology#GraphComponent_{gcf['graphcomponent_id']}")
+    g.add((graphcomponent_uri, RDF.type, ARCH.GraphComponent))
+
+    graph_uri = URIRef(f"http://digipal.eu/ontology#Graph_{gcf['graph_id']}")
+    g.add((graph_uri, CRM['P46_is_composed_of'], graphcomponent_uri))
+
+    component_uri = URIRef(f"http://digipal.eu/ontology#Component_{gcf['component_id']}")
+    g.add((graphcomponent_uri, CRM['P138_represents'], component_uri))
+
+    feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{gcf['feature_id']}")
+    g.add((graphcomponent_uri, CRM['P2_has_type'], feature_uri))
+```
+
+**Follow-up (Step 3) — a leftover duplicate loop from this exact refactoring was found and removed.** A second loop, iterating the identical `graphcomponent_features` table again, had survived the refactoring above: it built a *different*, never-typed URI prefix (`GraphCompo_<id>`, not `GraphComponent_<id>`) and re-asserted the same Feature relationship via the superseded `P56_bears_feature` property instead of the correct `P2_has_type` already produced by the loop above — the project lead's own code comment had already flagged this as suspicious (*"haven't we already done graphcomponent_features above? I think this should have been removed with refactoring"*), confirmed correct on inspection. Removed entirely (commented out); confirmed in the export: the 7,125 orphaned `GraphCompo_*`/`P56_bears_feature` triples are gone with zero information loss, since the same fact was already correctly captured by `GraphComponent_<id>`/`P2_has_type` in the loop above.
+
+**Still open, not resolved by the above**: `GraphComponent`'s own class declaration. The `rdfs:subClassOf E36_Visual_Item` line shown in the code block above is aspirational/example text in this report, not what's actually in the script — checked directly, `ARCH.GraphComponent` has **no `rdfs:subClassOf` declaration at all** anywhere in the current code, despite instances being correctly typed `ARCH.GraphComponent`. This is the project lead's own TODO #2 (*"What is superclass of GraphComponent? I guess E25, but then P138 doesn't work"*): `GraphComponent` needs to satisfy `P46`'s range (as the object of `Graph —P46→`, alongside `Graph` itself, which is `E25 Man-Made Feature`) **and** `P138`'s domain (as the subject of `—P138→ Component`, which requires `E36 Visual Item`) simultaneously — and `E25 Man-Made Feature` and `E36 Visual Item` aren't the same branch of the hierarchy, so a single superclass can't trivially satisfy both without checking whether CIDOC-CRM permits multiple inheritance here (it generally does elsewhere in the ontology). Not investigated yet — logged for the next pass.
+
+ Considered keeping the direct `Graph —P65→ Component` edge alongside the new precise chain (CRMtex itself does this elsewhere — `TXP9 is encoded using` is explicitly documented as *"a shortcut of the more fully articulated path"*), but decided against it — the direct edge is now fully redundant (`Graph —P46→ GraphComponent —P138→ Component`), and the project's general preference throughout this review has favoured avoiding duplicated assertions of the same fact over query convenience (matching the same call made for E54 Dimension's link).
+
+**`component_features` (`Component → Feature` type-level defaults) correctly kept as a separate loop from `graphcomponent_features`**, not merged despite the surface similarity to the graphcomponent/allographcomponent case — `ComponentFeature.set_by_default` marks this as curated editorial data about what's typically/normally true of a Component, independent of any specific Graph's observed features, not something empirically derivable from instance data the way `graphcomponent` was.
+
+**Resolved — moved out of CRM entirely, into a separate SKOS vocabulary file.** Confirmed with the project lead: `component_features` should be *kept*, not dropped — the list of possible Component/Feature values is itself a significant palaeographical resource, drawing real scholarly interest independent of any single Component's actual characterization, precisely because of ongoing arguments over terminology in the field. That ruled out option (a) from the original two (dropping it). Rather than force it into CRM via a custom property (the original option (b)), recognised as the same category of decision already made for `Annotation` earlier in this review — some things genuinely don't belong forced into CIDOC-CRM, and are better served by the standard purpose-built for them. Here, that's **SKOS** (Simple Knowledge Organization System), the W3C vocabulary for thesauri and controlled term lists, standard practice in cultural heritage LOD (e.g. the Getty AAT, Iconclass) for exactly this "a vocabulary in its own right, also reused as typed values elsewhere" situation:
+
+```turtle
+:ComponentVocabulary a skos:ConceptScheme ;
+    skos:prefLabel "Archetype Component-Feature Vocabulary" .
+
+:Feature_serif a skos:Concept ;
+    skos:prefLabel "has serif" ;
+    skos:inScheme :ComponentVocabulary .
+
+:Component_leg_applicable_features a skos:Collection ;
+    skos:member :Feature_serif, :Feature_long, :Feature_short .
+```
+
+This also gives mutual exclusivity a genuine home for the first time (not present in the current data, but naturally addable later): nesting a sub-`skos:Collection` per exclusive group (e.g. a "Length" collection containing just `long`/`short`) inside a Component's broader collection — new curation work if pursued, not derivable from what's currently recorded.
+
+**Mapping between the SKOS file and the core CRM/CRMtex RDF: reuse the identical URI in both** (e.g. `http://digipal.eu/ontology#Feature_5` typed `arch:Feature ⊑ E55 Type` in the core export, and typed `skos:Concept` with its own `skos:prefLabel`/`skos:inScheme`/collection membership in the SKOS file) — no bridging property needed, since RDF's open-world design means any two files using the same URI are automatically describing the same thing once loaded together. Confirmed as genuinely standard practice, not a shortcut, matching how the Getty AAT and Iconclass are conventionally reused as `P2 has type` values across independent CIDOC-CRM datasets in the sector.
+
+**Also flagged as worth extending**: `Ontograph` and `Allograph` were both mentioned as other classes that could usefully get the same SKOS-vocabulary treatment — not scoped or designed, just noted as a natural next candidate.
+
+**Logged as future work** (§7) — this is a new deliverable (a standalone SKOS file), not an RDF-export bug fix, so out of scope for the current error-fixing pass.
+
+
+
+- **P4 has time-span / P108i was produced by** — the old `E65 Creation → E4 Period` (P4) and `Historical Item → E65 Creation` (P108i) violations are both gone, as a side effect of E65 Creation no longer being instantiated (see §2.9).
+- **P7 took place at** — no longer attached directly to the Historical Item; now attached to `Writing_<id>` events (see §2.8 for the new caveat this introduces).
+- **P89 falls within** — now `Place → Region/County`, a sensible place hierarchy; the old `Information Object → ?` violation is gone. **Follow-up (Step 3) — see §2.18**: a separate, newly-found bug (`CurrentCounty_<id>` vs `County_<id>`) meant 63 of these links pointed at an untyped, unlabelled resource; now resolved.
+- **P46 is composed of / the Collation stale-variable bug** — confirmed fixed. The `Historical Item → Category` violation (1,534 triples) is gone; Historical Item's P46 total now cleanly accounts for Decoration + Collation with correct types, and Collation records are no longer orphaned. **Follow-up (Step 2, implemented and verified in export):** two further issues found and fixed. (1) `leaves`/`front_flyleaves`/`back_flyleaves` were all being written under the `EX.fragment` predicate (copy/paste error), colliding with the real `fragment` boolean and each other — 357 Collation resources had 2+ colliding `ex:fragment` values before the fix; each field now has its own predicate (`EX.leaves`/`EX.front_flyleaves`/`EX.back_flyleaves`), confirmed 0 collisions remaining. (2) The same empty-record pattern found in `Layout` (see schema report §1, and the future-work note below) was present here too — 1,172 of 1,534 Collation resources (76%) had only a default `fragment=False` and nothing else. Per the project lead: a record is valid only if `fragment` is `True`, or `leaves` is populated and non-zero (`0`/null `leaves` is implausible; front/back flyleaves are only ever populated alongside `leaves`) — `0` front/back flyleaves alone, unlike `Layout`'s measurements, is a plausible genuine value and was not used to disqualify a record. Confirmed in the export: Collation resources dropped from 1,534 to 310 accordingly. The `leaves`/`front_flyleaves`/`back_flyleaves` values were also wrapped in `int()` at the same time, pre-empting the same float-ID pattern being addressed generally below. **The underlying resource/property shape (`P46_is_composed_of`, `E18_Physical_Thing`) was deliberately left unchanged** — see the `E54 Dimension` modelling note under Future Work; this fix only addresses the predicate collision and empty records, not the deeper conceptual question of whether `Collation` belongs under `P46` at all.
+- **Owner data-loss defect** — resolved. 993 real `Owner_*` resources now exist (correctly typed E39 Actor) and are correctly linked from Item Part via P50.
+- **P65 shows visual item, F3 Manifestation domain violation** — resolved (see §2.6 for the new violations that have appeared in its place within the same property).
+
+---
+
+### 2.13 P106 is composed of — domain/range violation, the single largest relationship in the export (resolved)
+
+`Hand —[P106 is composed of]→ Graph` (64,028 triples — the single largest volume relationship in the entire export). `P106`'s official CIDOC-CRM scope note requires **both ends to be `E90 Symbolic Object`** — it's for symbolic/textual composition, not physical composition. `Hand` and `Graph` are both `subClassOf CRMtx.TX7_Written_Text_Segment`, whose parent `TX1 Written Text` is a subclass of **`E25 Man-Made Feature`** (confirmed via the CRMtex literature), a physical class, not `E90 Symbolic Object`. Checked what CRMtex itself uses for exactly this case (a Written Text physically composed of smaller graphical sign units): **`TXP8 has component`**, explicitly a subproperty of `P46 is composed of`, distinguished from the symbolic-composition property `TXP7`/`P106` by the CRMtex authors themselves. Since the script doesn't model `TX8`/`TX9` (`Grapheme`/`Glyph`) as separate classes, fixed by using the base property directly: `Hand —P46_is_composed_of→ Graph`, matching the physical-composition pattern already used everywhere else in the script. **Likely an honest oversight — the two properties look near-identical on the surface.** Confirmed by the project lead and implemented.
+
+Checked the adjacent, same-volume `P65_shows_visual_item` (`Graph —P65→ Idiograph`) while in this area — that one is correct: `Graph` inherits `E24 Physical Man-Made Thing` (P65's domain) via `E25 Man-Made Feature`, and `Idiograph` inherits `E36 Visual Item` (P65's range) via `Generalised_Allograph`. No issue found.
+
+### 2.14 P107 has current or former member — reversed direction (resolved)
+
+`Scribe —[P107]→ Institution` (matched pattern check, not the ~123 total P107 count — see below). `P107`'s domain is `E74 Group`, range `E39 Actor` — "Group has member Actor." Here the subject was the `Scribe` (a Person) and the object the `Institution` (a Group) — reversed, the same class of bug as the `P95 has formed` direction issue fixed earlier in this project (§2.1/domain_range history). Fixed to `Institution —P107→ Scribe`. Confirmed by the project lead (who had already independently fixed it before this was raised) and verified in the export: subject of `P107` is now consistently `E74_Group`.
+
+### 2.15 P10 falls within — misused for institutional hierarchy; deferred, one erroneous instance dropped
+
+`Repository —[P10 falls within]→ Repository` (parent institution), 1 occurrence only. `P10`'s domain and range are both `E4 Period` — spatiotemporal containment of periods/events, not organisational hierarchy. Investigated a fix via `P107 has current or former member` (following a precedent in the literature — a CIDOC-CRM archival-description case study models institutional affiliation this way), but the project lead judged this doesn't fit: `P107`'s range is `E39 Actor`, and while `E74 Group ⊑ E39 Actor` so it would technically validate, the semantics of "member" don't correctly describe one institution being organisationally *part of* another (e.g. "Durham Cathedral Library is part of Durham Cathedral" isn't naturally "Durham Cathedral Library is a member of Durham Cathedral"). No clear existing CIDOC-CRM property was identified for this relationship. **The single existing DigiPal instance was also found to be a literal self-reference** (`Repository_60 —P10→ Repository_60`), confirming it's a data error independent of which property would be correct. **Decision: defer the general institutional-hierarchy question to future work (see §7), and simply omit the one erroneous self-referential triple from the export** rather than force an imperfect property choice now. Not used by any other Archetype-based project known to the project lead, so no urgency.
+
+### 2.16 P104 is subject to — Repository asserted as legal subject of its own default policy (resolved)
+
+`Repository —[P104]→ MediaPermission` (and separately `Image —[P104]→ MediaPermission`), ~42 + ~932 triples respectively before the fix. `P104`'s domain is `E72 Legal Object`, range `E30 Right`. Checked and confirmed correct: `Image` (`E36 Visual Item ⊑ E72 Legal Object` — confirmed by the project lead, and conceptually clear: an institution's copyright claim genuinely is over the image, an `E72 Legal Object`) and `MediaPermission` (`E30 Right`) are both fine as far as class-typing goes. **The actual problem, identified by the project lead, is semantic rather than a class mismatch**: `Repository —P104→ MediaPermission` asserts that the *institution itself* is the legal subject of the right — but a repository doesn't hold rights over itself. The real fact being expressed is that this is the *default* copyright policy applied to every `Image` held at that repository, unless a specific `Image` has its own override — "more of an interface issue" (an application-level fallback/shortcut) than a fact about the `Repository`.
+
+**Fixed by computing each `Image`'s effective permission at export time** rather than asserting anything at `Repository` level, via the chain `Image —(item_part_id)→ Item_Part —(current_item_id, via ItemPart)→ Current_Item —(repository_id)→ Repository —(media_permission_id)→ MediaPermission`, using the `Image`'s own `media_permission_id` when present and falling back to the traced `Repository` default otherwise:
+
+```python
+itempart_to_current_item = data['itempart'].set_index('id')['current_item_id'].to_dict()
+current_item_to_repository = data['currentitem'].set_index('id')['repository_id'].to_dict()
+repository_to_media_permission = data['repository'].set_index('id')['media_permission_id'].to_dict()
+
+# in the image loop:
+effective_media_permission_id = image['media_permission_id']
+if pd.isna(effective_media_permission_id) and pd.notna(image['item_part_id']):
+    current_item_id = itempart_to_current_item.get(image['item_part_id'])
+    if pd.notna(current_item_id):
+        repository_id = current_item_to_repository.get(current_item_id)
+        if pd.notna(repository_id):
+            effective_media_permission_id = repository_to_media_permission.get(repository_id)
+
+if pd.notna(effective_media_permission_id):
+    media_permission_uri = URIRef(f"http://digipal.eu/ontology#MediaPermission_{int(effective_media_permission_id)}")
+    g.add((image_uri, CRM.P104_is_subject_to, media_permission_uri))
+```
+
+Confirmed in the export: `Repository` no longer asserts `P104` at all (0 occurrences); 974 of 995 `Image` resources now have a `P104` triple (own override or correctly inherited); no resource ended up with conflicting/duplicate distinct permission values; the remaining 21 `Image`s with no `P104` have no traceable chain (missing `item_part_id`, or a repository with no default set), which is expected rather than a bug. **Deliberate, acknowledged trade-off**: tracing this chain required discovering that `Current_Item` links back to `Item_Part` via `itempart.current_item_id` (initially missed — see the "shelfmark" discussion, §7) — so the fix depends on that specific join existing; the repository-level default is now correctly folded into each `Image`'s own assertion rather than a separately-visible fact in the graph, which is the intended, agreed outcome, not an oversight.
+
+A minor, functionally-inert code redundancy was noted while verifying this fix: the `image` loop contains a leftover duplicate inner block that re-computes and re-asserts the identical `P104` triple when `image['media_permission_id']` is set. Confirmed to have zero effect on the data (RDF triples are set-based; an identical duplicate triple simply collapses), so not treated as a defect requiring a fix — flagged only as an optional tidiness item.
+
+### 2.17 P33 used specific technique — wrong subject, then wrong property; Script/Appearance conflation uncovered along the way (resolved, one follow-up pending)
+
+`Hand —[P33]→ Appearance` (763 triples). `P33`'s domain is `E7 Activity`, range `E29 Design or Procedure` (*"a concrete information object in its own right... rather than simply a term or method known by tradition"*, per its own scope note). `Hand` isn't an Activity (it's `TX7_Written_Text_Segment ⊑ E25 Man-Made Feature`, a physical trace, not a process) — a clear domain violation.
+
+**First correction considered and rejected**: since `Hand` already has a `TX2_Writing` event (`Writing_<hand_id>`, from the earlier Hand/Writing redesign, §2.7) which does genuinely satisfy `E7 Activity` (confirmed via its full ancestry: `TX2_Writing ⊑ F28 Expression Creation ⊑ E12 Production ⊑ E7 Activity`), the first fix proposed was simply moving the property's subject from `Hand` to `Writing`, keeping `P33`. Investigating this surfaced a bigger, pre-existing conflation that needed sorting out first:
+
+**`digipal_appearance` and `digipal_script` are two distinct concepts, both linked from `Hand`, that the export had confused.** `Script` is the formal classification (e.g. "Caroline Minuscule," established terminology); `Appearance` is an informal, free-text description of the resulting Hand's look (e.g. "Late Caroline," "Tall and Narrow"). The code already had a `script_id` block using the correct, well-formed CRMtex chain (`Hand —TXP1_used_writing_system→ Writing_System —TXP16_employs_script→ Script`, typed `TX13_Script`) — but the *separate* `appearance_id` block and its standalone loop had been mistakenly typing `Appearance` resources as `ARCH.Script` (reusing the wrong class entirely), which is what led to the original confusion about how to fix `P33` in the first place.
+
+**Resolved, per project lead's distinction**: `Script` genuinely fits `E29 Design or Procedure` (*"it involves rules that constrain the activity/process"*) — no change needed there. `Appearance` does not — it describes *the result*, not a technique used to produce it, so it shouldn't be linked to the `Writing` activity at all (superseding the `Writing`-subject fix considered above). Modelled instead as its own `E55 Type`, attached directly to `Hand` via `P2_has_type` — matching the pattern already used throughout this project (`Component → Feature`, `Type_Accepted`, etc.) for "this thing is characterised by this type":
+
+```python
+g.add((ARCH.Appearance, RDFS.subClassOf, CRM['E55_Type']))   # new class
+
+# Hand loop:
+if pd.notna(hand['appearance_id']):
+    appearance_uri = URIRef(f"http://digipal.eu/ontology#Appearance_{int(hand['appearance_id'])}")
+    g.add((hand_uri, CRM.P2_has_type, appearance_uri))   # was P33_used_specific_technique
+
+# standalone appearance loop:
+for _, appearance in data['appearance'].iterrows():
+    appearance_uri = URIRef(f"http://digipal.eu/ontology#Appearance_{int(appearance['id'])}")
+    g.add((appearance_uri, RDF.type, ARCH.Appearance))   # was ARCH.Script
+```
+
+Confirmed in the export: `P33_used_specific_technique` fully retired (0 remaining); 37 distinct `Appearance` types correctly typed `ARCH.Appearance` (0 remain mistyped `ARCH.Script`); 763 `Hand → P2_has_type → Appearance` links, matching the original `P33` count exactly, confirming no data lost, just re-propertied.
+
+**One follow-up confirmed still needed, then implemented and verified**: while fixing this, `Script_<id>` resources were found to be correctly *typed* (`TX13_Script`) but never given any further properties — there was no loop reading the `script` table itself. Confirmed by the project lead as genuinely important: `digipal_script` is a small (4-row), simple table (`id`, `name`) — but the values it holds (e.g. "Caroline minuscule") are a headline searchable feature of Archetype ("find me all manuscripts containing Caroline minuscule"), so the missing labels were a real, user-facing gap, not a minor omission. Added:
+
+```python
+for _, script in data['script'].iterrows():
+    script_uri = URIRef(f"http://digipal.eu/ontology#Script_{int(script['id'])}")
+    g.add((script_uri, RDF.type, CRMtx.TX13_Script))
+    if pd.notna(script['name']):
+        g.add((script_uri, RDFS.label, Literal(script['name'])))
+```
+
+Confirmed in the export: all 4 `Script` resources present and labelled (`"Caroline minuscule"`, `"English Vernacular minuscule"`, `"Square minuscule"`, `"Insular Cursive minuscule"`), correctly reachable via the existing `Hand —TXP1_used_writing_system→ Writing_System —TXP16_employs_script→ Script` chain. Project lead has noted an intention to enrich the `Script` model further in a future stage — out of scope here, this fix only captures what the current table already holds.
+
+**Superseded by further discussion (Step 3, same session) — the `Writing_System`/`TXP1`/`TXP16` chain above turned out to be wrong, and `Script`'s typing changed again.** Checking `TXP1_used_writing_system` against the CRMtex spec directly (its own property table, not just a scope note) found its domain is specifically `TX2 Writing` (the writing *event*), not `Hand`/`TX7` — the same class of domain mismatch as the original `P33` finding, just on the adjacent property. But investigating the fix (moving `TXP1` onto the `Writing` event) surfaced a deeper problem, raised by the project lead: **`digipal_script` ("Caroline minuscule" etc.) isn't a `TX3 Writing System` or a `TX13 Script` at all** — `TX13 Script` is formally defined in CRMtex as a grapheme-set concept (essentially "alphabet"; Caroline minuscule and Insular minuscule share the *same* Latin grapheme set, so they can't be distinct `TX13 Script` instances), whereas `digipal_script` is genuinely about letterform *appearance* — `TX10 Style` territory. Also confirmed: **Archetype has no real `TX3 Writing System` data at all** — it's implicit at project level, not per-Hand, and modelling it properly is deliberately deferred to a larger future task (multi-script projects, e.g. Greek-Latin).
+
+Resolved by removing the `Writing_System`/`TXP1`/`TXP16` chain entirely and retyping `Script` as `TX10_Style`. This then raised a further, genuine question about *which* property should link `Hand` to `Script`:
+
+- **First attempt: `TXP12 has style`** (CRMtex's dedicated style property). Checked its exact domain in the CRMtex spec's property table: `TX1 Written Text` (satisfied by `Hand`, via `Hand ⊑ TX7 ⊑ TX1`) — so `Hand —TXP12→ Script` is class-valid, and matches a direct worked example in the spec itself (*"The Latin text in [MS]... has style 'Carolingian minuscule'"*).
+- **Rejected in favour of the generic `P33 used specific technique`**, on a sharper point from the project lead: **this project's own established distinction is that `Script` describes technique/procedure and `Appearance` describes the result** (the reasoning already used to keep `Appearance` on `Hand` directly rather than routing it through `Writing`) — which implies `Script` should attach to the *activity* (`Writing`), not the result (`Hand`), the opposite of where `TXP12`'s domain puts it. Investigating why surfaced a **genuine internal inconsistency in CRMtex's own `TX10 Style` definition**, confirmed by reading its scope note directly: it claims to describe *visual* appearance (*"the general appearance of the script, in terms of general design... shape and number of strokes"*) while being declared over two classes CRMtex itself defines as non-visual/abstract (`Text`, and `Script`/`TX13` — *"functionally complete sets of... graphemes"*) — and if style really were about visual/graphic realization, its declared superclass should sit in the physical/visual branch, not `E29 Design or Procedure` (CRMtex's category for *methods and rules*). Project lead intends to raise this with the CRMtex SIG directly.
+
+**Final resolution, implemented and verified**: `Script` moved off `TXP12` entirely, onto the generic `P33` from the `Writing` event (matching `Appearance`'s activity/result distinction, not CRMtex's `TXP12`/`TX1` domain):
+
+```python
+if pd.notna(hand['script_id']):
+    script_uri = URIRef(f"http://digipal.eu/ontology#Script_{int(hand['script_id'])}")
+    g.add((writing_uri, CRM.P33_used_specific_technique, script_uri))   # not TXP12, not hand_uri
+
+# standalone script loop:
+for _, script in data['script'].iterrows():
+    script_uri = URIRef(f"http://digipal.eu/ontology#Script_{int(script['id'])}")
+    g.add((script_uri, RDF.type, CRMtx.TX10_Style))   # was CRMtx.TX13_Script
+    if pd.notna(script['name']):
+        g.add((script_uri, RDFS.label, Literal(script['name'])))
+```
+
+One implementation slip caught before verification: an early draft referenced `script['id']` inside the `hand` loop, where no such variable is in scope (that name only exists in the separate standalone loop) — corrected to `hand['script_id']`, the field actually available there and the one needed to resolve to the same `Script_<id>` URI the standalone loop types.
+
+Confirmed in the export: `Writing_System`/`TXP1`/`TXP16` all fully retired (0 remaining anywhere); `Script_1` ("Caroline minuscule") now correctly typed `TX10_Style` (0 real instances remain typed `TX13_Script` — the sole remaining occurrence is a harmless class-hierarchy scaffold declaration, not instance data, the same pattern as the earlier dead `E92`/`E65` declarations); `Writing —P33_used_specific_technique→ Script` confirmed working (132 instances). `TX10_Style` now covers both `Script` and `LatinStyle` (29 instances combined) — sharpening, not resolving, the `LatinStyle`-vs-`Script`-vs-`Appearance` overlap question, resolved next.
+
+**`LatinStyle` question resolved.** Per the project lead: `LatinStyle` is a *formal refinement* of `Script` specifically (Dumville's typology — e.g. "Anglo-Caroline Style I"/"Style II" refining "Caroline minuscule"), genuinely distinct from `Appearance` (informal, English-only, inconsistently defined labels) — conceptually much closer to `Script` than to `Appearance`. Fixed to match `Script`'s pattern exactly, moving off `TXP12_has_style`/`Hand`:
+
+```python
+if pd.notna(hand['latin_style_id']):
+    latin_style_uri = URIRef(f"http://digipal.eu/ontology#LatinStyle_{int(hand['latin_style_id'])}")
+    g.add((writing_uri, CRM.P33_used_specific_technique, latin_style_uri))   # was: hand_uri, CRMtx.TXP12_has_style
+```
+
+(the standalone `latinstyle` loop needed no change — already correctly typed `TX10_Style` and labelled). Confirmed in the export: `TXP12_has_style` fully retired (0 remaining anywhere); `Writing —P33→ LatinStyle` confirmed working (495 instances); `P33` total (627) correctly accounts for both `Script` (132) and `LatinStyle` (495) combined.
+
+A related, larger idea surfaced but explicitly deferred, not actioned: no `script_id`-type link currently exists in the database between `digipal_latinstyle` and `digipal_script` (confirmed by the project lead, who notes it would be a quick addition), and the project lead proposes generalising rather than adding that link narrowly — a single, language-independent `arch:Style` (`TX10`) that *refines* `arch:Script` (`TX10`), applicable to English/vernacular writing as well as Latin, alongside `Appearance` remaining the separate informal layer. Logged in full under Future Work (§7), including the open sub-question of which property should express the refines-relationship.
+
+### 2.18 P89 falls within — untyped `CurrentCounty_<id>` objects, same URI-prefix bug pattern as before (resolved)
+
+`Place —[P89]→ CurrentCounty_<id>` (63 triples). `P89`'s range is `E53 Place`, but `CurrentCounty_<id>` was never given any `rdf:type` at all — only a `P2_has_type` tag (`CURRENT_COUNTY_TYPE`), never `E53_Place` itself, and never a label. The same class of bug found several times already in this project (`HistoricalItem_`/`Historical_Item_`, `Item_`/`Item_Part_`, `GraphCompo_`/`GraphComponent_`): `Place.current_county_id` and `Place.historical_county_id` are both foreign keys into the *same* `county` table (confirmed by the project lead: this single table exists specifically to record English county names both before and after the 1971 county reform — pre-1971 boundaries close to the medieval ones and still used by historians; post-1971 for current location), but the code built a different, uncorrelated URI prefix (`CurrentCounty_`) for the current-sense reference instead of reusing `County_<id>`, the prefix the historical-sense reference (and the standalone `county` loop that actually types and labels these resources) already correctly used.
+
+Fixed by aligning the prefix:
+```python
+if pd.notna(p['current_county_id']):
+    current_county_uri = URIRef(f"http://digipal.eu/ontology#County_{int(p['current_county_id'])}")   # was CurrentCounty_
+    g.add((current_county_uri, CRM['P2_has_type'], CURRENT_COUNTY_TYPE))
+    g.add((place_uri, CRM['P89_falls_within'], current_county_uri))
+```
+
+No new loop needed — this alone resolves the typing/labelling gap too, since it now correctly resolves to the same `County_<id>` resource the standalone loop already types `E53_Place` and labels.
+
+**Checked before implementing, not assumed**: since both FKs point into the same table, does this create a real collision risk? Verified against the export: of 63 `Place`s with both links set, **62 resolve to the same numeric ID** (name unchanged since 1971 — the two `P89` triples become identical and correctly collapse into one under RDF's set semantics, with the single resulting `County` resource carrying both `Type_Current_County` and `Type_Historical_County` tags — e.g. `County_10`, "Dorset"), and **exactly 1 resolves to two distinct IDs** (a genuine 1971 boundary change, correctly producing two separate, distinct `County` resources). Confirmed this is not a coincidental-collision risk like the earlier bugs (where two *unrelated* ID spaces from *different* tables happened to overlap) — a shared ID here reflects a genuine shared real-world county, by design, not an accident.
+
+**A separate, harmless duplicate found and removed at the same time**: the standalone `county` loop appeared twice in the code, verbatim (same table, same triples, same labels) — zero effect on the data (RDF triples are set-based), but tidied up while in this area.
+
+---
+
+### 2.19 Untyped-resource scan across the whole export — one high-impact finding, rest clean (resolved)
+
+Systematic scan of every `rdf:Description` block in the export: which subjects have properties asserted but no `rdf:type` at all, and which URIs are referenced as objects but never appear as a subject anywhere (fully undescribed). The first check (82 untyped-but-described subjects) turned out to be entirely expected — every one is a class-hierarchy scaffold declaration (`E1_CRM_Entity`, `digipal:Hand`, `TX10_Style`, etc., the `rdfs:subClassOf` backbone), which don't need their own `rdf:type` in this simple RDFS-style declaration style. No issue there.
+
+**One genuine, high-impact exception found: `Historical_Item_Type_<id>`.** Referenced 1,555 times via `P2_has_type` — essentially every `Historical_Item` in the export — but the resource itself had no `rdf:type` at all, only a `P2_has_type` pointing at a generic "Type" marker (`TYPE_Historical_Item`). Root cause: the actual `rdf:type` line was commented out in the code (`#g.add((type_uri, RDF.type, CRM['E55_Type']))`), while everything around it still ran. A second, related gap: no loop read the `historical_item_type` table itself, so even once typed, these resources had no label at all. Confirmed with the project lead: `digipal_historicalitemtype` is a real, simple (`id`, `name`) table with exactly two rows — "manuscript" and "charter" (distinguishing codex books from single-sheet charters) — likely rarely queried in practice, but genuine information worth keeping.
+
+Fixed both parts:
+```python
+if pd.notna(row['historical_item_type_id']):
+    type_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_Type_{int(row['historical_item_type_id'])}")
+    g.add((type_uri, RDF.type, CRM['E55_Type']))   # uncommented
+    g.add((hist_item, CRM['P2_has_type'], type_uri))
+    g.add((type_uri, CRM['P2_has_type'], TYPE_HISTITEM))
+
+for _, hi_type in data['historicalitemtype'].iterrows():
+    type_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_Type_{int(hi_type['id'])}")
+    if pd.notna(hi_type['name']):
+        g.add((type_uri, RDFS.label, Literal(hi_type['name'])))
+```
+
+Confirmed in the export: `Historical_Item_Type_1`/`_2` both now correctly typed `E55_Type` and labelled (`"charter"`, `"manuscript"`).
+
+### 2.20 Annotation → Graph link almost entirely missing (0.13% of cases); code cleanup surfaces two further fixes (resolved)
+
+**`oa:hasBody` (`Annotation → Graph`) — the core purpose of `Annotation` — was only being written for 81 of 64,030 annotations.** Found via the untyped-resource scan (§2.19): `Author_<id>` objects (`dcterms:creator`) were referenced but never described, tracing back to this block:
+
+```python
+if pd.notna(annotation['after_id']):
+    after_uri = URIRef(f"http://digipal.eu/ontology#Allograph_{int(annotation['after_id'])}")
+    g.add((annotation_uri,  CRM.P148_has_component, after_uri)) 
+    g.add((after_uri, CRM.P2_has_type, AFTER_TYPE))
+
+#if pd.notna(annotation['graph_id']):
+    graph_uri = URIRef(f"http://digipal.eu/ontology#Graph_{int(annotation['graph_id'])}")
+    g.add((annotation_uri, ANNO.hasBody, graph_uri))
+    ...
+#if pd.notna(annotation['author_id']):
+    ...
+```
+
+The `if` lines were commented out, but their indented bodies weren't — and since a comment doesn't close a Python block, those bodies were still read as part of the **preceding** `if pd.notna(annotation['after_id']):` block above them, not as unconditional statements. Confirmed precisely: **100% of the 81 annotations with `hasBody` also had `P148_has_component`** (before/after), the signature of this exact mechanism. Also surfaced a stale inconsistency with an already-documented decision: the report already recorded `before_id`/`after_id` as excluded by decision (§2.10/§7, "almost never used in practice"), but the code still had that block active — corrected at the same time.
+
+Resolved: `before_id`/`after_id` fully removed (matching the documented decision); `graph_id`/`hasBody` given its own correct, independent guard; `author_id`/`dcterms:creator` left fully disabled (matching the documented decision not to implement creator data — previously accidentally *partially* live for the same 81 rows, which was worse than either fully on or off). Confirmed in the export: `oa:hasBody` now 64,028 of 64,030 annotations (the 2 gaps are genuine null `graph_id` rows); `dcterms:creator` and the before/after `P148` links both correctly at 0.
+
+**Two further things surfaced while doing this fix, both confirmed and resolved.** (1) The project lead independently identified and fixed a second predicate collision, of the same general class as the `Collation`/`EX.fragment` bug found earlier in this project: `Current_Item.description` was being written under the `EX.shelfmark` predicate (colliding with the actual `shelfmark` field, which has its own correct block just above), rather than its own `EX.description`. Confirmed in the export: 128 `Current_Item` resources now correctly carry `EX.description`, separate from `EX.shelfmark`; 0 remaining collisions. (2) The project lead removed the large volume of now-fully-resolved commented-out dead code accumulated over this review (confirmed via diffing against a pre-cleanup snapshot the project lead provided) — flagged as worth doing, since commented-out code blocks were themselves the direct cause of this section's bug (a comment doesn't close a Python block the way a real statement does) and had already caused near-identical trouble at least twice before in this review (the `on_top_line`-adjacent block, and this one). Diffed line-by-line against the snapshot to confirm no unintended behaviour changes — none found beyond the two fixes described above.
+
+
+
+## 4. New finding: systemic float-ID bug affecting ~20 entity types
+
+*(Historical entry — this issue was fully resolved earlier in this project; see schema report §1 finding #8. Kept here for the record rather than deleted, since the detailed breakdown below isn't duplicated elsewhere.)*
+
+Found while investigating the P95 founder/reformer links (§2.1, live discussion). Wherever an ID is read from an optional (nullable) foreign key column, pandas silently upcasts that column to `float64` (a column can't be part-integer/part-NaN and stay integer-typed), so a clean integer like `255` becomes `255.0` in the DataFrame — and wherever the export code builds a URI with an unguarded f-string (e.g. `f"...Person_{i['founder_id']}"`), that `.0` gets baked directly into the URI.
+
+Confirmed at scale across roughly 20 entity types (Historical_Item, Text, Item_Part, Scribe, Place, Category, Person, Date_Period, Institution, Appearance, CurrentCounty, County, Allograph, LatinStyle, Language, Region, Script, Source, Hair, Historical_Item_Format, MediaPermission, Repository, Status), with reference counts ranging from a handful up to 1,452 (Historical_Item). Two sub-patterns:
+
+- **Most cases: a pure dangling reference.** The real entity already exists correctly under its clean integer URI; some other triple points at the float-suffixed twin instead, which is never itself described — a broken link, not a duplicate.
+- **A worse sub-case for Person, Language, Region, Source, and County**: the float-suffixed URI is *also* separately described (given its own `rdf:type`, etc.), meaning genuinely duplicate, disconnected resources exist for the same real-world thing, not just a broken pointer.
+- **CurrentCounty and Script have no clean-integer version anywhere** — worth checking specifically whether these two are only ever created via the buggy float-formatting path.
+
+Root cause is uniform (nullable FK → float64 column → unguarded f-string), and the fix is uniform too: wrap every ID in `int()` before formatting into a URI, the way a handful of existing lines already correctly do (e.g. `int(row['historical_item_type_id'])`).
+
+## 5. Open questions for the next discussion
+
+1. ~~P95 argument order~~ — **done**: fix drafted (see §2.1 update), covering direction, E8→E66, and role-qualified P14 for founder/reformer.
+2. ~~Reformer/E8 Acquisition dual-typing~~ — **resolved** as part of the P95 fix.
+3. ~~P198i/patron-saint removal~~ — **done**: code commented out; logged as a deliberate data-loss point (§2.4).
+4. ~~P65's new violations~~ — **fully resolved** (§2.6, §2.7): `F5 Item → Item Part` via phantom-resource removal + P56; `Allograph/Character → Component` via property swap to `P148 has component`; `Historical Item → TX2 Writing` via the Attribute Assignment redesign (Historical Item's date now split into an evidentiary `E13 Attribute Assignment` per `historicalitemdate` row, and a plain literal for the display-only accepted date).
+5. ~~Hand/P108, untyped Writing events, P196i/E92~~ — **consolidated design agreed** (§2.7): Writing at Hand-level, Attribute Assignment for all dating/place (Hand and Historical Item alike), E92 dropped. Fix now (accepted values, from data already read) vs. add later (evidentiary trails, needs `DateEvidence`/`HistoricalItemDate`/`ItemOrigin` exposed) staged per project priority. Writing→Item Part resolved as no direct edge (Option B, transitive via Hand) — see §2.7.
+
+---
+
+## 6. Regression check — RDF v3 (typo-fix pass, same file, same date)
+
+Same file (`data_rdf_digipal_cidoc_20260827.rdf`) re-checked after the round of "easy typo" fixes described in the companion schema report (`ontology_rdf_schema_comparison_v3.md` §8). **Every finding in this document is completely unchanged** — every property/type pair, every triple count, identical to the numbers reported above. This is expected: that round of fixes targeted string-level typos (spelling, separators, class-name errors) and didn't touch any of the underlying logic this report is about (argument order, property choice, event modelling). Re-verified systematically rather than assumed:
+
+- P95 has formed — still reversed in all four patterns, same counts (28/8/8/2).
+- P198i/patron-saint — still 41 triples, `Group → ?`, unchanged.
+- P72 has language — still 231 triples, `Historical Item → Language`, unchanged.
+- P50 (Archive→Place) — still 180 triples, unchanged; the Current Item/Repository and Item Part/Owner patterns also unchanged (still correct).
+- P65's three new violation patterns (F5 Item→Item Part 687, Allograph→Component 131, Character→Component 4) — unchanged; the compliant bulk (Graph→Idiograph 64,028, Graph→Component 4,883) also unchanged.
+- P108 has produced (Hand→untyped, 401) — unchanged.
+- P196i is defined by (602, still technically compliant per §2.9) — unchanged.
+- Reformer/E8 Acquisition dual-typing pattern (§2.5) — unchanged.
+- Untyped `Writing_<id>` event resources (§2.8) — unchanged; still carry P7/P92 triples with no `rdf:type`.
+
+One cosmetic knock-on effect from the schema-level namespace change (digipal.huma-num.fr → digipal.eu, see schema report §8.3): all the `https://digipal.huma-num.fr/...` URIs quoted throughout §2 above (Historical_Item, Current_Item, Item_Part, Hand, Graph, etc.) now appear as `https://digipal.eu/...` in the raw data. This is a naming change only — every relationship, count, and violation described above refers to the same underlying resources and is unaffected in substance.
+
+No new domain/range issues were introduced by this round.
+
+---
+
+## 7. Future work, deferred by request (second stage: adding missing data, after all errors are fixed)
+
+- **Proposed unified `Style`/`Script`/`Appearance` model, language-independent (new, Step 3).** Grew out of resolving the `LatinStyle`/`Script`/`Appearance` overlap question (§2.17 area): the project lead's account clarifies `LatinStyle` as a *formal refinement* of `Script` specifically for Latin script (Dumville's typology — e.g. "Anglo-Caroline Style I"/"Style II" refining "Caroline minuscule"), distinct from `Appearance` (informal, English-only, inconsistently defined labels). Confirmed no `script_id`-type link currently exists between `digipal_latinstyle` and `digipal_script` in the database, but the project lead notes it would be a short, quick addition (small table), and — since the same refines-relationship logically applies to English/vernacular writing too, not just Latin — proposes generalising rather than fixing narrowly: a single `arch:Style` (`TX10`) class that *refines* `arch:Script` (`TX10`), with both kept language-independent (i.e. not "LatinStyle" vs some hypothetical "EnglishStyle", just one `Style` class applicable across scripts), alongside `arch:Hand —P2_has_type→ arch:Appearance` remaining the separate, informal layer as already implemented. Judged more meaningful and more widely applicable than the current Latin-specific `LatinStyle` table, and easy to implement for DigiPal specifically. **Not for this step** — logged for a future pass. One open sub-question for whenever this is picked up: what CRMtex (or base CIDOC-CRM) property best expresses "this `TX10 Style` instance refines/narrows that `TX10 Style` instance" — not yet checked against the spec, since this wasn't being implemented now.
+
+- **`digipal_place`'s `current_county_id`/`historical_county_id` values need checking properly (new, Step 3).** Spot-checked while verifying the `CurrentCounty`/`County` URI fix (§2.18): of 63 `Place`s with both fields set, only one (`Place_21`, "Durham" itself) has different current/historical counties — `current_county = Durham`, `historical_county = Yorkshire`. That pairing doesn't match real geography at any period found — County Durham was never part of Yorkshire, historically or administratively. Very likely a data-entry error in this one row, not a genuine county reorganisation (the reform is 1974, Local Government Act 1972, not 1971 — worth having the correct date on record for any future check). Not a code/export issue; this is a `digipal_place` data-quality question the project lead should look into directly. Logged rather than corrected here, per the project lead's request: the full set of `current_county_id`/`historical_county_id` values across `digipal_place` should be checked properly at some point, not just this one flagged case.
+
+- **Institutional hierarchy modelling (new, Step 3).** No satisfactory CIDOC-CRM property was identified for one institution being organisationally part of another (e.g. "Durham Cathedral Library is part of Durham Cathedral") — see §2.15. `P10 falls within` is the wrong property (`E4 Period` only); `P107 has current or former member` was considered but rejected on semantic grounds (its range, `E39 Actor`, is technically satisfied since `E74 Group ⊑ E39 Actor`, but "member" doesn't correctly describe organisational containment). A real relationship worth modelling properly for other Archetype-based projects, even though DigiPal's own single instance turned out to be an erroneous self-reference and was simply dropped. Needs a fresh look, possibly outside base CIDOC-CRM (an extension, or a documented `EX:` property) if no suitable existing property turns up.
+
+- **`Owner`'s structure, `Repository`'s data quality, and the case for a full event-driven ownership redesign (new, Step 3).** Started from a narrower `P74 has current or former residence` domain/range check (`Owner —P74→ Repository`, but `Repository` is `E74 Group`, not `E53 Place` — nonsensical as written, e.g. *"Worcester Cathedral Library has current residence Worcester"*) and grew into a larger open question over the course of discussion:
+
+  - **Immediate fix, narrow scope**: `owner['repository_id']` was using `P74` while its sibling fields (`person_id`, `institution_id`) both correctly use `owl:sameAs` — fixed to match (`owner_uri —owl:sameAs→ repository_uri`), on the reasoning that all three fields are alternative ways of saying "this Owner record *is* this entity." **Implemented and verified in export** (a first attempt only updated the explanatory code comment without changing the actual `g.add(...)` call — caught and corrected; confirmed 0 `Owner`s remaining with `P74`, 993 correctly using `owl:sameAs → Repository`).
+  - **Deeper structural question, not actioned**: is treating `Owner` as `sameAs` its owning entity even correct in the first place? The project lead's own account of `digipal_owner`: it's really a linking/assertion table between the physical object (`Item_Part`/`Current_Item`/`Historical_Item` — in practice only `Item_Part` is ever populated) and the owning entity, and its actual purpose historically was to record *when* ownership changed ("this is when it arrived at/was acquired by the institution") — implying `Owner` may carry acquisition-date/evidence fields that the current `sameAs` treatment discards entirely, since `sameAs` only makes sense if `Owner` is a pure alias with no independent facts of its own. Not yet checked whether such fields exist and are unread by the script. The project lead judged the adjacent `Item_Part —P50_has_current_keeper→ Owner` link itself *not* a concern — current custody is an unambiguous fact answering "where do I consult this manuscript today," with no real scholarly uncertainty, so no evidentiary apparatus is needed there specifically.
+  - **`Repository`'s own data-quality issue**: the table is meant to hold institutions but in practice sometimes holds a named individual (a Person) or even a bare Place name ("Ireland," a town) — in every case, per the project lead, intended as a shorthand for "some unidentified institution located here." **Decision: treat this as acceptable, deliberate shorthand, not a defect** — even a Person-as-Repository can reasonably be typed `E74 Group`, on the (checked) basis that `E74 Group`'s own CIDOC-CRM scope note explicitly permits single-member groups for "official position"-type cases (*"it may happen that the Group never had more than one member"*). One documented internal tension in the standard worth being aware of, not blocking this decision: `P107 has current or former member`'s own scope note separately states *"a Group necessarily consists of more than one member"* — CIDOC-CRM's class-level and property-level scope notes disagree with each other here. Irrelevant to DigiPal's actual data (no `P107` membership is ever asserted for a Repository-as-Person), but would matter if any future consumer tried to strictly validate a single-member `E74 Group` instance against `P107`'s wording specifically.
+  - **The proper CIDOC-CRM answer — event-driven modelling via `E8 Acquisition`** — confirmed as the standard-recommended approach for ownership/provenance changes, and checked specifically against DigiPal's realistic constraints (sparse data, date uncertainty, unidentified acquirers, gaps in the chain) via the official CRM Primer rather than assumed:
+    - **Gaps and fragmentary chains are explicitly, officially supported**, not a workaround: the Primer documents two valid patterns side by side — a "multiple acquisition event pattern" for *"isolated facts"* with no known chain between them (each acquisition stands alone, no link to what came before/after required), versus a "single acquisition event pattern" when the full chain is known. Both are stated to *"semantically reflect the knowledge correctly,"* and are uniformly queryable together.
+    - **Rough/uncertain dates**: standard `E52 Time-Span` idiom (`P79`/`P80` "is qualified by," earliest/latest bound properties) — the same general apparatus already used elsewhere in this export for `Date`/`Date_Period`, not a new pattern.
+    - **"Some institution somewhere in Ireland"**: either attach the vague `E53 Place` via `P7_took_place_at` on the Acquisition event without naming an acquirer at all (CRM permits an event with roles left unfilled), or assert a minimally-described, unnamed `E74 Group`. Both valid; the better fit likely depends on whether "somewhere in Ireland" means "acquirer unknown" or "acquirer vaguely known."
+    - **Triple-count/complexity impact, estimated concretely rather than left vague**: each `Owner` row today produces roughly 2–4 triples (`sameAs` plus a few literal flags). A proper `E8 Acquisition` per ownership record would need the event's own typing, `P22`/`P23` (actor transferred to/from), `P24` (the item), `P4_has_time-span` pointing at a *separate* `E52 Time-Span` resource (itself 2–3 more triples), and optionally `P7` (place) and `P3` (evidence note) — plausibly **6–10+ triples per acquisition**, roughly a 2–3× increase for this specific slice of data. Not structurally alarming against the export's current ~174,000 total triples, but a real jump in both volume and query complexity (chained event-hopping vs. a single direct link) specifically for ownership data.
+  - **Not actioned** — this is a genuine redesign (new event class, new Time-Span sub-resources, `Owner`'s whole typing/relationship shape reconsidered), not a property swap, and depends on first checking whether `Owner` actually carries unread evidence/date fields. Logged here in full so the analysis isn't lost before that redesign is scoped properly.
+
+- **New modelling TODOs left in the code by the project lead, not yet investigated.** Six comments added directly to `creation_rdf_float_id_fixed.py`, flagged as out of scope for the current error-fixing pass: (1) `arch:Text`/`text_uri` typed `CRMtx.TX1_Written_Text` — flagged as likely wrong, since `TX1` is a Physical Feature, not a Linguistic Object; project lead suggests `E33_Linguistic_Object` or an FRBRoo `Expression` instead. (2) `GraphComponent`'s superclass is unclear — assumed `E25` but noted that `P138` wouldn't then work; needs checking. (3) A comment questioning whether graph component features are being (redundantly) handled twice, possibly a leftover from an earlier refactor. (4) Idiograph modelling flagged as very lightly done — apparently only linked to Hand, nothing more; open question whether it needs fuller treatment. (5) Missing `Image`–`ItemPart` and `Hand`–`Image` links noted for the ontology (not the export, since images aren't currently included) — filenames/image sizes suggested as a minimum. (6) A question of whether CIDOC-CRM's FRBRoo has been superseded by LRMoo, and if so whether the namespace should be updated. None of these actioned yet — recorded here so they aren't lost before the relevant step (likely step 6 of the phase plan, reviewing `EX:` catch-all properties, or the standards-conformance recheck in step 3/7).
+- **Item Part typed `FRBRoo F5 Item` — possible deeper modelling issue (new, Step 3).** Surfaced while tracing the `Image`→`Repository` chain for the `MediaPermission` fix: the `itempart` loop builds a variable confusingly named `F5_Item_uri` that actually points to the `Item_<id>` URI form (not `Item_Part_<id>`, which is what actually receives `rdf:type F5_Item` elsewhere, in the `itempartitem` loop) — the two are only connected via `owl:sameAs`, not a naming bug in the usual sense (both URI forms are used deliberately elsewhere and tied together), but confusing enough to prompt the question. The project lead's suspicion, not yet investigated: `Item_Part` may not actually be a good fit for `FRBRoo F5 Item` conceptually at all. Not actioned — needs a proper look at what `F5 Item` requires versus what `Item_Part` actually represents in DigiPal (a physical constituent of a `Historical_Item`, potentially spanning or being spanned by multiple `Current_Item`s) before deciding whether the typing, the `sameAs` chain, or both need revising.
+
+- **Systematic check for empty resource sets across the whole export.** `Layout`/`Dimension` turned out to have ~78% genuinely empty resources (no real content, just default-value nulls/`False`/`0`), fixed by filtering them out entirely — see the schema report §1 finding #1. `Collation` shows the same pattern (raised by the project lead, Step 2) and is being filtered the same way (see below). Since this has now turned up twice independently, it's worth a systematic pass across every table-derived resource in the export (not just the two found so far) to check for the same "all-null/zero/default" pattern before assuming a given resource's non-existence would be a real absence rather than legitimate filtering. Not yet done comprehensively — logged here so it isn't lost, and the same "0/False only counts as real content when at least one other field is populated" principle (agreed for `Layout`, schema report §1) should apply as the working rule unless a specific table's data suggests otherwise.
+- **`Layout`/`Collation` — `E54 Dimension` modelling needs revisiting (new, Step 2).** Surfaced while designing the `Collation` fix: per the CIDOC-CRM spec, `E54 Dimension` is scoped to *"quantifiable properties... that can be approximated by values"* and represents **a single measurable quantity**, not a bundle of several. `Layout`'s current `Dimension` resource doesn't match this — it bundles five distinct measurements (`page_height`, `page_width`, `frame_height`, `frame_width`, `tramline_width`) as separate literals on one shared `E54 Dimension` instance, where the spec implies each should really be its own `Dimension` (e.g. via repeated `P43_has_dimension`, one per measurement, each typed via `P2_has_type` to say which kind of dimension it is). Separately, and just as importantly: **categorical/boolean fields don't belong under `E54 Dimension` or `P43_has_dimension` at all** — `fragment` (`Collation`), and by the same reasoning `bilinear_ruling`/`insular_pricking`/`multiple_sheet_rulling` (`Layout`), are statuses or type-classifications, not quantifiable measurements, and would need a different treatment (e.g. `E55 Type` + `P2_has_type`, matching the pattern already used for `FORMAT_TYPE`/`ACCEPTED_TYPE` elsewhere in the script) if formalised properly, rather than sitting as plain `EX:` literals as they currently do. **Decision (Step 2): leave the current model and code as-is for now** rather than patch `Layout` and `Collation` separately and inconsistently — both need a single, coordinated modelling pass together once the current error-fixing round is done, rather than two independent, potentially-diverging fixes now. The `Collation` empty-row-filtering and predicate-collision fixes (see below) proceed using the existing `P46_is_composed_of`/`E18_Physical_Thing` shape unchanged, pending that future pass.
+- **SQL-to-RDF mapping report**: a report mapping the original DigiPal SQL database directly to the RDF export has been requested for later. Deliberately deferred until the modelling work in this and the companion schema report is finalised, so the mapping documents the settled model rather than a moving target.
+- **Attribution evidence for Hand and Historical Item dating/place** (broadened from the original "Hand `dateevidence`" note): `DateEvidence` (Hand), `HistoricalItemDate` (Historical Item date evidence), and `ItemOrigin` (Historical Item place/institution evidence) — none currently read by the export script. Genuine, confirmed data loss relative to the source database. The current fixing pass gives this its target CRM shape (`E13 Attribute Assignment` per evidentiary row, §2.7); actually populating it is next-stage work, once the current round of errors is resolved.
+- **Hand vs. Hand Instance (conceptual, not a bug).** Surfaced while resolving the split-manuscript problem for the Writing/Item Part design (§2.7): under the current model, `Hand.item_part` is a 1:1 legacy FK, so if a Historical Item written by one scribe in one sitting is later physically divided into multiple Current Items, that necessarily produces multiple Hand records for what was scholarly-speaking one hand — a real conflict with how "hand" is defined in the scholarship (a scribal identity/style, not "marks on the page"), not just a database quirk. Agreed direction: split the current single `Hand` class into an **abstract Hand** (the scribal identity/style, not tied to any Item Part — the same Type/realisation pattern already used for `arch:Script ⊑ TX10 Style`) and a **Hand Instance** (the item-part-bound occurrence, produced by a local `TX2 Writing`, pointing back to its abstract Hand) — the "Instance" naming also more accurately reflects that this level is about the physical occurrence on the page, not the scribal identity itself, which colleagues have separately noted "hand" shouldn't mean. This resolves the split-item case cleanly (one abstract Hand, two Hand Instances, no multiplication of scribal identity) but requires deciding, for every property currently attached to "Hand" (dating, place, description, features, etc.), which of the two levels it actually belongs to — not obvious in every case. **Logged as future work, not part of the current error-fixing pass.**
+- **Review of `EX:` (digipal.eu/ontology#) literal properties against core CIDOC-CRM.** The export uses a fair number of local `EX:` predicates (e.g. `EX.dubitable`, `EX.evidence`, `EX.legacy_reference`) that were treated throughout this review as expected RDB-flattening (implementation-only fields with no CRM equivalent, per the original schema report §4). Worth a dedicated pass to check whether some of these actually do have a proper CIDOC-CRM equivalent that should be used instead of a bespoke local property — flagged generally, not yet reviewed case-by-case.
+- **Unconditional `Literal(...)` calls without a `pd.notna()` guard — resolved for the fields checked (Step 2, implemented).** The float/int-in-`Literal()` issue itself is resolved (see schema report §1 finding #8) — but fixing it surfaced this related, more consequential defect: several fields are written into `Literal(...)` with no null-check at all, so a missing source value produces a literal `"nan"^^xsd:double` (or, for booleans, a nonsense string `"None"`) in the export rather than simply omitting the triple. **Full systematic pass completed**, checked against Django model nullability (`blank=True`/`null=True`) rather than only current-export symptoms, per the project lead's correction that schema-nullable fields need checking regardless of whether the current DigiPal snapshot happens to have any actual nulls. Confirmed and fixed: `Date.sort_order`/`band`/`additional_band` (51 `"nan"` literals removed, done alongside the float-ID fix); `Archive.dubitable`, `ItemOrigin.dubitable`, `Date.post_conquest`, `Date.s_xi`, `Date.min_weight`, `Date.max_weight` (6 more fields, including 4 confirmed live `<ex:dubitable>None</ex:dubitable>` instances on `Archive` and 2 confirmed `"nan"` instances on `Date.min_weight`/`max_weight`) — **implemented and verified in export**: 0 remaining `"None"`/`"nan"` literals anywhere; `dubitable`/`post_conquest`/`s_xi` now consistently typed `xsd:boolean` throughout (the `str()`-vs-raw-value inconsistency fixed for these fields as part of the same change, via `bool(...)`). Confirmed safe and left alone: every non-nullable `CharField`, every `['id']` primary-key reference, and four initial false positives from a first-pass heuristic that turned out to already be correctly guarded a few lines above the `Literal()` call (`Institution.foundation`/`refoundation`, `Layout.insular_pricking`, `Description.description`, `Date.evidence`) — all verified by reading the actual surrounding code, not assumed.
+- **Inconsistent boolean typing — checked and closed, no further code change needed (Step 2).** Fixing the `dubitable` cases above raised the concern that other boolean fields might have the same `str(...)`-before-`Literal()` mistyping bug. Full systematic check done: every boolean field in the script (24 total, including `Owner.dubitable` — a separate column from `Archive`/`ItemOrigin`'s `dubitable`, initially missed and added on a second pass) already serializes correctly as `xsd:boolean`. A whole-script search for any remaining `str(...)`-wrapped boolean field found zero instances — the 6 already fixed were the only occurrences of that specific pattern. Confirmed structurally robust going forward, not just correct for this one export: unlike the nullable-integer float-ID bug, Postgres boolean columns map to native Python `True`/`False`/`None` via psycopg2 regardless of nulls present, so there's no data-dependent upcasting mechanism that could silently reintroduce this issue later — the only way this bug occurs is the specific `str(...)` wrapping pattern, which is now fully eliminated. `multiple_sheet_rulling` shows zero values in the export — **confirmed against the live SQL database (not just this export) that the field is always `NULL`** in DigiPal's data; genuinely empty, not a bug, consistent with the broader empty-resource-set pattern noted above. Also confirmed: the field's apparent misspelling (`multiple_sheet_rulling`, not `_ruling`) is not a code error — the database column itself uses this spelling, so the code is correct as written and should not be "fixed."
+- **`Decoration.illuminated` — real field, never exported (found while checking boolean typing).** Not a typing bug but a straightforward omission: the field exists on the Django model but the `decoration` loop never reads it. **Implemented and verified**: 1,325 triples added, correctly typed `xsd:boolean`, matching the existing `illustrated`/`decorated` pattern.
+- **Source-data quality: `Language.name` "Latin with Bounds" (`language_id = 7`) is an unreliable category** (§2.2) — confirmed via two spot-checked instances (Historical Item P63, S319, cross-referenced against LangScape and eSawyer respectively) that this single label covers genuinely different real situations (English bounds in one case, Latin bounds in the other). Correcting the underlying DigiPal data is out of scope for this review; logged here so it's on record before the language/vernacular unification work (above) proceeds. Only two of the 11 `Language.name` values have been spot-checked this way — whether others hide similar inconsistencies is unknown.
+- **Responsibility/attribution data, systematically absent** (surfaced via Annotation's `author_id`, §2.10, but general): who-did/asserted-what information exists at various points in the source data (e.g. `annotation.author_id`) but is not captured anywhere in the current export, and this is consistent throughout rather than specific to Annotation — adding it in one place while absent elsewhere wasn't judged worthwhile. `dcterms:creator` is the recommended property if and when this is addressed as a whole, rather than piecemeal.
+- **Annotation adjacency (`before`/`after`), not modelled, logged as lost data** (§2.10): confirmed via the Django model that `annotation.before`/`.after` are real foreign keys to `Allograph`, denormalizing "the type of the immediately preceding/following occurrence in the manuscript" — almost never used in practice, so excluded from the current export by decision rather than fixed. If reinstated: no ready-made CRM/CRMtex property fits (`TX11 Grapheme Occurrence`/`TX12 Grapheme Sequence` are the right classes for a positioned occurrence, but `TXP17 has part` is composition, not adjacency, and CRMtex has no dedicated "precedes/follows" property) — a custom `arch:` property (e.g. `arch:immediately precedes`/`arch:immediately follows`) would be needed.
+- **Language/vernacular unification** (§2.2): retire `historicalitem.language`, `historicalitem.vernacular`, `historicalitemdate.vernacular`, and `hand.latin_only` in favour of `Text` and `Hand` each carrying their own `TXP9`/`TXP6`-via-Writing-System language route, per the project lead's stated ideal. Consistency-checked via SQL against the monolingual-Item-Part slice of the data: the mapping itself is confirmed correct in principle, but ~7% (30/423 checked) of Hands disagree with it, confirmed to be data-entry errors rather than a genuine conceptual gap. The CRM route itself is now fully settled (§2.2 — Text stays `TX1 Written Text`, no reclassification; language via each entity's own Writing System, not derived from one to the other). Needs (a) correcting the identified data-entry errors (and checking for equivalent ones in the fuller, non-monolingual data), and (b) resolving the `language_id = 7` ("Latin with Bounds") ambiguity instance-by-instance. The `text_languages`/`text_categories` missing-link bug feeding into this is already fixed (§2.2); `P72` remains on Historical Item and (now) Text in the meantime, imperfect but not regressed, pending the Writing-System route being implemented.
+- **Text-level Script information** (§2.2): Text's new Writing System resource could also carry `TXP16 employs script → Script`, mirroring Hand's existing pattern — not implemented, since this project's data doesn't include Script information at the Text level, but noted as available for other Archetype-based projects that do.
+- **`digipal_text` app — not considered at all.** Surfaced while confirming the Annotation authorial/normal distinction (§2.10): a separate Django app, `digipal_text`, exists in the DigiPal codebase and is entirely outside the scope of the current modelling work. Explicitly out of scope for this review by decision — logged here only so its existence and omission are on record, not investigated further.
+- **Standalone SKOS vocabulary file for Component/Feature (and candidates for extension: Ontograph, Allograph)** (§2.12): resolves the `component_features` applicable-vs-typical/mutual-exclusivity question by moving the vocabulary out of CRM entirely — a `skos:ConceptScheme` with `skos:Concept`s for each Feature and `skos:Collection`s for each Component's applicable set (and, if pursued, nested collections for mutually-exclusive groups, not present in the current data). Shares URIs directly with the core RDF export (standard LOD practice, e.g. Getty AAT/Iconclass) rather than using a bridging property. A new deliverable, not an RDF-export fix — not yet built.
+
+### 6.1 Second regression check (`data_rdf_digipal_cidoc_20260828.rdf`, corrected export)
+
+The two remaining naming issues from the schema-level report (§8.2 there) are now fixed (`P4_has_time-span`, `E26_Physical_Feature`) — neither affects anything in this document, since both are naming-only and don't touch domain/range compliance. A full predicate-set and type-set diff confirms no other changes were introduced. Every finding above remains current and unaddressed.

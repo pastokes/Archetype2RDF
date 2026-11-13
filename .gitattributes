@@ -1,3 +1,0 @@
-*.owx filter=lfs diff=lfs merge=lfs -text
-*.ofn filter=lfs diff=lfs merge=lfs -text
-*.rdf filter=lfs diff=lfs merge=lfs -text
