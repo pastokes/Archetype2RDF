@@ -15,6 +15,25 @@ dtype: object
 
 [2 rows x 8 columns]
 
+--- allograph_aspects ---
+id              int64
+allograph_id    int64
+aspect_id       int64
+dtype: object
+Empty DataFrame
+Columns: [id, allograph_id, aspect_id]
+Index: []
+
+--- alphabet ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
+
 --- apitransform ---
 id                              int64
 title                             str
@@ -33,6 +52,15 @@ dtype: object
 
 [2 rows x 10 columns]
 
+--- alphabet_hands ---
+id             int64
+alphabet_id    int64
+hand_id        int64
+dtype: object
+Empty DataFrame
+Columns: [id, alphabet_id, hand_id]
+Index: []
+
 --- appearance ---
 id                           int64
 legacy_id                    int64
@@ -47,6 +75,17 @@ dtype: object
 1   2  -663836257    Scribbled  ...          --- 2012-05-22 13:06:40.321932+00:00 2012-05-22 13:06:40.321947+00:00
 
 [2 rows x 7 columns]
+
+--- authenticitycategory ---
+id                       int64
+name                       str
+slug                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, slug, created, modified]
+Index: []
 
 --- archive ---
 id                                  int64
@@ -102,6 +141,27 @@ dtype: object
    id                name                          created                         modified
 0  10  cross stroke (eth) 2012-05-22 13:06:40.925792+00:00 2012-07-03 15:37:10.207725+00:00
 1   2         a-component 2012-05-22 13:06:40.710385+00:00 2012-05-22 13:06:40.713170+00:00
+
+--- currentitem_owners ---
+id                int64
+currentitem_id    int64
+owner_id          int64
+dtype: object
+Empty DataFrame
+Columns: [id, currentitem_id, owner_id]
+Index: []
+
+--- contentattribution ---
+id                            int64
+title                           str
+message                         str
+created          datetime64[s, UTC]
+modified         datetime64[s, UTC]
+short_message                   str
+dtype: object
+Empty DataFrame
+Columns: [id, title, message, created, modified, short_message]
+Index: []
 
 --- currentitem ---
 id                             int64
@@ -209,6 +269,15 @@ dtype: object
 1  1008              1274.0          2  ...     NaN      NaN     NaN
 
 [2 rows x 9 columns]
+
+--- graph_aspects ---
+id           int64
+graph_id     int64
+aspect_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, graph_id, aspect_id]
+Index: []
 
 --- graph ---
 id                             int64
@@ -407,6 +476,28 @@ dtype: object
 
 [2 rows x 7 columns]
 
+--- idiograph_aspects ---
+id              int64
+idiograph_id    int64
+aspect_id       int64
+dtype: object
+Empty DataFrame
+Columns: [id, idiograph_id, aspect_id]
+Index: []
+
+--- itempartauthenticity ---
+id                           int64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
+item_part_id                 int64
+category_id                  int64
+source_id                    int64
+note                           str
+dtype: object
+Empty DataFrame
+Columns: [id, created, modified, item_part_id, category_id, source_id, note]
+Index: []
+
 --- institutiontype ---
 id                        int64
 name                        str
@@ -463,6 +554,15 @@ dtype: object
 1   5                3        BL Additional Ch. 19795  ...         NaN   NaN                           NaN
 
 [2 rows x 13 columns]
+
+--- historicalitem_owners ---
+id                   int64
+historicalitem_id    int64
+owner_id             int64
+dtype: object
+Empty DataFrame
+Columns: [id, historicalitem_id, owner_id]
+Index: []
 
 --- historicalitemtype ---
 id                        int64
@@ -580,6 +680,16 @@ dtype: object
    id         name                          created                         modified
 0   1  punctuation 2012-05-22 13:06:41.768102+00:00 2012-05-22 13:06:41.768119+00:00
 1   2       letter 2012-05-22 13:06:41.780215+00:00 2012-05-22 13:06:41.780231+00:00
+
+--- itemparttype ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
 
 --- place ---
 id                                    int64
@@ -707,6 +817,23 @@ dtype: object
 
 [2 rows x 18 columns]
 
+--- placeevidence ---
+id                                 int64
+legacy_id                          int64
+hand_id                            int64
+place_id                           int64
+place_description                    str
+reference_id                       int64
+evidence                             str
+created               datetime64[s, UTC]
+modified              datetime64[s, UTC]
+historical_item_id                 int64
+written_as                           str
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, hand_id, place_id, place_description, reference_id, evidence, created, modified, historical_item_id, written_as]
+Index: []
+
 --- mediapermission ---
 id                 int64
 label                str
@@ -716,6 +843,16 @@ dtype: object
    id         label                                    display_message  permission
 0   3  Have Licence                                                            300
 1   1    No Licence  A full image of this page is not yet available...         200
+
+--- placetype ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
 
 --- ownertype ---
 id                        int64
@@ -908,6 +1045,26 @@ dtype: object
 0   1          1             1
 1   2          1             2
 
+--- scriptcomponent ---
+id                           int64
+script_id                    int64
+component_id                 int64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, script_id, component_id, created, modified]
+Index: []
+
+--- scriptcomponent_features ---
+id                    int64
+scriptcomponent_id    int64
+feature_id            int64
+dtype: object
+Empty DataFrame
+Columns: [id, scriptcomponent_id, feature_id]
+Index: []
+
 --- text_categories ---
 id             int64
 text_id        int64
@@ -954,6 +1111,20 @@ dtype: object
 0   1  Draft 2015-04-16 12:48:27.164873+00:00 2015-04-16 12:48:27.167550+00:00  draft          10
 1   2   Live 2015-04-16 12:48:27.171451+00:00 2015-04-16 12:48:27.172485+00:00   live         100
 
+--- text_textpattern ---
+id                          int64
+title                         str
+key                           str
+pattern                       str
+order                       int64
+description                   str
+created        datetime64[s, UTC]
+modified       datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, title, key, pattern, order, description, created, modified]
+Index: []
+
 --- django_content_type ---
 id           int64
 app_label      str
@@ -962,6 +1133,28 @@ dtype: object
     id app_label                 model
 0  179   digipal  itempartauthenticity
 1  180   digipal  authenticitycategory
+
+--- text_textcontent ---
+id                             int64
+type_id                        int64
+item_part_id                   int64
+created           datetime64[s, UTC]
+modified          datetime64[s, UTC]
+text_id                        int64
+attribution_id                 int64
+dtype: object
+Empty DataFrame
+Columns: [id, type_id, item_part_id, created, modified, text_id, attribution_id]
+Index: []
+
+--- text_textcontent_languages ---
+id                int64
+textcontent_id    int64
+language_id       int64
+dtype: object
+Empty DataFrame
+Columns: [id, textcontent_id, language_id]
+Index: []
 
 --- textitempart ---
 id                            int64
@@ -977,6 +1170,42 @@ dtype: object
 0   1   NaN           762        1 2013-11-04 17:13:22.275274+00:00 2013-11-04 17:13:22.275303+00:00  NaN  NaN
 1   3   NaN           762        3 2013-11-04 17:13:22.337034+00:00 2013-11-04 17:13:22.337058+00:00  NaN  NaN
 
+--- text_textcontentxml ---
+id                              int64
+status_id                       int64
+text_content_id                 int64
+created            datetime64[s, UTC]
+modified           datetime64[s, UTC]
+content                           str
+last_image_id                   int64
+dtype: object
+Empty DataFrame
+Columns: [id, status_id, text_content_id, created, modified, content, last_image_id]
+Index: []
+
+--- text_textcontentxmlcopy ---
+id                        int64
+source_id                 int64
+content                  object
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+ahash                       str
+dtype: object
+Empty DataFrame
+Columns: [id, source_id, content, created, modified, ahash]
+Index: []
+
+--- text_textcontenttype ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+slug                       str
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified, slug]
+Index: []
+
 --- allographcomponent ---
 id                            int64
 allograph_id                  int64
@@ -987,6 +1216,15 @@ dtype: object
    id  allograph_id  component_id                          created                         modified
 0   1             2            11 2012-05-22 13:06:41.786335+00:00 2013-05-02 10:17:56.673202+00:00
 1   2             2            22 2012-05-22 13:06:41.788845+00:00 2013-05-02 10:17:56.678589+00:00
+
+--- allographcomponent_features ---
+id                       int64
+allographcomponent_id    int64
+feature_id               int64
+dtype: object
+Empty DataFrame
+Columns: [id, allographcomponent_id, feature_id]
+Index: []
 
 --- annotation ---
 id                                   int64
@@ -1014,6 +1252,17 @@ dtype: object
 1  37224       587  http://digipal-stg.cch.kcl.ac.uk/iip/iipsrv.fc...  ...       NaN   NaN                  NaN
 
 [2 rows x 19 columns]
+
+--- text_textannotation ---
+id                            int64
+annotation_id                 int64
+elementid                       str
+created          datetime64[s, UTC]
+modified         datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, annotation_id, elementid, created, modified]
+Index: []
 
 --- imageannotationstatus ---
 id                        int64
@@ -1055,6 +1304,25 @@ dtype: object
 
 [2 rows x 22 columns]
 
+--- aspect ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
+
+--- aspect_features ---
+id            int64
+aspect_id     int64
+feature_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, aspect_id, feature_id]
+Index: []
+
 --- component_features ---
 id                              int64
 component_id                    int64
@@ -1066,6 +1334,15 @@ dtype: object
     id  component_id  feature_id  set_by_default                   created                  modified
 0  491            26          37           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
 1  492            26          39           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
+
+--- alphabet_ontographs ---
+id              int64
+alphabet_id     int64
+ontograph_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, alphabet_id, ontograph_id]
+Index: []
 
 --- feature ---
 id                        int64
@@ -1099,3 +1376,18 @@ dtype: object
 1   5          5   Saec. xi ex.  ... 2012-11-30 12:33:46.866922+00:00               NaN          
 
 [2 rows x 15 columns]
+
+--- text_entryhand ---
+id                           int64
+item_part_id                 int64
+entry_number                   str
+hand_label                     str
+order                        int64
+correction                    bool
+certainty                  float64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, item_part_id, entry_number, hand_label, order, correction, certainty, created, modified]
+Index: []
