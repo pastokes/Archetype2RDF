@@ -10,7 +10,7 @@
 # Added lines to include text type and language links for Text entities (missing in original code)
 # allographcomponent and character_component relationships fixed to use P148_has_component (not P65_shows_visual_item)
 # IdiomCat removed since it is not used in practice by Archetype. All references to IdiomCat have been commented out.
-# ItemPart generation fixed to include correct link to Hand: g.add((itempart_uri, CRM['P56_bears_feature'], hand_uri))
+# ItemPart generation fixed to include correct link to Hand: g.add((itempart_uri, CRM['P56_bears_feature'], handinstance_uri))
 #.   NB that Hand is a CRMtx.TX7_Written_Text_Segment, not a CRM.E36_Visual_Item, so the link is P56_bears_feature, not P65_shows_visual_item)
 #   NB also that Hand is linked directly to Item Part, not via Writing, for the same reason: the mark on a surface is directly connected to the material object,
 #      whereas in some sense the writing as activity results in the Hand, and so is in a sense intermediate between the Hand and the Item Part.
@@ -42,6 +42,8 @@
 # Promoted Locus throughout from simple field to full CIDOC Appelation Type LOCUS_TYPE structure (formerly E46 + P58, following recommended migration pattern after deprecation)
 # URL fields systematically dropped, since now out of date and not always semantically correct. Instead should now use proper LOD, for instance pointing to IIIF via Biblissima+
 # Image.transcription omitted from export because not used in Digipal and should probably be incorporated into text app export
+# If no historical_item_id in Layout record then can't link to anything, so we drop it completely.
+#    This is a data loss, but the data isn't meaningful without an HI anyway
 # TODO: Need to model, map and code the export for the text app.
 # TODO: should really change everything to braket notation for consistency
 # TODO: Problem of typing: some columns are typed as int64 but contain NaN, which is a float. This causes problems when creating URIs, so need to convert to int first, then to str. – Fixed (see above) but CHECK!
@@ -54,14 +56,19 @@
 # -------------------------------------------------------- LES IMPORTS -----------------------------------------------------------
 import pandas as pd
 import re
+import argparse
 from sqlalchemy import create_engine, inspect
-from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, URIRef, XSD
+from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, URIRef
 from datetime import datetime
 
+DEFAULT_DB_NAME = "pstokes"
+DEFAULT_FORMAT = "turtle"
+VALID_FORMATS = ["xml", "turtle"]
+
 # -------------------------------------------------------- LES FONCTIONS ---------------------------------------------------------
-def connection():
+def connection(dbname = DEFAULT_DB_NAME):
     try:
-        mydb = create_engine("postgresql+psycopg://postgres:1234@localhost:5432/pstokes")
+        mydb = create_engine("postgresql+psycopg://postgres:1234@localhost:5432/" + dbname)
         return mydb
     except Exception as e:
         print(f"**** Error connecting to database: {e} ****")
@@ -76,18 +83,48 @@ def charger_toutes_tables(engine):
         dataframes[table] = pd.read_sql_table(table, engine)
     return dataframes
 
+#def keep_digipal(dico):
+#    d = {}
+#    for key in dico.keys():
+#        if not dico[key].empty:
+#            if re.match('digipal_', key):
+#                d[key.replace("digipal_", "")] = dico[key]
+#            elif re.match('django_content_type', key):
+#                d['django_content_type'] = dico[key]
+#    return d
+
 def keep_digipal(dico):
     d = {}
     for key in dico.keys():
-        if not dico[key].empty:
-            if re.match('digipal_', key):
-                d[key.replace("digipal_", "")] = dico[key]
-            elif re.match('django_content_type', key):
-                d['django_content_type'] = dico[key]
+        if re.match('digipal_', key):
+            d[key.replace("digipal_", "")] = dico[key]
+        elif re.match('django_content_type', key):
+            d['django_content_type'] = dico[key]
     return d
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="My script description")
+    parser.add_argument(
+        "-d", "--db-name",
+        type=str,
+        default=DEFAULT_DB_NAME,
+        help="Name of the database to use"
+    )
+    parser.add_argument(
+        "-f", "--format",
+        type=str,
+        default=DEFAULT_FORMAT,
+        choices=VALID_FORMATS,
+        help="File format for the output (XML, turtle, ...)"
+    )
+    return parser.parse_args()
+
 # -------------------------------------------------------- CHARGEMENT -----------------------------------------------------------
-digipal = connection()
+args = parse_args()
+DB_NAME = args.db_name
+OUTPUT_FORMAT = args.format
+
+digipal = connection(DB_NAME)
 dfs = charger_toutes_tables(digipal)
 data = keep_digipal(dfs)
 
@@ -103,11 +140,16 @@ with open("tables_variables.txt", "w", encoding="utf-8") as f:
 
 # -------------------------------------------------------- MERGES TABLES POUR FACILITE LE TRAITEMENT -----------------------------------------------------------
 # archive
-archive = data['archive'].merge(
-    data['django_content_type'],
-    left_on="content_type_id", right_on="id",
-    suffixes=("", "_content_type"), how="left"
-)
+try:
+    archive = data['archive'].merge(
+        data['historicalitem'],
+        left_on="historical_item_id", right_on="id",
+        suffixes=("", "_historicalitem"), how="left"
+    )
+except Exception as e:
+    print(f"**** Error merging archive with historicalitem: {e} ****")
+    print("**** Check if the historicalitem table exists and has the expected columns. ****")
+    archive = pd.DataFrame()
 
 # -------------------------------------------------------- CREATION DU GRAPHE ---------------------------------------------------
 g = Graph()
@@ -116,18 +158,18 @@ g = Graph()
 CRM  = Namespace("http://www.cidoc-crm.org/cidoc-crm/")   # CIDOC-CRM
 FRBRoo = Namespace("http://iflastandards.info/ns/fr/frbr/frbroo/")  # FRBRoo. # TODO: is there now an LRMoo namespace? If so, should use that instead.
 CRMtx  = Namespace("https://cidoc-crm.org/extensions/crmtex/html/CRMtex_v2.0.html/")   # CIDOC-TX
-Gold = Namespace("https://static.vocabs.clariah.nl/docs/gold/2010.html/")  # Gold
 ANNO=Namespace("http://www.w3.org/ns/oa#") #Annotation Web
 ARCH = Namespace("https://digipal.eu/") 
 EX   = Namespace("http://digipal.eu/ontology#")            
 XSD_ = Namespace("http://www.w3.org/2001/XMLSchema#")
 DCTERMS = Namespace("http://purl.org/dc/terms/")    # PAS: Added for annotation creators
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")   # PAS: Added for altLabel
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+ORG = Namespace("http://www.w3.org/ns/org#")
 
 g.bind("crm",    CRM)
 g.bind("frbroo", FRBRoo)
 g.bind("crm-tx",    CRMtx)
-g.bind("gold", Gold)
 g.bind("archetype", ARCH)
 g.bind("web_annotation", ANNO)
 g.bind("ex",     EX)
@@ -135,11 +177,12 @@ g.bind("owl",    OWL)
 g.bind("xsd",    XSD_)
 g.bind("dcterms", DCTERMS)
 g.bind("skos",  SKOS)
+g.bind("foaf", FOAF)
 
 # --- Déclaration de l'ontologie ---
 ontologie = URIRef("http://digipal.eu/ontology")
 g.add((ontologie, RDF.type,   OWL.Ontology))
-g.add((ontologie, RDFS.label, Literal("Ontologie Digipal", lang="en")))
+g.add((ontologie, RDFS.label, Literal("Digipal Ontology", lang="en")))
 
 # Vrais imports OWL (ontologies formelles)
 g.add((ontologie, OWL.imports, URIRef("https://cidoc-crm.org/rdfs/7.1.3/CIDOC_CRM_v7.1.3.rdf")))
@@ -150,6 +193,35 @@ g.add((ontologie, RDFS.seeAlso, URIRef("http://erlangen-crm.org/efrbroo/")))
 g.add((ontologie, RDFS.seeAlso, URIRef("https://static.vocabs.clariah.nl/docs/gold/2010.html")))
 g.add((ontologie, RDFS.seeAlso, URIRef("https://www.w3.org/TR/annotation-vocab/")))
 g.add((ontologie, RDFS.seeAlso, URIRef("https://digipal.eu/")))
+
+#--------------------------------------- Declaration des métadonnées -----------------------------------------------------
+# TODO: distinguish properly between creators of the original data and creators of the export
+# TODO: define Biblissima+ as its own entity to model the funding properly
+
+RDFGRAPH_URI = URIRef("http://digipal.eu/graph")
+PAS_URI = URIRef("https://orchid.org/0000-0002-9060-9340")
+EG_URI = URIRef("https://github.com/Grim22E")
+EPHE_URI = URIRef("https://ror.org/046b3cj80")
+CESR_URI = URIRef("https://ror.org/03cv31q28")
+AOROC_URI = URIRef("https://ror.org/05nsvn336")
+
+g.add((RDFGRAPH_URI, RDF.type, DCTERMS['Dataset']))
+g.add((RDFGRAPH_URI, DCTERMS['title'], Literal(f"Export of the {DB_NAME} dataset using the Archetype RDF export", lang="en")))
+g.add((RDFGRAPH_URI, DCTERMS['creator'], PAS_URI))
+g.add((RDFGRAPH_URI, DCTERMS['creator'], EG_URI))
+g.add((RDFGRAPH_URI, DCTERMS['created'], Literal(datetime.now().strftime("%Y-%m-%d"))))
+g.add((RDFGRAPH_URI, DCTERMS['license'], URIRef("https://creativecommons.org/licenses/by/4.0/")))
+g.add((RDFGRAPH_URI, DCTERMS['description'], Literal(f"Export of the {DB_NAME} dataset using the Archetype RDF export. Mapping to RDF and export by Peter A. Stokes (EPHE/AOROC) and Eve Grimaud (CESR, Tours), in the context of Biblissima+ Cluster 4", lang="en")))
+g.add((RDFGRAPH_URI, RDFS['comment'], Literal("Biblissima+ bénéficie d’une aide de l'Etat gérée par l'ANR au titre du Programme d’investissements d’avenir intégré à France 2030, portant la référence ANR-21-ESRE-0005.", lang="fr")))
+
+g.add((PAS_URI, RDF.type, FOAF['person']))
+g.add((PAS_URI, FOAF['name'], Literal("Peter A. Stokes")))
+g.add((PAS_URI, ORG['memberOf'], EPHE_URI))
+g.add((PAS_URI, ORG['memberOf'], AOROC_URI))
+
+g.add((EG_URI, RDF.type, FOAF['person']))
+g.add((EG_URI, FOAF['name'], Literal("Eve Grimaud")))
+g.add((EG_URI, ORG['memberOf'], CESR_URI))
 
 #--------------------------------------- Declaration lien parents/enfants -----------------------------------------------------
 # --- Item / FRBRoo F5 ---
@@ -168,12 +240,13 @@ g.add((ARCH.Appearance, RDFS.subClassOf, CRM['E55_Type']))
 
 # --- Scribe ---
 g.add((ARCH.Scribe, RDFS.subClassOf, CRM.E21_Person))
+g.add((ARCH.Scribal_Practice, RDFS.subClassOf, CRM.E36_Visual_Item))
 
 # --- Writing / Trace ---
 g.add((ARCH.Trace, RDFS.subClassOf, CRMtx.TX2_Writing))
 
 # --- Written Text ---
-g.add((ARCH.Hand, RDFS.subClassOf, CRMtx.TX7_Written_Text_Segment))
+g.add((ARCH.HandInstance, RDFS.subClassOf, CRMtx.TX7_Written_Text_Segment))
 g.add((ARCH.Graph, RDFS.subClassOf, CRMtx.TX7_Written_Text_Segment))
 g.add((CRMtx.TX7_Written_Text_Segment, RDFS.subClassOf, CRMtx.TX1_Written_Text))
 g.add((CRMtx.TX1_Written_Text, RDFS.subClassOf, CRM['E25_Human-Made_Feature']))
@@ -183,7 +256,10 @@ g.add((ARCH.Idiograph, RDFS.subClassOf, ARCH.Generalised_Allograph))
 g.add((ARCH.Allograph, RDFS.subClassOf, ARCH.Generalised_Allograph))
 g.add((ARCH.Character, RDFS.subClassOf, ARCH.Generalised_Allograph))
 g.add((ARCH.Generalised_Allograph, RDFS.subClassOf, CRM.E36_Visual_Item))
-g.add((ARCH.Component, RDFS.subClassOf, CRM.E36_Visual_Item))
+# TODO: Not sure that naming of GenericComponent and VisualComponent is helpful here; TO DISCUSS
+g.add((ARCH.GenericComponent, RDFS.subClassOf, CRM['E36_Visual_Item'])) # Generic component independent of any Allograph, Graph etc. and of any specific features; the common node that connects GraphComponents and VisualComponents
+g.add((ARCH.VisualComponent, RDFS.subClassOf, CRM['E36_Visual_Item'])) # Component of Allograph, Idiograph, Character (and potentially others), the part that also bears features
+g.add((ARCH.GraphComponent, RDFS.subClassOf, CRM['E25_Human-Made_Feature'])) # Component of Graph, the physical realisation of a component on the page
 
 # --- Grapheme / Ontograph ---
 g.add((ARCH.Ontograph, RDFS.subClassOf, CRMtx.TX8_Grapheme))
@@ -227,9 +303,9 @@ g.add((CRM['E39_Actor'], RDFS.subClassOf, CRM['E77_Persistent_Item']))
 g.add((CRM['E70_Thing'], RDFS.subClassOf, CRM['E77_Persistent_Item']))
 
 # --- GOLD  ---
-g.add((Gold.Abstract, RDFS.subClassOf, CRM.E77_Persistent_Item))
-g.add((Gold.LinguisticDataStructure, RDFS.subClassOf, Gold.Abstract))
-g.add((Gold.FeatureSystem, RDFS.subClassOf, Gold.LinguisticDataStructure))
+#g.add((Gold.Abstract, RDFS.subClassOf, CRM.E77_Persistent_Item))
+#g.add((Gold.LinguisticDataStructure, RDFS.subClassOf, Gold.Abstract))
+#g.add((Gold.FeatureSystem, RDFS.subClassOf, Gold.LinguisticDataStructure))
 
 # --- E70 Thing : Human Made Thing / Legal Object ---
 g.add((CRM['E71_Human-Made_Thing'], RDFS.subClassOf, CRM['E70_Thing']))
@@ -258,8 +334,6 @@ g.add((CRM['E31_Document'], RDFS.subClassOf, CRM['E73_Information_Object']))
 g.add((CRM['E33_Linguistic_Object'], RDFS.subClassOf, CRM['E73_Information_Object']))
 g.add((CRM['E34_Inscription'], RDFS.subClassOf, CRM['E33_Linguistic_Object']))
 g.add((CRM['E36_Visual_Item'], RDFS.subClassOf, CRM['E73_Information_Object']))
-g.add((ARCH.Component, RDFS.subClassOf, CRM['E36_Visual_Item']))
-g.add((ARCH.Generalised_Allograph, RDFS.subClassOf, CRM['E36_Visual_Item']))
 g.add((CRM['E37_Mark'], RDFS.subClassOf, CRM['E36_Visual_Item']))
 g.add((CRM['E34_Inscription'], RDFS.subClassOf, CRM['E37_Mark']))
 g.add((CRM['E29_Design_or_Procedure'], RDFS.subClassOf, CRM['E73_Information_Object']))
@@ -593,59 +667,62 @@ for _, layout in data['layout'].iterrows():
     #  If other Archetype-based projects use Layout elsewhere, e.g. linked to Item Part, the URI naming should be changed accordingly.
     # - Changed model to implement full CIDOC-CRM Measurement structure
     # - Fixed issue of converting float to int for dimensions, since should be integers for these properties.
-    layout_uri = URIRef(f"http://digipal.eu/ontology#Layout_Historical_Item_{int(layout['historical_item_id'])}") 
-    g.add((layout_uri, RDF.type, CRM['E18_Physical_Thing']))
-    g.add((layout_uri, RDFS.label, Literal(f"Layout {layout['id']}")))
-
-    dimension_uris = []
-    for field_name, type_uri, uri_fragment in DIMENSION_FIELDS:
-        if pd.notna(layout[field_name]):
-            dim_uri = URIRef(f"http://digipal.eu/ontology#Dimension_Historical_Item_{int(layout['historical_item_id'])}_{uri_fragment}")
-            g.add((dim_uri, RDF.type, CRM['E54_Dimension']))
-            g.add((dim_uri, RDFS.label, Literal(f"{uri_fragment.replace('_', ' ')} {layout['id']}")))
-            g.add((dim_uri, CRM['P2_has_type'], type_uri))
-            g.add((dim_uri, CRM['P90_has_value'], Literal(int(layout[field_name]))))
-            g.add((dim_uri, CRM['P91_has_unit'], MEASUREMENT_UNIT))
-            dimension_uris.append(dim_uri)
-
-    if pd.notna(layout['lines']):
-        g.add((layout_uri, EX['lines'], Literal(int(layout['lines']))))
-    if pd.notna(layout['columns']):
-        g.add((layout_uri, EX['columns'], Literal(int(layout['columns']))))
-
-# PAS: on_top_line removed (see above)
-    if pd.notna(layout['multiple_sheet_rulling']):
-        g.add((layout_uri, EX['multiple_sheet_rulling'], Literal(layout['multiple_sheet_rulling'])))
-    if pd.notna(layout['bilinear_ruling']):
-        g.add((layout_uri, EX.bilinear_ruling, Literal(layout['bilinear_ruling'])))
-    if pd.notna(layout['comments']):
-        g.add((layout_uri, CRM.P3_has_note, Literal(layout['comments'])))
-    if pd.notna(layout['insular_pricking']):
-        # PAS: Fixed error in property name (was EX.columns)
-        g.add((layout_uri, EX['insular_pricking'], Literal(layout['insular_pricking'])))
-
-    if pd.notna(layout['hair_arrangement_id']):
-        hair =  URIRef(f"http://digipal.eu/ontology#Hair_{int(layout['hair_arrangement_id'])}")
-        g.add((layout_uri,  CRM['P45_consists_of'], hair))
-
-    # PAS: This loop is redundant in practice as Layout is only linked to Historical Items in DigiPal,
-    # but it could well be used for Item Parts in other implementations, so keep it in case.
-    # NB that if this is implemented then the naming of the layout and dimension URIs should be changed accordingly (see above)
-    # NB also that changed to implement full CIDOC-CRM Measurement model
-    if pd.notna(layout['item_part_id']):
-        itempart_layout = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(layout['item_part_id'])}")
-        g.add((itempart_layout, CRM['P46_is_composed_of'], layout_uri))
-        for dim_uri in dimension_uris:
-            g.add((itempart_layout, CRM['P43_has_dimension'], dim_uri))
-
-    # PAS: added — historical_item_id is the field actually populated in DigiPal's data;
-    # item_part_id above is kept as a fallback for other Archetype-based projects that may use it.
-    # Also: changed to implement full CIDOC-CRM Measurement model
+    # NB also, if no historical_item_id in Layout record then can't link to anything, so we drop it completely.
+    # This is a data loss, but the data isn't meaningful without an HI anyway
     if pd.notna(layout['historical_item_id']):
-        hist_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{int(layout['historical_item_id'])}")
-        g.add((hist_uri, CRM['P46_is_composed_of'], layout_uri))
-        for dim_uri in dimension_uris:
-            g.add((hist_uri, CRM['P43_has_dimension'], dim_uri))
+        layout_uri = URIRef(f"http://digipal.eu/ontology#Layout_Historical_Item_{int(layout['historical_item_id'])}") 
+        g.add((layout_uri, RDF.type, CRM['E18_Physical_Thing']))
+        g.add((layout_uri, RDFS.label, Literal(f"Layout {layout['id']}")))
+
+        dimension_uris = []
+        for field_name, type_uri, uri_fragment in DIMENSION_FIELDS:
+            if pd.notna(layout[field_name]):
+                dim_uri = URIRef(f"http://digipal.eu/ontology#Dimension_Historical_Item_{int(layout['historical_item_id'])}_{uri_fragment}")
+                g.add((dim_uri, RDF.type, CRM['E54_Dimension']))
+                g.add((dim_uri, RDFS.label, Literal(f"{uri_fragment.replace('_', ' ')} {layout['id']}")))
+                g.add((dim_uri, CRM['P2_has_type'], type_uri))
+                g.add((dim_uri, CRM['P90_has_value'], Literal(int(layout[field_name]))))
+                g.add((dim_uri, CRM['P91_has_unit'], MEASUREMENT_UNIT))
+                dimension_uris.append(dim_uri)
+
+        if pd.notna(layout['lines']):
+            g.add((layout_uri, EX['lines'], Literal(int(layout['lines']))))
+        if pd.notna(layout['columns']):
+            g.add((layout_uri, EX['columns'], Literal(int(layout['columns']))))
+
+    # PAS: on_top_line removed (see above)
+        if pd.notna(layout['multiple_sheet_rulling']):
+            g.add((layout_uri, EX['multiple_sheet_rulling'], Literal(layout['multiple_sheet_rulling'])))
+        if pd.notna(layout['bilinear_ruling']):
+            g.add((layout_uri, EX.bilinear_ruling, Literal(layout['bilinear_ruling'])))
+        if pd.notna(layout['comments']):
+            g.add((layout_uri, CRM.P3_has_note, Literal(layout['comments'])))
+        if pd.notna(layout['insular_pricking']):
+            # PAS: Fixed error in property name (was EX.columns)
+            g.add((layout_uri, EX['insular_pricking'], Literal(layout['insular_pricking'])))
+
+        if pd.notna(layout['hair_arrangement_id']):
+            hair =  URIRef(f"http://digipal.eu/ontology#Hair_{int(layout['hair_arrangement_id'])}")
+            g.add((layout_uri,  CRM['P45_consists_of'], hair))
+
+        # PAS: This loop is redundant in practice as Layout is only linked to Historical Items in DigiPal,
+        # but it could well be used for Item Parts in other implementations, so keep it in case.
+        # NB that if this is implemented then the naming of the layout and dimension URIs should be changed accordingly (see above)
+        # NB also that changed to implement full CIDOC-CRM Measurement model
+        if pd.notna(layout['item_part_id']):
+            itempart_layout = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(layout['item_part_id'])}")
+            g.add((itempart_layout, CRM['P46_is_composed_of'], layout_uri))
+            for dim_uri in dimension_uris:
+                g.add((itempart_layout, CRM['P43_has_dimension'], dim_uri))
+
+        # PAS: added — historical_item_id is the field actually populated in DigiPal's data;
+        # item_part_id above is kept as a fallback for other Archetype-based projects that may use it.
+        # Also: changed to implement full CIDOC-CRM Measurement model
+        if pd.notna(layout['historical_item_id']):
+            hist_uri = URIRef(f"http://digipal.eu/ontology#Historical_Item_{int(layout['historical_item_id'])}")
+            g.add((hist_uri, CRM['P46_is_composed_of'], layout_uri))
+            for dim_uri in dimension_uris:
+                g.add((hist_uri, CRM['P43_has_dimension'], dim_uri))
 
 for _, hair in data['hair'].iterrows():
     hair_uri =  URIRef(f"http://digipal.eu/ontology#Hair_{int(hair['id'])}")
@@ -952,60 +1029,60 @@ for _, owner in data['owner'].iterrows():
         g.add((owner_uri,  CRM['P141_assigned'], repository_uri))
     
 for _, hand in data['hand'].iterrows():
-    hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(hand['id'])}")
-    g.add((hand_uri, RDF.type,      ARCH.Hand))
+    handinstance_uri = URIRef(f"http://digipal.eu/ontology#HandInstance_{int(hand['id'])}")
+    g.add((handinstance_uri, RDF.type, ARCH.HandInstance))
     if pd.notna(hand['num']):
-        g.add((hand_uri, EX.num, Literal(hand['num'])))
+        g.add((handinstance_uri, EX.num, Literal(hand['num'])))
     if pd.notna(hand['scragg']):
-        g.add((hand_uri, EX.scragg, Literal(hand['scragg'])))
+        g.add((handinstance_uri, EX.scragg, Literal(hand['scragg'])))
     if pd.notna(hand['em_title']):
-        g.add((hand_uri, EX.em_title, Literal(hand['em_title'])))
+        g.add((handinstance_uri, EX.em_title, Literal(hand['em_title'])))
     if pd.notna(hand['label']):
-        g.add((hand_uri, RDFS.label, Literal(hand['label'])))
+        g.add((handinstance_uri, RDFS.label, Literal(hand['label'])))
     if pd.notna(hand['display_note']):
-        g.add((hand_uri, EX.display_note, Literal(hand['display_note'])))
+        g.add((handinstance_uri, EX.display_note, Literal(hand['display_note'])))
     # PAS: Don't export internal notes, as they are not part of the public data and are only for internal use in DigiPal.
 #    if pd.notna(hand['internal_note']):
-#        g.add((hand_uri, EX.internal_note, Literal(hand['internal_note'])))
+#        g.add((handinstance_uri, EX.internal_note, Literal(hand['internal_note'])))
     if pd.notna(hand['relevant']):
-        g.add((hand_uri, EX.relevant, Literal(hand['relevant'])))
+        g.add((handinstance_uri, EX.relevant, Literal(hand['relevant'])))
     if pd.notna(hand['latin_only']):
-        g.add((hand_uri, EX.latin_only, Literal(hand['latin_only'])))
+        g.add((handinstance_uri, EX.latin_only, Literal(hand['latin_only'])))
     if pd.notna(hand['gloss_only']):
-        g.add((hand_uri, EX.gloss_only, Literal(hand['gloss_only'])))
+        g.add((handinstance_uri, EX.gloss_only, Literal(hand['gloss_only'])))
     if pd.notna(hand['membra_disjecta']):
-        g.add((hand_uri, EX.membra_disjecta, Literal(hand['membra_disjecta'])))
+        g.add((handinstance_uri, EX.membra_disjecta, Literal(hand['membra_disjecta'])))
     # PAS: Fixed error of float to int conversion for num_glosses and num_glossing_hands, since they should be integers for these properties.
     if pd.notna(hand['num_glosses']):
-        g.add((hand_uri, EX.num_glosses, Literal(int(hand['num_glosses']))))
+        g.add((handinstance_uri, EX.num_glosses, Literal(int(hand['num_glosses']))))
     if pd.notna(hand['num_glossing_hands']):
-        g.add((hand_uri, EX.num_glossing_hands, Literal(int(hand['num_glossing_hands']))))
+        g.add((handinstance_uri, EX.num_glossing_hands, Literal(int(hand['num_glossing_hands']))))
     if pd.notna(hand['scribble_only']):
-        g.add((hand_uri, EX.scribble_only, Literal(hand['scribble_only'])))
+        g.add((handinstance_uri, EX.scribble_only, Literal(hand['scribble_only'])))
     if pd.notna(hand['imitative']):
-        g.add((hand_uri, EX.imitative, Literal(hand['imitative'])))
+        g.add((handinstance_uri, EX.imitative, Literal(hand['imitative'])))
     if pd.notna(hand['comments']):
-        g.add((hand_uri, CRM.P3_has_note, Literal(hand['comments'])))
+        g.add((handinstance_uri, CRM.P3_has_note, Literal(hand['comments'])))
     if pd.notna(hand['display_label']):
-        g.add((hand_uri, EX.display_label, Literal(hand['display_label'])))
+        g.add((handinstance_uri, EX.display_label, Literal(hand['display_label'])))
     if pd.notna(hand['locus']) and str(hand['locus']).strip() != '' and pd.notna(hand['item_part_id']):
         locus_uri = get_locus_appellation_uri(hand['item_part_id'], hand['locus'])
         g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
         g.add((locus_uri, RDFS.label, Literal(hand['locus'])))
         g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
-        g.add((hand_uri, CRM['P1_is_identified_by'], locus_uri))
+        g.add((handinstance_uri, CRM['P1_is_identified_by'], locus_uri))
         itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(hand['item_part_id'])}")
         g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
 
     if pd.notna(hand['surrogates']):
-        g.add((hand_uri, EX.surrogates, Literal(hand['surrogates'])))
+        g.add((handinstance_uri, EX.surrogates, Literal(hand['surrogates'])))
 
     # PAS: selected_locus removed — always identical to locus in DigiPal, and is internal
     # bookkeeping rather than a distinct fact (see report). Logged as a deliberate omission.
 #    if pd.notna(hand['selected_locus']):
-#        g.add((hand_uri, EX.selected_locus, Literal(hand['selected_locus'])))
+#        g.add((handinstance_uri, EX.selected_locus, Literal(hand['selected_locus'])))
     if pd.notna(hand['ker']):
-        g.add((hand_uri, EX.ker, Literal(hand['ker'])))
+        g.add((handinstance_uri, EX.ker, Literal(hand['ker'])))
 
     # PAS: Writing moved to Hand-level
     # NB no direct link from Writing to Item Part — relies on the transitive Writing—P108→Hand←P56—ItemPart path.
@@ -1013,7 +1090,7 @@ for _, hand in data['hand'].iterrows():
     # and is in a sense exactly the link between the Activity and the physical surface.
     writing_uri = URIRef(f"http://digipal.eu/ontology#Writing_{int(hand['id'])}")
     g.add((writing_uri, RDF.type, CRMtx.TX2_Writing))
-    g.add((writing_uri, CRM.P108_has_produced, hand_uri))
+    g.add((writing_uri, CRM.P108_has_produced, handinstance_uri))
     if pd.notna(hand['scribe_id']):
         scribe_uri = URIRef(f"http://digipal.eu/ontology#Scribe_{int(hand['scribe_id'])}")
         g.add((writing_uri, CRM.P14_carried_out_by, scribe_uri))
@@ -1026,14 +1103,14 @@ for _, hand in data['hand'].iterrows():
         date_uri = URIRef(f"http://digipal.eu/ontology#Date_Period_{int(hand['assigned_date_id'])}")
         attr_assignment_date = URIRef(f"http://digipal.eu/ontology#HandDate_{int(hand['id'])}")
         g.add((attr_assignment_date, RDF.type, CRM['E13_Attribute_Assignment']))
-        g.add((attr_assignment_date, CRM['P140_assigned_attribute_to'], hand_uri))
+        g.add((attr_assignment_date, CRM['P140_assigned_attribute_to'], handinstance_uri))
         g.add((attr_assignment_date, CRM['P141_assigned'], date_uri))
         g.add((attr_assignment_date, CRM['P2_has_type'], ACCEPTED_TYPE))
     if pd.notna(hand['assigned_place_id']):
         place_uri = URIRef(f"http://digipal.eu/ontology#Place_{int(hand['assigned_place_id'])}")
         attr_assignment_place = URIRef(f"http://digipal.eu/ontology#HandPlace_{int(hand['id'])}")
         g.add((attr_assignment_place, RDF.type, CRM['E13_Attribute_Assignment']))
-        g.add((attr_assignment_place, CRM['P140_assigned_attribute_to'], hand_uri))
+        g.add((attr_assignment_place, CRM['P140_assigned_attribute_to'], handinstance_uri))
         g.add((attr_assignment_place, CRM['P141_assigned'], place_uri))
         g.add((attr_assignment_place, CRM['P2_has_type'], ACCEPTED_TYPE))
 
@@ -1045,25 +1122,25 @@ for _, hand in data['hand'].iterrows():
     # TODO: CHECK and follow up with the CRMtex folk.
     if pd.notna(hand['script_id']):
         script_uri = URIRef(f"http://digipal.eu/ontology#Script_{int(hand['script_id'])}")
-        g.add((writing_uri, CRM.P33_used_specific_technique, script_uri))   # not TXP12, not hand_uri
+        g.add((writing_uri, CRM.P33_used_specific_technique, script_uri))   # not TXP12, not handinstance_uri
     if pd.notna(hand['item_part_id']):
         itempart_uri = URIRef(f"http://digipal.eu/ontology#Item_Part_{int(hand['item_part_id'])}") 
         # PAS: Fixed itempart - hand relationship.
-        g.add((itempart_uri, CRM['P56_bears_feature'], hand_uri))
+        g.add((itempart_uri, CRM['P56_bears_feature'], handinstance_uri))
     # PAS: Fixed Appearance
     if pd.notna(hand['appearance_id']):
         appearance_uri = URIRef(f"http://digipal.eu/ontology#Appearance_{int(hand['appearance_id'])}")
-        g.add((hand_uri, CRM.P2_has_type, appearance_uri))
+        g.add((handinstance_uri, CRM.P2_has_type, appearance_uri))
     if pd.notna(hand['glossed_text_id']):
         glossed_text_uri = URIRef(f"http://digipal.eu/ontology#Category_{int(hand['glossed_text_id'])}") 
-        g.add((hand_uri,  CRM.P2_has_type, glossed_text_uri))
+        g.add((handinstance_uri,  CRM.P2_has_type, glossed_text_uri))
     # PAS: Latin Style is in fact a finer typology applied to arch:Script (e.g. Style I Anglo-Caroline minuscule),
     # so it's here modelled in the same way as arch:Script.
     # TODO: It would be easy and desirable to formally link the arch:LatinStyle to the arch:Script it's a substyle of,
     # and to unify the treatment of Latin and English in regard to arch:Script, arch:Style and arch:Appearance.
     if pd.notna(hand['latin_style_id']):
         latin_style_uri = URIRef(f"http://digipal.eu/ontology#LatinStyle_{int(hand['latin_style_id'])}") 
-        g.add((writing_uri, CRM.P33_used_specific_technique, latin_style_uri))   # was: hand_uri, CRMtx.TXP12_has_style
+        g.add((writing_uri, CRM.P33_used_specific_technique, latin_style_uri))   # was: handinstance_uri, CRMtx.TXP12_has_style
 
 # PAS: First, we build the chain for MediaPermission inheritance taken from Repository->MediaPermission.
 # Repository-MediaPermission is not a direct legal assertion about the Repository (a repository doesn't hold rights over
@@ -1129,8 +1206,8 @@ for _, image in data['image'].iterrows():
 
 for _, hand_image in data['hand_images'].iterrows():
     image_uri = URIRef(f"http://digipal.eu/ontology#Image_{int(hand_image['image_id'])}")
-    hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(hand_image['hand_id'])}") 
-    g.add((image_uri,  CRM.P138_represents, hand_uri))
+    handinstance_uri = URIRef(f"http://digipal.eu/ontology#HandInstance_{int(hand_image['hand_id'])}") 
+    g.add((image_uri,  CRM.P138_represents, handinstance_uri))
 
 for _, style in data['latinstyle'].iterrows():
     latin_style_uri = URIRef(f"http://digipal.eu/ontology#LatinStyle_{int(style['id'])}")
@@ -1250,10 +1327,10 @@ for _, graph in data['graph'].iterrows():
         g.add((graph_uri,  CRM.P65_shows_visual_item, idiograph_uri))
     
     if pd.notna(graph['hand_id']):
-        hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(graph['hand_id'])}")
+        handinstance_uri = URIRef(f"http://digipal.eu/ontology#HandInstance_{int(graph['hand_id'])}")
         # PAS: Fixed hand - graph relationship. Hand and Graph are both E22_Man-Made_Object, so the relationship
         # should be P46_is_composed_of, not P106_is_composed_of which is for symbolic objects.
-        g.add((hand_uri,  CRM.P46_is_composed_of, graph_uri))
+        g.add((handinstance_uri,  CRM.P46_is_composed_of, graph_uri))
 
 for _, idiograph in data['idiograph'].iterrows():
     idiograph_uri = URIRef(f"http://digipal.eu/ontology#Idiograph_{int(idiograph['id'])}")
@@ -1264,6 +1341,10 @@ for _, idiograph in data['idiograph'].iterrows():
     if pd.notna(idiograph['allograph_id']):
         allograph_uri = URIRef(f"http://digipal.eu/ontology#Allograph_{int(idiograph['allograph_id'])}")
         g.add((idiograph_uri,  CRM.P138_represents, allograph_uri))
+
+    if pd.notna(idiograph['scribe_id']):
+        scribalpractice_uri = URIRef(f"http://digipal.eu/ontology#Scribal_Practice_{int(idiograph['scribe_id'])}")
+        g.add((scribalpractice_uri,  CRM.P148_has_component, idiograph_uri))
     
 for _, feature in data['feature'].iterrows():
     feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{int(feature['id'])}")
@@ -1272,14 +1353,14 @@ for _, feature in data['feature'].iterrows():
         g.add((feature_uri, RDFS.label, Literal(feature['name'])))
 
 for _, component in data['component'].iterrows():
-    component_uri = URIRef(f"http://digipal.eu/ontology#Component_{int(component['id'])}")
-    g.add((component_uri, RDF.type, ARCH.Component))
+    genericcomponent_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(component['id'])}")
+    g.add((genericcomponent_uri, RDF.type, ARCH.GenericComponent))
     if pd.notna(component['name']):
-        g.add((component_uri, RDFS.label, Literal(component['name'])))
+        g.add((genericcomponent_uri, RDFS.label, Literal(component['name'])))
 
 for _, allo_compo in data['allographcomponent'].iterrows():
     allo_uri = URIRef(f"http://digipal.eu/ontology#Allograph_{int(allo_compo['allograph_id'])}")
-    compo_uri = URIRef(f"http://digipal.eu/ontology#Component_{int(allo_compo['component_id'])}")
+    compo_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(allo_compo['component_id'])}")
     # PAS: Fixed allograph - component relationship.
     g.add((allo_uri,  CRM['P148_has_component'], compo_uri)) 
 
@@ -1290,7 +1371,7 @@ for _, allo_compo in data['allographcomponent'].iterrows():
 # Component features, i.e. the list of all possible features that a given component could have.
 # TODO: FIX!!
 for _, compo_feature in data['component_features'].iterrows():
-    compo_uri = URIRef(f"http://digipal.eu/ontology#Component_{int(compo_feature['component_id'])}")
+    compo_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(compo_feature['component_id'])}")
     feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{int(compo_feature['feature_id'])}")
     g.add((compo_uri, CRM['P2_has_type'], feature_uri))    # was P56_bears_feature
 
@@ -1305,13 +1386,32 @@ for _, gcf in gc_features.iterrows():
     g.add((graphcomponent_uri, RDF.type, ARCH.GraphComponent))
 
     graph_uri = URIRef(f"http://digipal.eu/ontology#Graph_{int(gcf['graph_id'])}")
-    g.add((graph_uri, CRM['P46_is_composed_of'], graphcomponent_uri)) # TODO: What is superclass of GraphComponent? I guess E25, but then P138 doesn't work. CHECK! 
+    g.add((graph_uri, CRM['P46_is_composed_of'], graphcomponent_uri))
 
-    component_uri = URIRef(f"http://digipal.eu/ontology#Component_{int(gcf['component_id'])}")
-    g.add((graphcomponent_uri, CRM['P138_represents'], component_uri))
+    genericcomponent_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(gcf['component_id'])}")
+    g.add((graphcomponent_uri, CRM['P65_shows_visual_item'], genericcomponent_uri))
 
     feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{int(gcf['feature_id'])}")
     g.add((graphcomponent_uri, CRM['P2_has_type'], feature_uri))
+
+ic_features = data['idiographcomponent_features'].merge(
+    data['idiographcomponent'],
+    left_on='idiographcomponent_id', right_on='id',
+    suffixes=('', '_ic')
+)
+for _, icf in ic_features.iterrows():
+    idiographcomponent_uri = URIRef(f"http://digipal.eu/ontology#IdiographComponent_{int(icf['idiographcomponent_id'])}")
+    g.add((idiographcomponent_uri, RDF.type, ARCH.VisualComponent))
+
+    idiograph_uri = URIRef(f"http://digipal.eu/ontology#Idiograph_{int(icf['idiograph_id'])}")
+    g.add((idiograph_uri, CRM['P148_has_component'], idiographcomponent_uri))
+
+    genericcomponent_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(icf['component_id'])}")
+    g.add((idiographcomponent_uri, CRM['P138_represents'], genericcomponent_uri))
+
+    feature_uri = URIRef(f"http://digipal.eu/ontology#Feature_{int(icf['feature_id'])}")
+    g.add((idiographcomponent_uri, CRM['P2_has_type'], feature_uri))
+
 
 # PAS: Remember, the Archetype Owners table does *not* record owners, but rather assertions of current or historical 
 # Ownership.
@@ -1331,8 +1431,8 @@ for _, hand_desc in data['handdescription'].iterrows():
     if pd.notna(hand_desc['description']):
         g.add((hand_desc_uri, DCTERMS.description, Literal(hand_desc['description'])))
     if pd.notna(hand_desc['hand_id']):
-        hand_uri = URIRef(f"http://digipal.eu/ontology#Hand_{int(hand_desc['hand_id'])}")
-        g.add((hand_uri,  CRM.P3_has_note, hand_desc_uri))
+        handinstance_uri = URIRef(f"http://digipal.eu/ontology#HandInstance_{int(hand_desc['hand_id'])}")
+        g.add((handinstance_uri,  CRM.P3_has_note, hand_desc_uri))
     if pd.notna(hand_desc['source_id']):
         # TODO: isn't this backwards? Surely the source documents the description, not the other way around? CHECK!
         # (Is P70 really right here anyway?) CHECK!
@@ -1342,7 +1442,7 @@ for _, hand_desc in data['handdescription'].iterrows():
 for _, scribe_ref in data['scribe_reference'].iterrows():
     scribe_uri = URIRef(f"http://digipal.eu/ontology#Scribe_{int(scribe_ref['scribe_id'])}")
     ref_uri = URIRef(f"http://digipal.eu/ontology#Reference_{int(scribe_ref['reference_id'])}")
-    g.add((scribe_uri,  CRM.P70i_is_documented_in, ref_uri)) 
+    g.add((scribe_uri,  CRM.P70i_is_documented_in, ref_uri))
 
 for _, reference in data['reference'].iterrows():
     ref_uri = URIRef(f"http://digipal.eu/ontology#Reference_{int(reference ['id'])}")
@@ -1388,6 +1488,10 @@ for _, scribe in data['scribe'].iterrows():
         # PAS: Fixed reversed relationship between Scribe and Institution. The institution is the current or former member of the scribe, not the other way around.
         g.add((institution_uri, CRM.P107_has_current_or_former_member, scribe_uri))
 
+    scribalpractice_uri = URIRef(f"http://digipal.eu/ontology#Scribal_Practice_{int(scribe['id'])}")
+    g.add((scribe_uri, EX.characterised_by, scribalpractice_uri))
+
+
 for _, character in data['character'].iterrows():
     character_uri = URIRef(f"http://digipal.eu/ontology#Character_{int(character['id'])}")
     g.add((character_uri, RDF.type, ARCH.Character))
@@ -1406,9 +1510,9 @@ for _, character in data['character'].iterrows():
 
 for _, character_compo in data['character_components'].iterrows():
     character_uri = URIRef(f"http://digipal.eu/ontology#Character_{int(character_compo['character_id'])}")
-    component_uri = URIRef(f"http://digipal.eu/ontology#Component_{int(character_compo['component_id'])}")
+    genericcomponent_uri = URIRef(f"http://digipal.eu/ontology#GenericComponent_{int(character_compo['component_id'])}")
     # PAS: Fixed character-component relationship.
-    g.add((character_uri,  CRM['P148_has_component'], component_uri)) 
+    g.add((character_uri,  CRM['P148_has_component'], genericcomponent_uri)) 
 
 for _, form in data['characterform'].iterrows():
     form_uri = URIRef(f"http://digipal.eu/ontology#FormCharacter_{int(form['id'])}")
@@ -1445,7 +1549,7 @@ for _, status in data['status'].iterrows():
 # PAS: Added timestamp to RDF output to help versioning and provenance tracking.
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M")
-output_filename = f"data_rdf_digipal_cidoc_{timestamp}.rdf"
-g.serialize(destination=output_filename, format="xml")
+output_filename = f"data_{DB_NAME}_{OUTPUT_FORMAT}_{timestamp}.rdf"
+g.serialize(destination=output_filename, format=OUTPUT_FORMAT)
 print(f"Exported to {output_filename}")
 print(f"✓ Fichier RDF généré — {len(g)} triplets")
