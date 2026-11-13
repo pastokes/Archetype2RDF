@@ -1,0 +1,32 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Archetype2RDF
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Peter
+    name-particle: A.
+    family-names: Stokes
+    email: peter.stokes@ephe.psl.eu
+    affiliation: >-
+      AOROC, École Pratique des Hautes Études – Université
+      PSL
+    orcid: 'https://orcid.org/0000-0002-9060-9340'
+  - given-names: Eve
+    family-names: Grimaud
+    affiliation: 'CESR, Université de Tours'
+abstract: >-
+  Code and modelling for alignment of Archetype data model
+  with CIDOC-CRM and accompanying export to RDF
+keywords:
+  - Palaeography
+  - Semantic Web
+  - Biblissima+
+  - Ontology
+  - CIDOC-CRM
+license: MIT
+date-released: '2026-11-13'
