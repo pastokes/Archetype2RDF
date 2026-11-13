@@ -8,8 +8,7 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Peter
-    name-particle: A.
+  - given-names: Peter A.
     family-names: Stokes
     email: peter.stokes@ephe.psl.eu
     affiliation: >-
