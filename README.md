@@ -1,6 +1,7 @@
 # DigiPal/Archetype Ontology mapping and RDF export
 
-Project to map the original (v2) Archetype data model to a formal ontology based on CIDOC-CRM, and to export data with RDF.
+Project to map the [original (v2) Archetype](https://github.com/kcl-ddh/digipal) data model to a formal ontology based on CIDOC-CRM, and to export data with RDF, building on but entirely replacing the [Archetype-Ontology repository](https://github.com/pastokes/archetype-ontology).
+
 
 First stage completed by Eve Grimaud (CESR, Université de Tours), under the supervision of Peter A. Stokes, [AOROC (UMR 8546)](https://archeo.ens.fr), [École Pratique des Hautes Études, Université PSL](https://ephe.psl.eu).
 Subsequent revisions and further work by Peter Stokes.
