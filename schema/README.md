@@ -5,8 +5,8 @@ The references are as follows:
 ## CIDOC_CRM_v7.1.3.owl
 "An OWL DL 1.0 implementation of the CIDOC Conceptual Reference Model ... 7.1.3 (February 2024)."
 
-- Created by FORTH-ICS, February 13, 2024
-- Available at https://cidoc-crm.org/rdfs/7.1.3/CIDOC_CRM_v7.1.3.rdfs
+- Created by FORTH-ICS, February, 2024
+- Available at https://cidoc-crm.org/owl/7.1.3/CIDOC_CRM_v7.1.3.owl
 - Licence: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/legalcode
 
 ## CRMtex_v2.0.owl
