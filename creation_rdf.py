@@ -14,7 +14,7 @@ from sqlalchemy import create_engine, inspect
 from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, URIRef
 from datetime import datetime
 
-DEFAULT_DB_NAME = "pstokes"
+DEFAULT_DB_NAME = "digipal"
 DEFAULT_FORMAT = "turtle"
 VALID_FORMATS = ["xml", "turtle"]
 

@@ -1,4 +1,13 @@
 
+--- allograph_aspects ---
+id              int64
+allograph_id    int64
+aspect_id       int64
+dtype: object
+    id  allograph_id  aspect_id
+0  515            39          1
+1  516            39          2
+
 --- allograph ---
 id                            int64
 name                            str
@@ -9,19 +18,30 @@ modified        datetime64[us, UTC]
 hidden                         bool
 illustration                    str
 dtype: object
-   id      name  character_id  ...                         modified hidden illustration
-0  58  2-shaped            30  ... 2013-07-13 21:28:52.091784+00:00  False          NaN
-1  59     Round            18  ... 2012-11-21 14:24:59.451523+00:00  False          NaN
+    id       name  character_id  ...                         modified hidden illustration
+0  102  with head            11  ... 2016-04-14 20:04:04.606652+00:00  False          NaN
+1    7          7             7  ... 2018-06-29 10:33:30.995326+00:00  False          NaN
 
 [2 rows x 8 columns]
 
---- allograph_aspects ---
-id              int64
-allograph_id    int64
-aspect_id       int64
+--- allographcomponent ---
+id                            int64
+allograph_id                  int64
+component_id                  int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+dtype: object
+   id  allograph_id  component_id                          created                         modified
+0   6            10             6 2015-12-24 09:54:05.160808+00:00 2015-12-24 09:54:05.160840+00:00
+1   7            65             6 2015-12-24 09:54:27.858262+00:00 2015-12-24 09:54:27.858285+00:00
+
+--- alphabet_hands ---
+id             int64
+alphabet_id    int64
+hand_id        int64
 dtype: object
 Empty DataFrame
-Columns: [id, allograph_id, aspect_id]
+Columns: [id, alphabet_id, hand_id]
 Index: []
 
 --- alphabet ---
@@ -33,6 +53,42 @@ dtype: object
 Empty DataFrame
 Columns: [id, name, created, modified]
 Index: []
+
+--- alphabet_ontographs ---
+id              int64
+alphabet_id     int64
+ontograph_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, alphabet_id, ontograph_id]
+Index: []
+
+--- annotation ---
+id                                   int64
+image_id                             int64
+cutout                                 str
+status_id                           object
+before_id                          float64
+graph_id                           float64
+after_id                           float64
+vector_id                              str
+geo_json                               str
+display_note                           str
+internal_note                          str
+author_id                            int64
+created                datetime64[us, UTC]
+modified               datetime64[us, UTC]
+rotation                           float64
+holes                                  str
+clientid                               str
+type                                   str
+illustration_ductus                    str
+dtype: object
+      id  image_id cutout status_id  before_id  ...  rotation  holes            clientid  type illustration_ductus
+0  26318      3648    NaN      None        NaN  ...       0.0    NaN                 NaN   NaN                 NaN
+1  26319      4306    NaN      None        NaN  ...       0.0    NaN  1626778210826:8264  text                 NaN
+
+[2 rows x 19 columns]
 
 --- apitransform ---
 id                              int64
@@ -46,62 +102,63 @@ mimetype                          str
 sample_request                    str
 webpage                          bool
 dtype: object
-   id                     title  ...                                     sample_request webpage
-0   1  CHECK: Hand Descriptions  ...  /handdescription/?_source=8&@format=xml&@selec...    True
-1  11            MSS With Latin  ...  description/?_description__icontains=s.%20xi&_...    True
+   id           title            slug  ...   mimetype                                     sample_request webpage
+0   1       H Numbers       h-numbers  ...  text/html  cataloguenumber/?@format=xml&@limit=50000&_sou...    True
+1   2  Display graphs  display-graphs  ...   text/xml  annotation/?_graph__idiograph__allograph__name...    True
 
 [2 rows x 10 columns]
 
---- alphabet_hands ---
-id             int64
-alphabet_id    int64
-hand_id        int64
+--- aspect ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                        name                          created                         modified
+0  11  Position: Initial of Quare 2016-12-20 11:22:31.257383+00:00 2016-12-30 00:59:11.952966+00:00
+1   4       Position: End of line 2016-01-02 18:52:01.742113+00:00 2016-12-30 00:59:23.852943+00:00
+
+--- archive ---
+id                                 int64
+legacy_id                          int64
+content_type_id                    int64
+object_id                          int64
+historical_item_id                 int64
+dubitable                           bool
+created               datetime64[s, UTC]
+modified              datetime64[s, UTC]
 dtype: object
 Empty DataFrame
-Columns: [id, alphabet_id, hand_id]
+Columns: [id, legacy_id, content_type_id, object_id, historical_item_id, dubitable, created, modified]
 Index: []
 
 --- appearance ---
-id                           int64
-legacy_id                    int64
-text                           str
-sort_order                   int64
-description                    str
-created        datetime64[us, UTC]
-modified       datetime64[us, UTC]
-dtype: object
-   id   legacy_id         text  ...  description                          created                         modified
-0   1 -1214987120  Wulfstanian  ...          --- 2012-05-22 13:06:40.319194+00:00 2012-05-22 13:06:40.319220+00:00
-1   2  -663836257    Scribbled  ...          --- 2012-05-22 13:06:40.321932+00:00 2012-05-22 13:06:40.321947+00:00
-
-[2 rows x 7 columns]
-
---- authenticitycategory ---
-id                       int64
-name                       str
-slug                       str
-created     datetime64[s, UTC]
-modified    datetime64[s, UTC]
+id                          int64
+legacy_id                   int64
+text                          str
+sort_order                  int64
+description                   str
+created        datetime64[s, UTC]
+modified       datetime64[s, UTC]
 dtype: object
 Empty DataFrame
-Columns: [id, name, slug, created, modified]
+Columns: [id, legacy_id, text, sort_order, description, created, modified]
 Index: []
 
---- archive ---
-id                                  int64
-legacy_id                          object
-content_type_id                     int64
-object_id                           int64
-historical_item_id                  int64
-dubitable                          object
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
+--- character ---
+id                             int64
+name                             str
+unicode_point                    str
+ontograph_id                   int64
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+form_id                        int64
 dtype: object
-   id legacy_id  content_type_id  ...  dubitable                          created                         modified
-0   1      None               43  ...      False 2012-05-22 13:06:49.643876+00:00 2013-05-02 10:18:32.250117+00:00
-1   5      None               43  ...      False 2012-05-22 13:06:49.837381+00:00 2013-05-02 10:18:32.272976+00:00
+   id    name unicode_point  ...                          created                         modified form_id
+0  68  hyphen             -  ... 2015-05-08 07:36:46.447849+00:00 2015-05-08 07:36:46.447886+00:00       1
+1   3      ./          f1f0  ... 2012-05-22 13:06:41.795503+00:00 2012-05-22 13:06:41.802245+00:00       1
 
-[2 rows x 8 columns]
+[2 rows x 7 columns]
 
 --- carouselitem ---
 id                           int64
@@ -116,21 +173,18 @@ modified       datetime64[us, UTC]
 image_file                     str
 dtype: object
    id                                               link  ...                         modified image_file
-0   3  /blog/anglo-saxon-mss-online-i-the-latin-colle...  ... 2014-03-19 12:03:08.444033+00:00        NaN
-1   7  /digipal/search/?terms=Eadwig+Basan&basic_sear...  ... 2014-03-19 12:08:11.707829+00:00        NaN
+0   9  /digipal/collection/shared/1/?collection=%7B%2...  ... 2015-06-23 00:16:33.990525+00:00           
+1   4                                                     ... 2015-06-23 00:57:30.903121+00:00           
 
 [2 rows x 10 columns]
 
---- county ---
-id                         int64
-legacy_id                  int64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
+--- characterform ---
+id      int64
+name      str
 dtype: object
-   id  legacy_id          name                          created                         modified
-0   1          1  Bedfordshire 2012-05-22 13:06:44.564237+00:00 2012-05-22 13:06:44.564253+00:00
-1   2          5     Berkshire 2012-05-22 13:06:44.566169+00:00 2012-05-22 13:06:44.566185+00:00
+   id       name
+0   1        n/a
+1   2  minuscule
 
 --- component ---
 id                        int64
@@ -138,18 +192,79 @@ name                        str
 created     datetime64[us, UTC]
 modified    datetime64[us, UTC]
 dtype: object
-   id                name                          created                         modified
-0  10  cross stroke (eth) 2012-05-22 13:06:40.925792+00:00 2012-07-03 15:37:10.207725+00:00
-1   2         a-component 2012-05-22 13:06:40.710385+00:00 2012-05-22 13:06:40.713170+00:00
+   id  name                          created                         modified
+0   7  Lobe 2015-12-24 10:23:48.969615+00:00 2015-12-24 10:23:48.969662+00:00
+1   5  Limb 2015-12-09 17:26:28.359733+00:00 2015-12-24 10:24:06.690737+00:00
 
---- currentitem_owners ---
-id                int64
-currentitem_id    int64
-owner_id          int64
+--- category ---
+id                         int64
+name                         str
+sort_order                 int64
+created       datetime64[s, UTC]
+modified      datetime64[s, UTC]
 dtype: object
 Empty DataFrame
-Columns: [id, currentitem_id, owner_id]
+Columns: [id, name, sort_order, created, modified]
 Index: []
+
+--- cataloguenumber ---
+id                                  int64
+historical_item_id                  int64
+source_id                           int64
+number                                str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+text_id                            object
+url                                   str
+number_slug                           str
+dtype: object
+    id  historical_item_id  source_id  ... text_id                                       url        number_slug
+0  326                 326          2  ...    None  http://db.poms.ac.uk/record/source/4882/   document-3-260-4
+1  211                 211          2  ...    None  http://db.poms.ac.uk/record/source/1314/  document-2-10-126
+
+[2 rows x 9 columns]
+
+--- component_features ---
+id                              int64
+component_id                    int64
+feature_id                      int64
+set_by_default                   bool
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+dtype: object
+   id  component_id  feature_id  set_by_default                          created                         modified
+0   3             4           3           False 2015-12-09 17:28:44.568783+00:00 2015-12-09 17:28:44.568813+00:00
+1   4             4           4           False 2015-12-09 17:29:00.495114+00:00 2015-12-09 17:29:00.495181+00:00
+
+--- county ---
+id                        int64
+legacy_id                 int64
+name                        str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, name, created, modified]
+Index: []
+
+--- authenticitycategory ---
+id                        int64
+name                        str
+slug                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                       name    slug                          created                         modified
+0   1  Suspect palaeographically  SusPal 2017-03-09 13:50:21.295376+00:00 2017-03-09 13:50:21.295417+00:00
+
+--- character_components ---
+id              int64
+character_id    int64
+component_id    int64
+dtype: object
+   id  character_id  component_id
+0   9            46             6
+1  10            47             6
 
 --- contentattribution ---
 id                            int64
@@ -163,181 +278,188 @@ Empty DataFrame
 Columns: [id, title, message, created, modified, short_message]
 Index: []
 
---- currentitem ---
-id                             int64
-legacy_id                    float64
-repository_id                  int64
-shelfmark                        str
-description                      str
-display_label                    str
-created          datetime64[us, UTC]
-modified         datetime64[us, UTC]
-dtype: object
-   id  legacy_id  ...                          created                         modified
-0   1        2.0  ... 2012-05-22 13:06:49.603050+00:00 2013-05-02 10:18:34.872690+00:00
-1   3        6.0  ... 2012-05-22 13:06:49.809329+00:00 2013-05-02 10:18:34.882752+00:00
-
-[2 rows x 8 columns]
-
---- character ---
-id                             int64
-name                             str
-unicode_point                    str
-ontograph_id                   int64
-created          datetime64[us, UTC]
-modified         datetime64[us, UTC]
-form_id                        int64
-dtype: object
-   id  name unicode_point  ontograph_id                          created                         modified  form_id
-0   2  wynn          01bf             2 2012-05-22 13:06:41.783363+00:00 2012-05-22 13:06:41.790620+00:00        2
-1   3    ./          f1f0             3 2012-05-22 13:06:41.795503+00:00 2012-05-22 13:06:41.802245+00:00        1
-
---- character_components ---
-id              int64
-character_id    int64
-component_id    int64
-dtype: object
-   id  character_id  component_id
-0   1            38             8
-1   2            38            11
-
---- cataloguenumber ---
-id                                  int64
-historical_item_id                float64
-source_id                           int64
-number                                str
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
-text_id                           float64
-url                                   str
-number_slug                           str
-dtype: object
-     id  historical_item_id  source_id  ... text_id                                                url number_slug
-0  4297              1555.0         12  ...     NaN  http://brbl-dl.library.yale.edu/vufind/Record/...      ms-578
-1  1790              1467.0          1  ...     NaN                                                NaN       a1822
-
-[2 rows x 9 columns]
-
 --- collation ---
-id                                  int64
-historical_item_id                  int64
-fragment                           object
-leaves                            float64
-front_flyleaves                   float64
-back_flyleaves                    float64
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
+id                                 int64
+historical_item_id                 int64
+fragment                            bool
+leaves                             int64
+front_flyleaves                    int64
+back_flyleaves                     int64
+created               datetime64[s, UTC]
+modified              datetime64[s, UTC]
 dtype: object
-    id  historical_item_id  ...                          created                         modified
-0  814                 823  ... 2012-05-22 13:07:37.684215+00:00 2012-05-24 14:12:11.039318+00:00
-1  816                 825  ... 2012-05-22 13:07:37.809681+00:00 2012-05-24 14:12:11.218928+00:00
+Empty DataFrame
+Columns: [id, historical_item_id, fragment, leaves, front_flyleaves, back_flyleaves, created, modified]
+Index: []
 
-[2 rows x 8 columns]
-
---- category ---
-id                          int64
-name                          str
-sort_order                float64
-created       datetime64[us, UTC]
-modified      datetime64[us, UTC]
+--- feature ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
 dtype: object
-   id             name  sort_order                          created                         modified
-0   1  Psalter (Gall.)       320.0 2012-05-22 13:06:43.810400+00:00 2012-05-22 13:06:43.810417+00:00
-1   2  Gospels (Latin)       130.0 2012-05-22 13:06:43.812989+00:00 2012-05-22 13:06:43.813004+00:00
+   id             name                          created                         modified
+0  10  without penlift 2015-12-24 10:39:49.970437+00:00 2015-12-24 10:39:49.970466+00:00
+1  11         extended 2015-12-24 10:40:30.897677+00:00 2015-12-24 10:40:30.897704+00:00
 
---- characterform ---
-id      int64
-name      str
+--- graphcomponent ---
+id                            int64
+graph_id                      int64
+component_id                  int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
 dtype: object
-   id       name
-0   1        n/a
-1   2  minuscule
+     id  graph_id  component_id                          created                         modified
+0  3144       538             8 2017-04-05 01:02:01.494180+00:00 2017-04-05 01:02:01.507892+00:00
+1  1163      7651             8 2017-02-06 16:59:44.158963+00:00 2017-02-06 17:17:08.686000+00:00
 
---- description ---
-id                                  int64
-historical_item_id                float64
-source_id                           int64
-description                           str
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
-text_id                           float64
-comments                              str
-summary                               str
+--- currentitem_owners ---
+id                int64
+currentitem_id    int64
+owner_id          int64
 dtype: object
-     id  historical_item_id  source_id  ... text_id comments summary
-0   347               576.0          2  ...     NaN      NaN     NaN
-1  1008              1274.0          2  ...     NaN      NaN     NaN
-
-[2 rows x 9 columns]
+Empty DataFrame
+Columns: [id, currentitem_id, owner_id]
+Index: []
 
 --- graph_aspects ---
 id           int64
 graph_id     int64
 aspect_id    int64
 dtype: object
-Empty DataFrame
-Columns: [id, graph_id, aspect_id]
-Index: []
+     id  graph_id  aspect_id
+0   825      3318         13
+1  1540     14403         10
 
---- graph ---
-id                             int64
-idiograph_id                   int64
-hand_id                        int64
-display_label                    str
-created          datetime64[us, UTC]
-modified         datetime64[us, UTC]
-group_id                      object
+--- hand_images ---
+id          int64
+hand_id     int64
+image_id    int64
 dtype: object
-    id  idiograph_id  hand_id  ...                          created                         modified group_id
-0  339            74      637  ... 2012-05-22 13:08:38.729090+00:00 2013-05-02 10:19:23.066900+00:00     None
-1  345            74      637  ... 2012-05-22 13:08:38.832351+00:00 2013-05-02 10:19:23.109142+00:00     None
+   id  hand_id  image_id
+0   2        1        77
+1   7       10      3655
 
-[2 rows x 7 columns]
+--- graphcomponent_features ---
+id                   int64
+graphcomponent_id    int64
+feature_id           int64
+dtype: object
+     id  graphcomponent_id  feature_id
+0  2640               2406          47
+1  2641               2407          47
 
 --- dateevidence ---
 id                                  int64
-legacy_id                           int64
-hand_id                             int64
-date_id                           float64
+legacy_id                          object
+hand_id                            object
+date_id                             int64
 date_description                      str
-reference_id                      float64
+reference_id                       object
 evidence                              str
 created               datetime64[us, UTC]
 modified              datetime64[us, UTC]
-historical_item_id                 object
+historical_item_id                  int64
 is_firm_date                         bool
 dtype: object
-   id  legacy_id  hand_id  ...                         modified historical_item_id  is_firm_date
-0  42         35      247  ... 2013-05-02 10:19:13.705025+00:00               None         False
-1  64         57      287  ... 2013-05-02 10:19:13.791364+00:00               None         False
+     id legacy_id hand_id  ...                         modified historical_item_id is_firm_date
+0  3761      None    None  ... 2015-10-01 14:57:28.063000+00:00                396         True
+1  4118      None    None  ... 2016-02-12 17:13:56.508000+00:00                706         True
 
 [2 rows x 11 columns]
 
+--- hair ---
+id                        int64
+legacy_id                 int64
+label                       str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, label, created, modified]
+Index: []
+
+--- format ---
+id                         int64
+legacy_id                  int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id  legacy_id  ...                          created                         modified
+0   9        248  ... 2017-03-09 15:31:01.838152+00:00 2017-03-09 16:35:45.704526+00:00
+1  11        657  ... 2017-03-09 16:27:49.895748+00:00 2017-07-12 11:19:31.099789+00:00
+
+[2 rows x 5 columns]
+
+--- date ---
+id                                int64
+legacy_id                        object
+date                                str
+sort_order                       object
+weight                          float64
+band                             object
+additional_band                  object
+post_conquest                    object
+s_xi                             object
+min_weight                      float64
+max_weight                      float64
+created             datetime64[us, UTC]
+modified            datetime64[us, UTC]
+legacy_reference                    str
+evidence                            str
+dtype: object
+    id legacy_id                                date  ...                         modified  legacy_reference evidence
+0  534      None                  24 May 1153 X 1162  ... 2014-11-19 13:29:15.052000+00:00                           
+1  535      None  6 January 1161 X 13 September 1162  ... 2014-11-19 13:29:15.156000+00:00                           
+
+[2 rows x 15 columns]
+
+--- decoration ---
+id                                   int64
+historical_item_id                   int64
+illustrated                           bool
+decorated                             bool
+illuminated                           bool
+num_colours                          int64
+colours                                str
+num_inks                             int64
+inks                                   str
+style                                  str
+description                            str
+catalogue_references                   str
+created                 datetime64[s, UTC]
+modified                datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, historical_item_id, illustrated, decorated, illuminated, num_colours, colours, num_inks, inks, style, description, catalogue_references, created, modified]
+Index: []
+
 --- hand ---
 id                                  int64
-legacy_id                         float64
+legacy_id                          object
 num                                 int64
 item_part_id                        int64
-script_id                         float64
+script_id                          object
 scribe_id                         float64
-assigned_date_id                  float64
-assigned_place_id                 float64
+assigned_date_id                   object
+assigned_place_id                  object
 scragg                                str
 em_title                              str
 label                                 str
 display_note                          str
 internal_note                         str
-appearance_id                     float64
+appearance_id                      object
 relevant                           object
 latin_only                         object
 gloss_only                         object
 membra_disjecta                    object
-num_glosses                       float64
-num_glossing_hands                float64
-glossed_text_id                   float64
+num_glosses                        object
+num_glossing_hands                 object
+glossed_text_id                    object
 scribble_only                      object
 imitative                          object
-latin_style_id                    float64
+latin_style_id                     object
 comments                              str
 display_label                         str
 created               datetime64[us, UTC]
@@ -345,23 +467,129 @@ modified              datetime64[us, UTC]
 locus                                 str
 surrogates                            str
 selected_locus                        str
-stewart_record_id                 float64
+stewart_record_id                  object
 ker                                   str
 dtype: object
-     id  legacy_id         num  item_part_id  script_id  ...  locus  surrogates  selected_locus stewart_record_id  ker
-0   908      425.0  1121511382          1138        NaN  ...                                                  NaN  NaN
-1  1249      130.0  1121759104          1793        NaN  ...                                                  NaN  NaN
+   id legacy_id  num  item_part_id script_id  ...  locus surrogates selected_locus stewart_record_id  ker
+0  32      None    1           245      None  ...                                               None  NaN
+1  33      None    1           246      None  ...                                               None  NaN
 
 [2 rows x 33 columns]
 
+--- itemorigin ---
+id                                 int64
+legacy_id                          int64
+historical_item_id                 int64
+evidence                             str
+dubitable                           bool
+created               datetime64[s, UTC]
+modified              datetime64[s, UTC]
+place_id                           int64
+institution_id                     int64
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, historical_item_id, evidence, dubitable, created, modified, place_id, institution_id]
+Index: []
+
+--- historicalitemtype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id     name                          created                         modified
+0   1  Charter 2014-11-07 20:48:21.019444+00:00 2014-11-07 20:48:21.019482+00:00
+1   2   Brieve 2014-11-19 13:29:15.044000+00:00 2014-11-19 13:29:15.044000+00:00
+
+--- idiograph_aspects ---
+id              int64
+idiograph_id    int64
+aspect_id       int64
+dtype: object
+Empty DataFrame
+Columns: [id, idiograph_id, aspect_id]
+Index: []
+
+--- idiographcomponent_features ---
+id                       int64
+idiographcomponent_id    int64
+feature_id               int64
+dtype: object
+Empty DataFrame
+Columns: [id, idiographcomponent_id, feature_id]
+Index: []
+
+--- historicalitem_categories ---
+id                   int64
+historicalitem_id    int64
+category_id          int64
+dtype: object
+Empty DataFrame
+Columns: [id, historicalitem_id, category_id]
+Index: []
+
+--- institutiontype ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
+
+--- imageannotationstatus ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+dtype: object
+   id                 name                          created                         modified
+0   3      Features: begun 2015-12-29 18:28:15.866905+00:00 2015-12-29 18:28:15.866933+00:00
+1   4  Features: completed 2015-12-29 18:28:26.275529+00:00 2015-12-29 18:28:26.275557+00:00
+
+--- institution ---
+id                                  int64
+legacy_id                           int64
+institution_type_id                 int64
+name                                  str
+founder_id                          int64
+reformer_id                         int64
+patron_id                           int64
+place_id                            int64
+foundation                            str
+refoundation                          str
+created                datetime64[s, UTC]
+modified               datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, institution_type_id, name, founder_id, reformer_id, patron_id, place_id, foundation, refoundation, created, modified]
+Index: []
+
+--- historicalitemdate ---
+id                                 int64
+legacy_id                          int64
+historical_item_id                 int64
+date_id                            int64
+evidence                             str
+vernacular                          bool
+addition                            bool
+dubitable                           bool
+created               datetime64[s, UTC]
+modified              datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, historical_item_id, date_id, evidence, vernacular, addition, dubitable, created, modified]
+Index: []
+
 --- historicalitem ---
 id                                         int64
-legacy_id                                float64
+legacy_id                                 object
 historical_item_type_id                    int64
 historical_item_format_id                float64
 date                                         str
 name                                         str
-hair_id                                  float64
+hair_id                                   object
 language_id                              float64
 url                                          str
 vernacular                                object
@@ -373,93 +601,31 @@ modified                     datetime64[us, UTC]
 legacy_reference                             str
 date_sort                                    str
 dtype: object
-     id  legacy_id  historical_item_type_id  ...                         modified legacy_reference date_sort
-0  1829        NaN                        2  ... 2013-05-08 14:26:26.007452+00:00                        NaN
-1  1073     1330.0                        2  ... 2014-03-12 12:06:21.829579+00:00                        NaN
+    id legacy_id  historical_item_type_id  ...                         modified legacy_reference date_sort
+0  754      None                        8  ... 2017-09-08 14:15:00.010523+00:00                        NaN
+1  213      None                        1  ... 2018-08-07 12:32:35.317636+00:00                        NaN
 
 [2 rows x 17 columns]
 
---- decoration ---
-id                                    int64
-historical_item_id                    int64
-illustrated                            bool
-decorated                            object
-illuminated                            bool
-num_colours                         float64
-colours                                 str
-num_inks                            float64
-inks                                    str
-style                                   str
-description                             str
-catalogue_references                    str
-created                 datetime64[us, UTC]
-modified                datetime64[us, UTC]
+--- idiographcomponent ---
+id                           int64
+idiograph_id                 int64
+component_id                 int64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
 dtype: object
-   id  historical_item_id  ...                          created                         modified
-0   1                 377  ... 2012-05-22 13:07:11.454258+00:00 2012-05-24 14:11:39.634292+00:00
-1   2                 378  ... 2012-05-22 13:07:11.495656+00:00 2012-05-24 14:11:39.676468+00:00
+Empty DataFrame
+Columns: [id, idiograph_id, component_id, created, modified]
+Index: []
 
-[2 rows x 14 columns]
-
---- graphcomponent ---
-id                            int64
-graph_id                      int64
-component_id                  int64
-created         datetime64[us, UTC]
-modified        datetime64[us, UTC]
-dtype: object
-    id  graph_id  component_id                          created                         modified
-0  267      4091            28 2012-06-21 09:10:14.449367+00:00 2012-06-21 09:10:14.460575+00:00
-1  168      7055             5 2012-06-07 13:13:38.769305+00:00 2012-06-07 13:13:38.778153+00:00
-
---- graphcomponent_features ---
-id                   int64
-graphcomponent_id    int64
-feature_id           int64
-dtype: object
-    id  graphcomponent_id  feature_id
-0  326                197          97
-1  327                198         100
-
---- hand_images ---
-id          int64
-hand_id     int64
-image_id    int64
-dtype: object
-     id  hand_id  image_id
-0  1275     1450       736
-1     2      423         2
-
---- historicalitem_categories ---
+--- historicalitem_owners ---
 id                   int64
 historicalitem_id    int64
-category_id          int64
+owner_id             int64
 dtype: object
-     id  historicalitem_id  category_id
-0     1                  1          281
-1  1899               1393           17
-
---- hair ---
-id                         int64
-legacy_id                  int64
-label                        str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id label                          created                         modified
-0   1          1  HFFH 2012-05-22 13:06:44.484650+00:00 2012-05-22 13:06:44.484667+00:00
-1   2          2  HFHF 2012-05-22 13:06:44.486762+00:00 2012-05-22 13:06:44.486777+00:00
-
---- format ---
-id                         int64
-legacy_id                  int64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id          name                          created                         modified
-0   1          1  Single-sheet 2012-05-22 13:06:44.474083+00:00 2012-05-22 13:06:44.474100+00:00
-1   2          2     Cartulary 2012-05-22 13:06:44.476103+00:00 2012-05-22 13:06:44.476119+00:00
+   id  historicalitem_id  owner_id
+0   1                  1         1
+1   2                  2         2
 
 --- handdescription ---
 id                           int64
@@ -470,55 +636,11 @@ created        datetime64[us, UTC]
 modified       datetime64[us, UTC]
 label                          str
 dtype: object
-     id  hand_id  source_id  ...                          created                         modified label
-0  1605      862       11.0  ... 2013-06-07 17:28:18.374106+00:00 2015-04-22 16:52:30.251720+00:00   NaN
-1  1649      997       11.0  ... 2013-06-07 17:28:19.197241+00:00 2015-04-22 16:52:31.713580+00:00   NaN
+   id  hand_id  source_id  ...                          created                         modified  label
+0   1        8        NaN  ... 2015-03-31 17:24:20.294295+00:00 2015-03-31 17:24:20.294328+00:00       
+1   2       36       23.0  ... 2015-05-08 14:41:30.850324+00:00 2015-05-10 09:20:42.021256+00:00  p. 85
 
 [2 rows x 7 columns]
-
---- idiograph_aspects ---
-id              int64
-idiograph_id    int64
-aspect_id       int64
-dtype: object
-Empty DataFrame
-Columns: [id, idiograph_id, aspect_id]
-Index: []
-
---- itempartauthenticity ---
-id                           int64
-created         datetime64[s, UTC]
-modified        datetime64[s, UTC]
-item_part_id                 int64
-category_id                  int64
-source_id                    int64
-note                           str
-dtype: object
-Empty DataFrame
-Columns: [id, created, modified, item_part_id, category_id, source_id, note]
-Index: []
-
---- institutiontype ---
-id                        int64
-name                        str
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
-dtype: object
-   id                  name                          created                         modified
-0   1  medieval institution 2012-05-22 13:06:46.979836+00:00 2012-05-22 13:06:46.979852+00:00
-1   2     modern repository 2012-05-22 13:06:46.981711+00:00 2012-05-22 13:06:46.981726+00:00
-
---- itempartitem ---
-id                                  int64
-historical_item_id                  int64
-item_part_id                        int64
-locus                                 str
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
-dtype: object
-   id  historical_item_id  item_part_id locus                          created                         modified
-0   1                 377           451       2013-08-29 17:17:18.118911+00:00 2013-08-29 17:17:18.118942+00:00
-1   2                 378           452       2013-08-29 17:17:18.121744+00:00 2013-08-29 17:17:18.121766+00:00
 
 --- idiograph ---
 id                             int64
@@ -528,11 +650,65 @@ display_label                    str
 created          datetime64[us, UTC]
 modified         datetime64[us, UTC]
 dtype: object
-   id  allograph_id  ...                          created                         modified
-0   1            11  ... 2012-05-22 13:08:33.511605+00:00 2013-05-02 10:18:44.219416+00:00
-1   2             4  ... 2012-05-22 13:08:33.632182+00:00 2013-05-02 10:18:44.226677+00:00
+   id  allograph_id  scribe_id display_label                          created                         modified
+0   2            17        NaN             e 2014-11-19 11:26:26.035854+00:00 2014-11-19 11:26:26.035899+00:00
+1   3            44        NaN             t 2014-11-19 11:27:52.295718+00:00 2014-11-19 11:27:52.295752+00:00
 
-[2 rows x 6 columns]
+--- image ---
+id                                    int64
+item_part_id                        float64
+locus                                   str
+caption                                 str
+image                                   str
+display_label                           str
+created                 datetime64[us, UTC]
+modified                datetime64[us, UTC]
+folio_side                              str
+folio_number                            str
+iipimage                                str
+media_permission_id                 float64
+transcription                           str
+internal_notes                          str
+custom_label                            str
+annotation_status_id                float64
+width                                 int64
+height                                int64
+size                                  int64
+keywords_string                         str
+quire                                   str
+page_boundaries                         str
+dtype: object
+     id  item_part_id locus                       caption  ...     size keywords_string quire page_boundaries
+0  7138         635.0  face                       244.tif  ...        0                   NaN             NaN
+1  4969           NaN        GD004500013_00271_00001_.tif  ...  6887778                   NaN             NaN
+
+[2 rows x 22 columns]
+
+--- ontograph ---
+id                                 int64
+name                                 str
+ontograph_type_id                  int64
+created              datetime64[us, UTC]
+modified             datetime64[us, UTC]
+nesting_level                      int64
+sort_order                         int64
+dtype: object
+   id name  ontograph_type_id  ...                         modified nesting_level  sort_order
+0  10    A                  2  ... 2015-01-23 10:49:12.430826+00:00             0         100
+1  38    W                  2  ... 2015-02-09 13:46:50.878595+00:00             0         315
+
+[2 rows x 7 columns]
+
+--- language ---
+id                         int64
+legacy_id                 object
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+dtype: object
+   id legacy_id                             name                          created                         modified
+0   4      None                            Latin 2014-11-19 13:29:15.042000+00:00 2014-11-19 13:29:15.042000+00:00
+1   5      None  Entered from an English summary 2014-11-19 13:29:26.605000+00:00 2014-11-19 13:29:26.605000+00:00
 
 --- itempart ---
 id                               int64
@@ -549,114 +725,32 @@ notes                              str
 keywords_string                    str
 custom_label                       str
 dtype: object
-   id  current_item_id locus            display_label  ... group_locus notes  keywords_string custom_label
-0   1                1        BL Additional Ch. 19797  ...         NaN   NaN                           NaN
-1   5                3        BL Additional Ch. 19795  ...         NaN   NaN                           NaN
+    id  current_item_id  ...                                    keywords_string custom_label
+0  720              723  ...                                                             NaN
+1  211              211  ...  Original contemporary Measured User-photograph...          NaN
 
 [2 rows x 13 columns]
 
---- historicalitem_owners ---
-id                   int64
-historicalitem_id    int64
-owner_id             int64
+--- latinstyle ---
+id                        int64
+legacy_id                 int64
+style                       str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
 dtype: object
 Empty DataFrame
-Columns: [id, historicalitem_id, owner_id]
+Columns: [id, legacy_id, style, created, modified]
 Index: []
 
---- historicalitemtype ---
+--- ownertype ---
 id                        int64
 name                        str
 created     datetime64[us, UTC]
 modified    datetime64[us, UTC]
 dtype: object
-   id        name                          created                         modified
-0   1     charter 2012-05-22 13:06:44.498223+00:00 2012-05-22 13:06:44.498240+00:00
-1   2  manuscript 2012-05-22 13:06:44.500076+00:00 2012-05-22 13:06:44.500091+00:00
-
---- historicalitemdate ---
-id                                  int64
-legacy_id                          object
-historical_item_id                  int64
-date_id                             int64
-evidence                              str
-vernacular                         object
-addition                           object
-dubitable                          object
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
-dtype: object
-   id legacy_id  historical_item_id  ...  dubitable                          created                         modified
-0   1      None                1829  ...      False 2013-05-08 14:26:26.358673+00:00 2013-05-08 14:26:26.358703+00:00
-1   2      None                 305  ...      False 2013-05-08 15:20:41.887118+00:00 2013-05-08 15:20:41.887147+00:00
-
-[2 rows x 10 columns]
-
---- idiographcomponent ---
-id                            int64
-idiograph_id                  int64
-component_id                  int64
-created         datetime64[us, UTC]
-modified        datetime64[us, UTC]
-dtype: object
-     id  idiograph_id  component_id                          created                         modified
-0   466          1290            17 2012-11-21 14:25:13.229075+00:00 2012-11-21 14:27:31.073152+00:00
-1  1356            81            17 2012-11-21 14:25:48.084303+00:00 2012-11-21 14:29:23.229663+00:00
-
---- idiographcomponent_features ---
-id                       int64
-idiographcomponent_id    int64
-feature_id               int64
-dtype: object
-   id  idiographcomponent_id  feature_id
-0   1                      1          26
-1   2                      2          63
-
---- institution ---
-id                                   int64
-legacy_id                          float64
-institution_type_id                  int64
-name                                   str
-founder_id                         float64
-reformer_id                        float64
-patron_id                          float64
-place_id                             int64
-foundation                             str
-refoundation                           str
-created                datetime64[us, UTC]
-modified               datetime64[us, UTC]
-dtype: object
-   id  legacy_id  ...                          created                         modified
-0   1        1.0  ... 2012-05-22 13:06:47.014474+00:00 2012-05-22 13:06:47.014490+00:00
-1   2        2.0  ... 2012-05-22 13:06:47.019895+00:00 2012-05-22 13:06:47.019911+00:00
-
-[2 rows x 12 columns]
-
---- itempart_owners ---
-id             int64
-itempart_id    int64
-owner_id       int64
-dtype: object
-   id  itempart_id  owner_id
-0   1          482         1
-1   2         1512         2
-
---- itemorigin ---
-id                                  int64
-legacy_id                         float64
-historical_item_id                  int64
-evidence                              str
-dubitable                            bool
-created               datetime64[us, UTC]
-modified              datetime64[us, UTC]
-place_id                          float64
-institution_id                    float64
-dtype: object
-   id  legacy_id  historical_item_id  ...                         modified  place_id institution_id
-0  25       24.0                 432  ... 2014-07-03 17:20:04.770137+00:00      30.0            NaN
-1  32       30.0                 438  ... 2014-07-03 17:20:04.776213+00:00      86.0            NaN
-
-[2 rows x 9 columns]
+   id         name                          created                         modified
+0   1       Person 2014-11-03 14:52:04.031296+00:00 2014-11-03 14:52:04.031276+00:00
+1   2  Institution 2014-11-03 14:52:04.032827+00:00 2014-11-03 14:52:04.032807+00:00
 
 --- keyval ---
 id                        int64
@@ -666,10 +760,43 @@ created     datetime64[us, UTC]
 modified    datetime64[us, UTC]
 dtype: object
    id                        key  ...                          created                         modified
-0   3                    indexer  ... 2019-03-20 19:26:18.792443+00:00 2026-02-20 16:00:40.231269+00:00
-1   4  get_latest_docker_version  ... 2021-12-02 18:54:46.026787+00:00 2026-05-29 08:02:38.180360+00:00
+0   2                    indexer  ... 2016-11-09 18:51:56.092514+00:00 2024-03-05 21:01:19.789646+00:00
+1   3  get_latest_docker_version  ... 2020-09-02 12:09:21.164236+00:00 2024-07-02 10:57:54.823569+00:00
 
 [2 rows x 5 columns]
+
+--- person ---
+id                        int64
+legacy_id                 int64
+name                        str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, name, created, modified]
+Index: []
+
+--- mediapermission ---
+id                 int64
+label                str
+display_message      str
+permission         int64
+dtype: object
+   id                     label                                    display_message  permission
+0   1              Have Licence                                                            300
+1   2  Have Licence but Private  <p>A full image of this page is not yet availa...         100
+
+--- itempartitem ---
+id                                  int64
+historical_item_id                  int64
+item_part_id                        int64
+locus                                 str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+dtype: object
+    id  historical_item_id  item_part_id locus                          created                         modified
+0  690                 690           699       2016-01-27 19:11:31.185000+00:00 2016-01-27 19:11:31.185000+00:00
+1  691                 691           700       2016-01-27 19:11:31.227000+00:00 2016-01-27 19:11:31.227000+00:00
 
 --- ontographtype ---
 id                        int64
@@ -691,71 +818,14 @@ Empty DataFrame
 Columns: [id, name, created, modified]
 Index: []
 
---- place ---
-id                                    int64
-legacy_id                           float64
-name                                    str
-eastings                            float64
-northings                           float64
-region_id                           float64
-current_county_id                   float64
-historical_county_id                float64
-created                 datetime64[us, UTC]
-modified                datetime64[us, UTC]
-type_id                              object
-other_names                             str
-dtype: object
-   id     legacy_id              name  ...                         modified  type_id  other_names
-0   1           NaN            000000  ... 2012-05-22 13:06:44.675850+00:00     None          NaN
-1   2 -2.054568e+09  Unknown (Cerne?)  ... 2012-05-22 13:06:44.683084+00:00     None          NaN
-
-[2 rows x 12 columns]
-
---- latinstyle ---
-id                         int64
-legacy_id                float64
-style                        str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id         style                          created                         modified
-0   1        1.0          None 2012-05-22 13:06:46.369983+00:00 2012-05-22 13:06:46.369999+00:00
-1   2        2.0  Pre-Caroline 2012-05-22 13:06:46.371928+00:00 2012-05-22 13:06:46.371944+00:00
-
---- measurement ---
-id                         int64
-legacy_id                  int64
-label                        str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id      label                          created                         modified
-0   1          1   Ascender 2012-05-22 13:10:00.975748+00:00 2012-05-22 13:10:00.975772+00:00
-1   2          2  Descender 2012-05-22 13:10:00.977938+00:00 2012-05-22 13:10:00.977953+00:00
-
---- ontograph ---
-id                                 int64
-name                                 str
-ontograph_type_id                  int64
-created              datetime64[us, UTC]
-modified             datetime64[us, UTC]
-nesting_level                      int64
-sort_order                         int64
-dtype: object
-   id name  ontograph_type_id  ...                         modified nesting_level  sort_order
-0  10    A                  2  ... 2013-11-04 13:10:48.868141+00:00             0         100
-1  17    Æ                  2  ... 2013-11-04 13:10:51.433439+00:00             0         115
-
-[2 rows x 7 columns]
-
 --- owner ---
 id                              int64
-legacy_id                       int64
+legacy_id                      object
 date                              str
 evidence                          str
-rebound                          bool
-annotated                        bool
-dubitable                        bool
+rebound                        object
+annotated                      object
+dubitable                      object
 created           datetime64[us, UTC]
 modified          datetime64[us, UTC]
 person_id                      object
@@ -763,86 +833,183 @@ institution_id                 object
 repository_id                   int64
 display_label                     str
 dtype: object
-    id  legacy_id date  ... institution_id  repository_id                                      display_label
-0  781        930       ...           None            422  'Kenneth Spencer Pryce P2A :1' owned by  'Robi...
-1   89        998       ...           None            259  'BL Egerton 3314, fols. 45–72' owned by  'Butt...
+    id legacy_id date  ... institution_id repository_id                                      display_label
+0  134      None       ...           None             3  'Charter Melr. Lib. no. 211 PoMS Document 3/40...
+1  169      None       ...           None             3  'Charter Melr. Lib. no. 267 PoMS Document 3/39...
 
 [2 rows x 13 columns]
 
---- language ---
-id                         int64
-legacy_id                  int64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
+--- itempart_owners ---
+id             int64
+itempart_id    int64
+owner_id       int64
 dtype: object
-   id  legacy_id            name                          created                         modified
-0   1         10  (Undetermined) 2012-05-22 13:06:44.504624+00:00 2012-05-22 13:06:44.504640+00:00
-1   2          2         English 2012-05-22 13:06:44.507375+00:00 2012-05-22 13:06:44.507391+00:00
-
---- person ---
-id                         int64
-legacy_id                float64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id                          name                          created                         modified
-0   1        1.0  Talbot, Robert (1505?--1558) 2012-05-22 13:06:46.442730+00:00 2012-05-22 13:06:46.442755+00:00
-1   2        2.0    Nowell, Laurence (d. 1576) 2012-05-22 13:06:46.444946+00:00 2012-05-22 13:06:46.444962+00:00
+Empty DataFrame
+Columns: [id, itempart_id, owner_id]
+Index: []
 
 --- layout ---
 id                                      int64
-historical_item_id                      int64
-page_height                           float64
-page_width                            float64
-frame_height                          float64
-frame_width                           float64
-tramline_width                        float64
+historical_item_id                     object
+page_height                             int64
+page_width                              int64
+frame_height                           object
+frame_width                            object
+tramline_width                         object
 lines                                 float64
-columns                               float64
+columns                                object
 on_top_line                            object
 multiple_sheet_rulling                 object
-bilinear_ruling                          bool
+bilinear_ruling                        object
 comments                                  str
-hair_arrangement_id                   float64
+hair_arrangement_id                    object
 insular_pricking                       object
 created                   datetime64[us, UTC]
 modified                  datetime64[us, UTC]
-item_part_id                           object
+item_part_id                            int64
 dtype: object
-   id  historical_item_id  ...                         modified  item_part_id
-0  18                 394  ... 2012-05-24 14:11:40.826475+00:00          None
-1   1                 377  ... 2012-05-24 14:11:39.642818+00:00          None
+   id historical_item_id  ...                         modified  item_part_id
+0   5               None  ... 2017-07-12 10:44:12.110509+00:00           700
+1  11               None  ... 2017-07-12 11:24:15.920988+00:00           218
 
 [2 rows x 18 columns]
 
---- placeevidence ---
-id                                 int64
-legacy_id                          int64
-hand_id                            int64
-place_id                           int64
-place_description                    str
-reference_id                       int64
-evidence                             str
-created               datetime64[s, UTC]
-modified              datetime64[s, UTC]
-historical_item_id                 int64
-written_as                           str
+--- itempartauthenticity ---
+id                           int64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
+item_part_id                 int64
+category_id                  int64
+source_id                    int64
+note                           str
 dtype: object
 Empty DataFrame
-Columns: [id, legacy_id, hand_id, place_id, place_description, reference_id, evidence, created, modified, historical_item_id, written_as]
+Columns: [id, created, modified, item_part_id, category_id, source_id, note]
 Index: []
 
---- mediapermission ---
-id                 int64
-label                str
-display_message      str
-permission         int64
+--- scriptcomponent ---
+id                           int64
+script_id                    int64
+component_id                 int64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
 dtype: object
-   id         label                                    display_message  permission
-0   3  Have Licence                                                            300
-1   1    No Licence  A full image of this page is not yet available...         200
+Empty DataFrame
+Columns: [id, script_id, component_id, created, modified]
+Index: []
+
+--- repository ---
+id                                   int64
+legacy_id                          float64
+name                                   str
+short_name                             str
+place_id                             int64
+url                                    str
+comma                               object
+british_isles                       object
+digital_project                     object
+created                datetime64[us, UTC]
+modified               datetime64[us, UTC]
+copyright_notice                       str
+media_permission_id                float64
+type_id                              int64
+part_of_id                         float64
+dtype: object
+   id  legacy_id                              name  ... media_permission_id  type_id part_of_id
+0   5        NaN                   British Library  ...                 2.0        3        5.0
+1   3        NaN  Charters of the Abbey of Melrose  ...                 NaN        4        NaN
+
+[2 rows x 15 columns]
+
+--- placeevidence ---
+id                                  int64
+legacy_id                          object
+hand_id                            object
+place_id                            int64
+place_description                     str
+reference_id                        int64
+evidence                              str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+historical_item_id                  int64
+written_as                            str
+dtype: object
+     id legacy_id hand_id  ...                         modified historical_item_id  written_as
+0  3073      None    None  ... 2015-10-01 14:57:40.428000+00:00                 38            
+1  3074      None    None  ... 2015-10-01 14:57:40.568000+00:00                 39            
+
+[2 rows x 11 columns]
+
+--- scribe ---
+id                                int64
+legacy_id                        object
+name                                str
+date                                str
+scriptorium_id                   object
+created             datetime64[us, UTC]
+modified            datetime64[us, UTC]
+legacy_reference                    str
+dtype: object
+   id legacy_id  ...                         modified legacy_reference
+0   2      None  ... 2015-05-13 22:46:05.628867+00:00                 
+1   1      None  ... 2016-02-03 18:50:39.585011+00:00                 
+
+[2 rows x 8 columns]
+
+--- script ---
+id                        int64
+legacy_id                 int64
+name                        str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, name, created, modified]
+Index: []
+
+--- region ---
+id                       int64
+name                       str
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, created, modified]
+Index: []
+
+--- requestlog ---
+id                            int64
+request                         str
+created         datetime64[us, UTC]
+result_count                  int64
+dtype: object
+    id                                            request                          created  result_count
+0   85  https://mofa-stg.dighum.kcl.ac.uk/digipal/sear... 2014-11-19 14:48:59.000291+00:00             1
+1  615  https://mofa-stg.dighum.kcl.ac.uk/digipal/sear... 2015-07-15 12:02:00.000421+00:00          1908
+
+--- scriptcomponent_features ---
+id                    int64
+scriptcomponent_id    int64
+feature_id            int64
+dtype: object
+Empty DataFrame
+Columns: [id, scriptcomponent_id, feature_id]
+Index: []
+
+--- proportion ---
+id                             int64
+legacy_id                      int64
+hand_id                        int64
+measurement_id                 int64
+description                      str
+cue_height                   float64
+value                        float64
+created           datetime64[s, UTC]
+modified          datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, hand_id, measurement_id, description, cue_height, value, created, modified]
+Index: []
 
 --- placetype ---
 id                       int64
@@ -854,35 +1021,29 @@ Empty DataFrame
 Columns: [id, name, created, modified]
 Index: []
 
---- ownertype ---
-id                        int64
-name                        str
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
+--- place ---
+id                                    int64
+legacy_id                            object
+name                                    str
+eastings                            float64
+northings                           float64
+region_id                            object
+current_county_id                    object
+historical_county_id                 object
+created                 datetime64[us, UTC]
+modified                datetime64[us, UTC]
+type_id                              object
+other_names                             str
 dtype: object
-   id         name                          created                         modified
-0   1       Person 2014-09-08 10:51:07.305354+00:00 2014-09-08 10:51:07.305334+00:00
-1   2  Institution 2014-09-08 10:51:07.307056+00:00 2014-09-08 10:51:07.307036+00:00
+   id legacy_id     name  ...                         modified  type_id other_names
+0  56      None  Unknown  ... 2016-01-27 19:11:31.159000+00:00     None         NaN
+1  62      None  Belford  ... 2016-02-12 17:13:57.714000+00:00     None     Belford
 
---- scribe ---
-id                                int64
-legacy_id                       float64
-name                                str
-date                                str
-scriptorium_id                  float64
-created             datetime64[us, UTC]
-modified            datetime64[us, UTC]
-legacy_reference                    str
-dtype: object
-    id  legacy_id  ...                         modified legacy_reference
-0  165        NaN  ... 2013-07-12 14:52:50.096266+00:00                 
-1  166        NaN  ... 2013-07-12 14:56:52.137100+00:00                 
-
-[2 rows x 8 columns]
+[2 rows x 12 columns]
 
 --- reference ---
 id                                int64
-legacy_id                       float64
+legacy_id                        object
 name                                str
 name_index                          str
 legacy_reference                    str
@@ -890,21 +1051,304 @@ full_reference                      str
 created             datetime64[us, UTC]
 modified            datetime64[us, UTC]
 dtype: object
-   id  legacy_id  ...                          created                         modified
-0   1      380.0  ... 2012-05-22 13:06:42.383295+00:00 2013-05-02 10:17:57.227217+00:00
-1   2        1.0  ... 2012-05-22 13:06:42.385343+00:00 2013-05-02 10:17:57.231055+00:00
+   id legacy_id         name  ... full_reference                          created                         modified
+0   2      None  Unspecified  ...                2014-11-19 13:29:15.073000+00:00 2014-11-19 13:29:15.073000+00:00
+
+[1 rows x 8 columns]
+
+--- source ---
+id                            int64
+name                            str
+label                           str
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+priority                      int64
+label_styled                    str
+label_slug                      str
+dtype: object
+   id                       name  ...               label_styled              label_slug
+0  36             Reid, TDGAS 35  ...                                      reid-tdgas-35
+1  37  Macquarrie, Bruces, no. 3  ...  Macquarrie, Bruces, no. 3  macquarrie-bruces-no-3
 
 [2 rows x 8 columns]
 
---- requestlog ---
-id                            int64
-request                         str
-created         datetime64[us, UTC]
-result_count                  int64
+--- script_allographs ---
+id              int64
+script_id       int64
+allograph_id    int64
 dtype: object
-    id                                            request                          created  result_count
-0  520  https://digipal-stg.cch.kcl.ac.uk/digipal/search/ 2013-11-06 10:41:35.316809+00:00             0
-1  521  https://digipal-stg.cch.kcl.ac.uk/digipal/search/ 2013-11-06 10:51:14.440051+00:00             0
+Empty DataFrame
+Columns: [id, script_id, allograph_id]
+Index: []
+
+--- text_textcontenttype ---
+id                        int64
+name                        str
+created     datetime64[us, UTC]
+modified    datetime64[us, UTC]
+slug                        str
+dtype: object
+   id           name                          created                         modified           slug
+0   1    Translation 2015-02-02 15:00:05.670621+00:00 2015-02-02 15:00:05.670654+00:00    translation
+1   2  Transcription 2015-02-02 15:00:16.648030+00:00 2015-02-02 15:00:16.648077+00:00  transcription
+
+--- text_textcontent_languages ---
+id                int64
+textcontent_id    int64
+language_id       int64
+dtype: object
+Empty DataFrame
+Columns: [id, textcontent_id, language_id]
+Index: []
+
+--- text_textcontentxml ---
+id                               int64
+status_id                        int64
+text_content_id                  int64
+created            datetime64[us, UTC]
+modified           datetime64[us, UTC]
+content                            str
+last_image_id                   object
+dtype: object
+     id  status_id  ...                                            content last_image_id
+0     1          4  ...  <p><span data-dpt="clause" data-dpt-cat="words...          None
+1  1004          1  ...  <p><span data-dpt="clause" data-dpt-cat="words...          None
+
+[2 rows x 7 columns]
+
+--- text ---
+id                         int64
+name                         str
+created      datetime64[us, UTC]
+modified     datetime64[us, UTC]
+legacy_id                 object
+date                         str
+url                          str
+date_sort                    str
+dtype: object
+   id                         name                          created  ...                           date  url date_sort
+0   1  NLS Adv. MS 15.1.18, no. 27 2017-08-21 00:42:23.154530+00:00  ...  25 March 1222 x 24 March 1223  NaN       NaN
+1   2       BL Cotton Ch. xviii.28 2017-08-21 00:42:23.329734+00:00  ...         Saturday 5 August 1245  NaN       NaN
+
+[2 rows x 8 columns]
+
+--- text_categories ---
+id             int64
+text_id        int64
+category_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, text_id, category_id]
+Index: []
+
+--- text_textannotation ---
+id                             int64
+annotation_id                  int64
+elementid                        str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+dtype: object
+    id  annotation_id  ...                          created                         modified
+0  473           3659  ... 2016-03-10 00:27:34.987231+00:00 2016-03-10 00:27:34.987262+00:00
+1  929           7237  ... 2016-12-18 03:14:29.090813+00:00 2016-12-18 03:14:29.090834+00:00
+
+[2 rows x 5 columns]
+
+--- text_languages ---
+id             int64
+text_id        int64
+language_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, text_id, language_id]
+Index: []
+
+--- text_textcontentxmlcopy ---
+id                        int64
+source_id                 int64
+content                  object
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+ahash                       str
+dtype: object
+Empty DataFrame
+Columns: [id, source_id, content, created, modified, ahash]
+Index: []
+
+--- text_textpattern ---
+id                          int64
+title                         str
+key                           str
+pattern                       str
+order                       int64
+description                   str
+created        datetime64[s, UTC]
+modified       datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, title, key, pattern, order, description, created, modified]
+Index: []
+
+--- text_textcontentxmlstatus ---
+id                          int64
+name                          str
+created       datetime64[us, UTC]
+modified      datetime64[us, UTC]
+slug                          str
+sort_order                  int64
+dtype: object
+   id   name                          created                         modified   slug  sort_order
+0   1  Draft 2015-04-13 20:24:20.653526+00:00 2015-04-13 20:24:20.653559+00:00  draft          10
+1   2   Live 2015-04-13 20:24:20.656136+00:00 2015-04-13 20:24:20.656156+00:00   live         100
+
+--- text_entryhand ---
+id                           int64
+item_part_id                 int64
+entry_number                   str
+hand_label                     str
+order                        int64
+correction                    bool
+certainty                  float64
+created         datetime64[s, UTC]
+modified        datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, item_part_id, entry_number, hand_label, order, correction, certainty, created, modified]
+Index: []
+
+--- text_textcontent ---
+id                              int64
+type_id                         int64
+item_part_id                    int64
+created           datetime64[us, UTC]
+modified          datetime64[us, UTC]
+text_id                        object
+attribution_id                 object
+dtype: object
+   id  type_id  item_part_id  ...                         modified text_id attribution_id
+0   1        2           553  ... 2015-02-02 15:00:54.595654+00:00    None           None
+1   2        1           553  ... 2015-02-02 15:00:54.804483+00:00    None           None
+
+[2 rows x 7 columns]
+
+--- django_content_type ---
+id           int64
+app_label      str
+model          str
+dtype: object
+    id     app_label                 model
+0  108  digipal_text        textannotation
+1  109       digipal  itempartauthenticity
+
+--- allographcomponent_features ---
+id                       int64
+allographcomponent_id    int64
+feature_id               int64
+dtype: object
+    id  allographcomponent_id  feature_id
+0  184                     73          63
+1  185                     74          37
+
+--- aspect_features ---
+id            int64
+aspect_id     int64
+feature_id    int64
+dtype: object
+   id  aspect_id  feature_id
+0  46          8          40
+
+--- currentitem ---
+id                             int64
+legacy_id                     object
+repository_id                  int64
+shelfmark                        str
+description                      str
+display_label                    str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+dtype: object
+    id legacy_id  ...                          created                         modified
+0  723      None  ... 2017-03-23 15:22:58.478831+00:00 2017-03-23 16:00:10.970228+00:00
+1  724      None  ... 2017-05-19 13:02:55.942295+00:00 2017-05-19 13:02:55.942327+00:00
+
+[2 rows x 8 columns]
+
+--- graph ---
+id                             int64
+idiograph_id                   int64
+hand_id                        int64
+display_label                    str
+created          datetime64[us, UTC]
+modified         datetime64[us, UTC]
+group_id                      object
+dtype: object
+     id  idiograph_id  hand_id  ...                          created                         modified group_id
+0  7327            21       67  ... 2017-01-31 01:56:23.815297+00:00 2017-01-31 01:56:23.816592+00:00     None
+1   317            10        1  ... 2015-03-30 00:37:48.594815+00:00 2015-03-30 00:37:48.595825+00:00     None
+
+[2 rows x 7 columns]
+
+--- scribe_reference ---
+id              int64
+scribe_id       int64
+reference_id    int64
+dtype: object
+Empty DataFrame
+Columns: [id, scribe_id, reference_id]
+Index: []
+
+--- description ---
+id                                  int64
+historical_item_id                  int64
+source_id                           int64
+description                           str
+created               datetime64[us, UTC]
+modified              datetime64[us, UTC]
+text_id                            object
+comments                              str
+summary                               str
+dtype: object
+   id  historical_item_id  source_id  ... text_id comments summary
+0   9                 621          2  ...    None                 
+1  51                 209          2  ...    None                 
+
+[2 rows x 9 columns]
+
+--- textitempart ---
+id                            int64
+locus                           str
+item_part_id                  int64
+text_id                       int64
+created         datetime64[us, UTC]
+modified        datetime64[us, UTC]
+date                            str
+name                            str
+dtype: object
+   id locus  item_part_id  text_id                          created                         modified date name
+0   1   NaN           248        1 2017-08-21 00:42:23.192829+00:00 2017-08-21 00:42:23.192850+00:00  NaN  NaN
+1   2   NaN           703        2 2017-08-21 00:42:23.330480+00:00 2017-08-21 00:42:23.330495+00:00  NaN  NaN
+
+--- measurement ---
+id                        int64
+legacy_id                 int64
+label                       str
+created      datetime64[s, UTC]
+modified     datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, legacy_id, label, created, modified]
+Index: []
+
+--- status ---
+id                       int64
+name                       str
+default                   bool
+created     datetime64[s, UTC]
+modified    datetime64[s, UTC]
+dtype: object
+Empty DataFrame
+Columns: [id, name, default, created, modified]
+Index: []
 
 --- stewartrecord ---
 id                 int64
@@ -933,461 +1377,6 @@ ker_hand             str
 import_messages      str
 matched_hands        str
 dtype: object
-    id scragg         repository  ... ker_hand import_messages matched_hands
-0  423         Exeter, Cathedral  ...                                       
-1  629                  + Oxford  ...        3                              
-
-[2 rows x 25 columns]
-
---- status ---
-id                        int64
-name                        str
-default                    bool
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
-dtype: object
-   id       name  default                          created                         modified
-0   1    chopper    False 2012-05-22 14:37:24.339073+00:00 2012-05-22 14:37:24.339092+00:00
-1   4  Completed    False 2012-11-28 14:36:03.359296+00:00 2012-11-28 14:36:03.359318+00:00
-
---- source ---
-id                            int64
-name                            str
-label                           str
-created         datetime64[us, UTC]
-modified        datetime64[us, UTC]
-priority                      int64
-label_styled                    str
-label_slug                      str
-dtype: object
-   id                                        name             label  ... priority      label_styled        label_slug
-0  12  Beinecke Rare Book and Manuscript Library   Beinecke Library  ...      200  Beinecke Library  beinecke-library
-1   1                  Codices Latini Antiquiores               CLA  ...       90                                 cla
-
-[2 rows x 8 columns]
-
---- repository ---
-id                                   int64
-legacy_id                            int64
-name                                   str
-short_name                             str
-place_id                             int64
-url                                    str
-comma                               object
-british_isles                         bool
-digital_project                     object
-created                datetime64[us, UTC]
-modified               datetime64[us, UTC]
-copyright_notice                       str
-media_permission_id                float64
-type_id                              int64
-part_of_id                         float64
-dtype: object
-    id  legacy_id                        name  ... media_permission_id  type_id part_of_id
-0  218       -469                      Aachen  ...                 NaN        1        NaN
-1  219       -472  Abbey of Anvin, near Douai  ...                 NaN        4        NaN
-
-[2 rows x 15 columns]
-
---- script ---
-id                         int64
-legacy_id                float64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-dtype: object
-   id  legacy_id                          name                          created                         modified
-0   1        NaN            Caroline minuscule 2012-09-24 11:06:54.555243+00:00 2012-09-24 11:06:54.555270+00:00
-1   2      999.0  English Vernacular minuscule 2012-09-24 11:09:12.937784+00:00 2012-09-24 11:09:12.937816+00:00
-
---- region ---
-id                        int64
-name                        str
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
-dtype: object
-   id        name                          created                         modified
-0   1      Wessex 2012-05-22 13:06:44.539091+00:00 2012-05-22 13:06:44.539107+00:00
-1   2  South West 2012-05-22 13:06:44.541034+00:00 2012-05-22 13:06:44.541050+00:00
-
---- proportion ---
-id                              int64
-legacy_id                       int64
-hand_id                         int64
-measurement_id                  int64
-description                       str
-cue_height                    float64
-value                         float64
-created           datetime64[us, UTC]
-modified          datetime64[us, UTC]
-dtype: object
-   id  legacy_id  hand_id  ...  value                          created                         modified
-0   1          3      753  ...   34.0 2012-05-22 13:10:01.009031+00:00 2013-05-02 10:21:30.450060+00:00
-1   7          9      753  ...   28.0 2012-05-22 13:10:01.052132+00:00 2013-05-02 10:21:30.475468+00:00
-
-[2 rows x 9 columns]
-
---- scribe_reference ---
-id              int64
-scribe_id       int64
-reference_id    int64
-dtype: object
-   id  scribe_id  reference_id
-0   4          4           248
-1   5          5           248
-
---- script_allographs ---
-id              int64
-script_id       int64
-allograph_id    int64
-dtype: object
-   id  script_id  allograph_id
-0   1          1             1
-1   2          1             2
-
---- scriptcomponent ---
-id                           int64
-script_id                    int64
-component_id                 int64
-created         datetime64[s, UTC]
-modified        datetime64[s, UTC]
-dtype: object
 Empty DataFrame
-Columns: [id, script_id, component_id, created, modified]
-Index: []
-
---- scriptcomponent_features ---
-id                    int64
-scriptcomponent_id    int64
-feature_id            int64
-dtype: object
-Empty DataFrame
-Columns: [id, scriptcomponent_id, feature_id]
-Index: []
-
---- text_categories ---
-id             int64
-text_id        int64
-category_id    int64
-dtype: object
-   id  text_id  category_id
-0   1        1          283
-1   2        2          279
-
---- text_languages ---
-id             int64
-text_id        int64
-language_id    int64
-dtype: object
-   id  text_id  language_id
-0   1        1            2
-1   2        2            2
-
---- text ---
-id                         int64
-name                         str
-created      datetime64[us, UTC]
-modified     datetime64[us, UTC]
-legacy_id                float64
-date                         str
-url                          str
-date_sort                    str
-dtype: object
-   id            name                          created  ...                         date  url date_sort
-0   1  charter P. 101 2013-11-04 17:13:22.258568+00:00  ...  11 June 1096 × 18 June 1102  NaN       NaN
-1   2  charter P. 102 2013-11-04 17:13:22.289874+00:00  ...                               NaN       NaN
-
-[2 rows x 8 columns]
-
---- text_textcontentxmlstatus ---
-id                          int64
-name                          str
-created       datetime64[us, UTC]
-modified      datetime64[us, UTC]
-slug                          str
-sort_order                  int64
-dtype: object
-   id   name                          created                         modified   slug  sort_order
-0   1  Draft 2015-04-16 12:48:27.164873+00:00 2015-04-16 12:48:27.167550+00:00  draft          10
-1   2   Live 2015-04-16 12:48:27.171451+00:00 2015-04-16 12:48:27.172485+00:00   live         100
-
---- text_textpattern ---
-id                          int64
-title                         str
-key                           str
-pattern                       str
-order                       int64
-description                   str
-created        datetime64[s, UTC]
-modified       datetime64[s, UTC]
-dtype: object
-Empty DataFrame
-Columns: [id, title, key, pattern, order, description, created, modified]
-Index: []
-
---- django_content_type ---
-id           int64
-app_label      str
-model          str
-dtype: object
-    id app_label                 model
-0  179   digipal  itempartauthenticity
-1  180   digipal  authenticitycategory
-
---- text_textcontent ---
-id                             int64
-type_id                        int64
-item_part_id                   int64
-created           datetime64[s, UTC]
-modified          datetime64[s, UTC]
-text_id                        int64
-attribution_id                 int64
-dtype: object
-Empty DataFrame
-Columns: [id, type_id, item_part_id, created, modified, text_id, attribution_id]
-Index: []
-
---- text_textcontent_languages ---
-id                int64
-textcontent_id    int64
-language_id       int64
-dtype: object
-Empty DataFrame
-Columns: [id, textcontent_id, language_id]
-Index: []
-
---- textitempart ---
-id                            int64
-locus                           str
-item_part_id                  int64
-text_id                       int64
-created         datetime64[us, UTC]
-modified        datetime64[us, UTC]
-date                            str
-name                            str
-dtype: object
-   id locus  item_part_id  text_id                          created                         modified date name
-0   1   NaN           762        1 2013-11-04 17:13:22.275274+00:00 2013-11-04 17:13:22.275303+00:00  NaN  NaN
-1   3   NaN           762        3 2013-11-04 17:13:22.337034+00:00 2013-11-04 17:13:22.337058+00:00  NaN  NaN
-
---- text_textcontentxml ---
-id                              int64
-status_id                       int64
-text_content_id                 int64
-created            datetime64[s, UTC]
-modified           datetime64[s, UTC]
-content                           str
-last_image_id                   int64
-dtype: object
-Empty DataFrame
-Columns: [id, status_id, text_content_id, created, modified, content, last_image_id]
-Index: []
-
---- text_textcontentxmlcopy ---
-id                        int64
-source_id                 int64
-content                  object
-created      datetime64[s, UTC]
-modified     datetime64[s, UTC]
-ahash                       str
-dtype: object
-Empty DataFrame
-Columns: [id, source_id, content, created, modified, ahash]
-Index: []
-
---- text_textcontenttype ---
-id                       int64
-name                       str
-created     datetime64[s, UTC]
-modified    datetime64[s, UTC]
-slug                       str
-dtype: object
-Empty DataFrame
-Columns: [id, name, created, modified, slug]
-Index: []
-
---- allographcomponent ---
-id                            int64
-allograph_id                  int64
-component_id                  int64
-created         datetime64[us, UTC]
-modified        datetime64[us, UTC]
-dtype: object
-   id  allograph_id  component_id                          created                         modified
-0   1             2            11 2012-05-22 13:06:41.786335+00:00 2013-05-02 10:17:56.673202+00:00
-1   2             2            22 2012-05-22 13:06:41.788845+00:00 2013-05-02 10:17:56.678589+00:00
-
---- allographcomponent_features ---
-id                       int64
-allographcomponent_id    int64
-feature_id               int64
-dtype: object
-Empty DataFrame
-Columns: [id, allographcomponent_id, feature_id]
-Index: []
-
---- annotation ---
-id                                   int64
-image_id                             int64
-cutout                                 str
-status_id                          float64
-before_id                          float64
-graph_id                           float64
-after_id                           float64
-vector_id                              str
-geo_json                               str
-display_note                           str
-internal_note                          str
-author_id                            int64
-created                datetime64[us, UTC]
-modified               datetime64[us, UTC]
-rotation                           float64
-holes                                  str
-clientid                               str
-type                                   str
-illustration_ductus                    str
-dtype: object
-      id  image_id                                             cutout  ...  clientid  type  illustration_ductus
-0  37223       587  http://digipal-stg.cch.kcl.ac.uk/iip/iipsrv.fc...  ...       NaN   NaN                  NaN
-1  37224       587  http://digipal-stg.cch.kcl.ac.uk/iip/iipsrv.fc...  ...       NaN   NaN                  NaN
-
-[2 rows x 19 columns]
-
---- text_textannotation ---
-id                            int64
-annotation_id                 int64
-elementid                       str
-created          datetime64[s, UTC]
-modified         datetime64[s, UTC]
-dtype: object
-Empty DataFrame
-Columns: [id, annotation_id, elementid, created, modified]
-Index: []
-
---- imageannotationstatus ---
-id                        int64
-name                        str
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
-dtype: object
-   id                            name                          created                         modified
-0   2                   Boxes checked 2014-02-17 16:14:36.893192+00:00 2014-02-17 16:14:36.893216+00:00
-1   3  Feature descriptions completed 2014-02-17 16:14:51.591763+00:00 2014-02-17 16:14:51.591788+00:00
-
---- image ---
-id                                    int64
-item_part_id                        float64
-locus                                   str
-caption                                 str
-image                                   str
-display_label                           str
-created                 datetime64[us, UTC]
-modified                datetime64[us, UTC]
-folio_side                              str
-folio_number                            str
-iipimage                                str
-media_permission_id                 float64
-transcription                           str
-internal_notes                          str
-custom_label                            str
-annotation_status_id                float64
-width                                 int64
-height                                int64
-size                                  int64
-keywords_string                         str
-quire                                   str
-page_boundaries                         str
-dtype: object
-   id  item_part_id  locus               caption  ... size keywords_string quire page_boundaries
-0  21         303.0  dorse  S1021-1_original.jpg  ...    0                   NaN             NaN
-1  58         575.0     1v                    1v  ...    0                   NaN             NaN
-
-[2 rows x 22 columns]
-
---- aspect ---
-id                       int64
-name                       str
-created     datetime64[s, UTC]
-modified    datetime64[s, UTC]
-dtype: object
-Empty DataFrame
-Columns: [id, name, created, modified]
-Index: []
-
---- aspect_features ---
-id            int64
-aspect_id     int64
-feature_id    int64
-dtype: object
-Empty DataFrame
-Columns: [id, aspect_id, feature_id]
-Index: []
-
---- component_features ---
-id                              int64
-component_id                    int64
-feature_id                      int64
-set_by_default                   bool
-created           datetime64[us, UTC]
-modified          datetime64[us, UTC]
-dtype: object
-    id  component_id  feature_id  set_by_default                   created                  modified
-0  491            26          37           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
-1  492            26          39           False 2000-01-01 00:00:00+00:00 2000-01-01 00:00:00+00:00
-
---- alphabet_ontographs ---
-id              int64
-alphabet_id     int64
-ontograph_id    int64
-dtype: object
-Empty DataFrame
-Columns: [id, alphabet_id, ontograph_id]
-Index: []
-
---- feature ---
-id                        int64
-name                        str
-created     datetime64[us, UTC]
-modified    datetime64[us, UTC]
-dtype: object
-   id        name                          created                         modified
-0   1    3-shaped 2012-05-22 13:06:40.403469+00:00 2012-05-22 13:06:40.403486+00:00
-1   2  3/4 closed 2012-05-22 13:06:40.405797+00:00 2012-05-22 13:06:40.405813+00:00
-
---- date ---
-id                                int64
-legacy_id                         int64
-date                                str
-sort_order                      float64
-weight                          float64
-band                            float64
-additional_band                 float64
-post_conquest                      bool
-s_xi                               bool
-min_weight                      float64
-max_weight                      float64
-created             datetime64[us, UTC]
-modified            datetime64[us, UTC]
-legacy_reference                    str
-evidence                            str
-dtype: object
-   id  legacy_id           date  ...                         modified  legacy_reference  evidence
-0   4          4  Saec. xi med.  ... 2012-11-30 12:33:46.785995+00:00               NaN          
-1   5          5   Saec. xi ex.  ... 2012-11-30 12:33:46.866922+00:00               NaN          
-
-[2 rows x 15 columns]
-
---- text_entryhand ---
-id                           int64
-item_part_id                 int64
-entry_number                   str
-hand_label                     str
-order                        int64
-correction                    bool
-certainty                  float64
-created         datetime64[s, UTC]
-modified        datetime64[s, UTC]
-dtype: object
-Empty DataFrame
-Columns: [id, item_part_id, entry_number, hand_label, order, correction, certainty, created, modified]
+Columns: [id, scragg, repository, shelf_mark, fols, gneuss, sp, ker, locus, selected, adate, location, surrogates, contents, notes, em, glosses, minor, charter, cartulary, eel, stokes_db, ker_hand, import_messages, matched_hands]
 Index: []
