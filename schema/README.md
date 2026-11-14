@@ -2,14 +2,8 @@ This `schema` folder contains local copies of published ontologies purely for ar
 
 The references are as follows:
 
-## CIDOC_CRM_v7.1.3.rdf
-"This is the implementation approved by the 58th CRM-SIG meeting (March 2024)
-as the current RDFS version for the CIDOC CRM namespace.
-Note that this is NOT a definition of the CIDOC CRM, but a CIDOC CRM compatible implementation
-of an RDF Schema derived from the authoritative release of the CIDOC CRM v7.1.3 on February 2024
-https://cidoc-crm.org/Version/version-7.1.3 by an automated algorithm. It is intended for an
-assumed majority of uses. Depending on the application, users may create adequate extensions 
-compatible with the logical definitions of the CIDOC CRM."
+## CIDOC_CRM_v7.1.3.owl
+"An OWL DL 1.0 implementation of the CIDOC Conceptual Reference Model ... 7.1.3 (February 2024)."
 
 - Created by FORTH-ICS, February 13, 2024
 - Available at https://cidoc-crm.org/rdfs/7.1.3/CIDOC_CRM_v7.1.3.rdfs
