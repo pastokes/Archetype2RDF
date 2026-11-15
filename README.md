@@ -1,14 +1,28 @@
 # Archetype ontology, mapping and RDF export
 
-Project to map the [original (v2) Archetype](https://github.com/kcl-ddh/digipal) data model to a formal ontology based on CIDOC-CRM, and to export data with RDF, building on but entirely replacing the [Archetype-Ontology repository](https://github.com/pastokes/archetype-ontology).
-
+Project to map the [Archetype 2](https://github.com/kcl-ddh/digipal) (pre-2026) data model to a formal ontology based on CIDOC-CRM, and to export data with RDF.
 
 First stage completed by Eve Grimaud (CESR, Université de Tours), under the supervision of Peter A. Stokes, [AOROC (UMR 8546)](https://archeo.ens.fr), [École Pratique des Hautes Études, Université PSL](https://ephe.psl.eu).
 Subsequent revisions and further work by Peter Stokes.
 
-The export has been developed primarily for [DigiPal project](https://digipal.eu), but also with some testing on the palaeographical part of [Models of Authority](https://modelsofauthority.ac.uk). Note however that **the text part of Archetype is not yet implemented**.
+The export has been developed primarily for [DigiPal project](https://digipal.eu), but also with some testing on the palaeographical part of [Models of Authority](https://modelsofauthority.ac.uk). Note however that **the Archetype 2 text app is not yet implemented**.
+
+This repository builds on but entirely replaces the [Archetype-Ontology repository](https://github.com/pastokes/archetype-ontology); the latter model should now be considered obsolete.
 
 This work was completed in the context of [Biblissima+ Cluster 4](https://projet.biblissima.fr/fr/projet/clusters-biblissima/cluster-4). The work benefited from financial support from the French state managed by the Agence Nationale de Recherche under the Programme d'investissements d'avenir integrated into France 2030, with grant no. ANR-21-ESRE-0005.
+
+## Structure
+
+- **archetype_ontology.ttl** gives the ontology in OWL format
+- **archetype_shapes.ttl** provides further definition of the model using SHACKL shapes
+- **scripts**: Python scripts and related files for generating the SHACKL shapes and the RDF export from an Archetype instance.
+- **reports**: Reports detailing the full process and decision-making behind the ontology, export and SHACKL shapes in their current state.
+- - **schema**: Local copies of external ontologies (CIDOC-CRM, CRMtex, etc.). These are unchanged and saved here for purely for archival purposes.
+- **logos**: Local copies of logos for the README.md
+
+Note that the actual RDF exports are not stored in the GitHub repository but will be posted on Zenodo as related projects.
+
+---
 
 <p>
 <img width="73" height="93" alt="Logo of EPHE-PSL" src="logos/EPHE_2026.png" />
