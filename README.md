@@ -17,7 +17,7 @@ This work was completed in the context of [Biblissima+ Cluster 4](https://projet
 - **archetype_shapes.ttl** provides further definition of the model using SHACKL shapes
 - **scripts**: Python scripts and related files for generating the SHACKL shapes and the RDF export from an Archetype instance.
 - **reports**: Reports detailing the full process and decision-making behind the ontology, export and SHACKL shapes in their current state.
-- - **schema**: Local copies of external ontologies (CIDOC-CRM, CRMtex, etc.). These are unchanged and saved here for purely for archival purposes.
+- **schema**: Local copies of external ontologies (CIDOC-CRM, CRMtex, etc.). These are unchanged and saved here for purely for archival purposes.
 - **logos**: Local copies of logos for the README.md
 
 Note that the actual RDF exports are not stored in the GitHub repository but will be posted on Zenodo as related projects.
