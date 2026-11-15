@@ -218,10 +218,21 @@ DIMENSION_FIELDS = [
     ('tramline_width', TYPE_TRAMLINE_WIDTH, 'Tramline_Width'),
 ]
 
+ITEM_PART_LOCUS_TYPE = DATA["Type_Locus_In_Current_Item"]
+g.add((ITEM_PART_LOCUS_TYPE, RDF.type, CRM['E55_Type']))
+g.add((ITEM_PART_LOCUS_TYPE, RDFS.label, Literal("Locus in Current Item", lang="en")))
+
 # Helper function to build locus URIs
 def get_locus_appellation_uri(item_part_id, locus_text):
     locus_clean = re.sub(r'[^a-zA-Z0-9_-]', '_', str(locus_text))
     return DATA[f"Locus_Item_Part_{int(item_part_id)}_{locus_clean}"]
+
+# Helper function to get Surface Extent: a stretch of writing surface within an Item Part, from one point to another (may be less than a page,
+# or cross page/leaf boundaries), whose extent is given by a locus. One per (Item Part, locus string), shared by
+# everything citing that locus. Created only when a locus exists; the direct Item_Part -P46-> link is always present.
+def get_surface_extent_uri(item_part_id, locus_text):
+    locus_clean = re.sub(r'[^a-zA-Z0-9_-]', '_', str(locus_text))
+    return DATA[f"Surface_Extent_Item_Part_{int(item_part_id)}_{locus_clean}"]
 
 for _, row in data['historicalitem'].iterrows():
 
@@ -397,6 +408,16 @@ for _, item in data['itempart'].iterrows():
         g.add((itempart, ARCH.pagination, Literal(item['pagination'])))
     if pd.notna(item['notes']):
         g.add((itempart, CRM.P3_has_note, Literal(item['notes'])))
+    # Item Part's own locus: its location in its Current Item (e.g. "fols. 3–101"). With the shelfmark this
+    # identifies the Item Part, so P1 is appropriate (unlike loci cited *within* an Item Part, which identify
+    # Surface Extents). Not modelled as a separate Folio Extent node: the Item Part already is that physical unit.
+    # itempart.group / group_locus and itempartitem.locus: deliberately not exported (unused in DigiPal and MoA).
+    if pd.notna(item['locus']) and str(item['locus']).strip() != '':
+        ip_locus_uri = DATA[f"Item_Part_Locus_{int(item['id'])}"]
+        g.add((ip_locus_uri, RDF.type, CRM['E41_Appellation']))
+        g.add((ip_locus_uri, RDFS.label, Literal(item['locus'])))
+        g.add((ip_locus_uri, CRM['P2_has_type'], ITEM_PART_LOCUS_TYPE))
+        g.add((itempart, CRM['P1_is_identified_by'], ip_locus_uri))
     if pd.notna(item['current_item_id']):
         F5_Item_uri = DATA[f"Item_{int(item['id'])}"]
         current_item_uri = DATA[f"Current_Item_{int(item['current_item_id'])}"]
@@ -702,7 +723,7 @@ for _, repository in data['repository'].iterrows():
     
 for _, text in data['text'].iterrows():
     text_uri = DATA[f"Text_{int(text['id'])}"]
-    g.add((text_uri, RDF.type,      CRMtx.TX1_Written_Text))  # TODO: No, TX1 is a Physical Feature, not a Linguistic Object, so this is wrong. arch:Text should be E33_Linguistic_Object (or FRBRoo Expression)
+    g.add((text_uri, RDF.type,      ARCH.Text))
     if pd.notna(text['name']):
         g.add((text_uri, RDFS.label, Literal(text['name'])))
     if pd.notna(text['date']):
@@ -719,27 +740,35 @@ for _, text_cat in data['text_categories'].iterrows():
 for _, text_lang in data['text_languages'].iterrows():
     text_uri = DATA[f"Text_{int(text_lang['text_id'])}"]
     lang_uri = DATA[f"Language_{int(text_lang['language_id'])}"]
-    # TODO: NB that P72 is not strictly correct as Text here is TX1 so a Physical Feature, not a E33 Linguistic Object
     g.add((text_uri, CRM['P72_has_language'], lang_uri))
 
+
+# TextCopy: this Text as physically written in this Item Part (original or copy) -- TX1, the marks on the surface --
+# carrying the intellectual archetype:Text (P128). Its date is the date of this writing, not of the Text.
+# P46 (not P56) links it to the Item Part / Surface Extent: P56 requires an E19 subject, which neither is
+# (Item_Part is F5 ⊑ E24 under LRMoo). Same pattern as CRMtex's own example (physical object -P46-> TX1).
+# textitempart.name is never used (DigiPal, MoA), so not exported.
 for _, text_item in data['textitempart'].iterrows():
-    text_item_uri = DATA[f"Text_Item_part_{int(text_item['id'])}"]
-    g.add((text_item_uri, RDF.type,      CRMtx.TX7_Written_Text_Segment))
-    if pd.notna(text_item['name']):
-        g.add((text_item_uri, RDFS.label, Literal(text_item['name'])))
-    if pd.notna(text_item['date']):
-        g.add((text_item_uri, DCTERMS.date, Literal(text_item['date'])))
-    if pd.notna(text_item['locus']) and str(text_item['locus']).strip() != '' and pd.notna(text_item['item_part_id']):
-        locus_uri = get_locus_appellation_uri(text_item['item_part_id'], text_item['locus'])
-        g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
-        g.add((locus_uri, RDFS.label, Literal(text_item['locus'])))
-        g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
-        g.add((text_item_uri, CRM['P1_is_identified_by'], locus_uri))
-        itempart_uri = DATA[f"Item_Part_{int(text_item['item_part_id'])}"]
-        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
+    textcopy_uri = DATA[f"TextCopy_{int(text_item['id'])}"]          # was: Text_Item_part_<id>
+    g.add((textcopy_uri, RDF.type, ARCH.TextCopy))                    # was: CRMtx.TX7_Written_Text_Segment
+    if pd.notna(text_item['date']) and str(text_item['date']).strip() != '':
+        g.add((textcopy_uri, DCTERMS.date, Literal(text_item['date'])))
     if pd.notna(text_item['text_id']):
         text_uri = DATA[f"Text_{int(text_item['text_id'])}"]
-        g.add((text_uri,  CRMtx.TXP4_has_segment, text_item_uri))
+        g.add((textcopy_uri, CRM['P128_carries'], text_uri))          # replaces Text -TXP4-> segment
+    if pd.notna(text_item['item_part_id']):
+        itempart_uri = DATA[f"Item_Part_{int(text_item['item_part_id'])}"]
+        g.add((itempart_uri, CRM['P46_is_composed_of'], textcopy_uri))   # always: fixes the 69 orphans
+        if pd.notna(text_item['locus']) and str(text_item['locus']).strip() != '':
+            extent_uri = get_surface_extent_uri(text_item['item_part_id'], text_item['locus'])
+            g.add((extent_uri, RDF.type, ARCH.Surface_Extent))
+            g.add((itempart_uri, CRM['P46_is_composed_of'], extent_uri))
+            g.add((extent_uri, CRM['P46_is_composed_of'], textcopy_uri))
+            locus_uri = get_locus_appellation_uri(text_item['item_part_id'], text_item['locus'])
+            g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
+            g.add((locus_uri, RDFS.label, Literal(text_item['locus'])))
+            g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
+            g.add((extent_uri, CRM['P1_is_identified_by'], locus_uri))
 
 for _, owner in data['owner'].iterrows():
     owner_uri = DATA[f"Owner_{int(owner['id'])}"]
@@ -779,8 +808,6 @@ for _, hand in data['hand'].iterrows():
         g.add((handinstance_uri, RDFS.label, Literal(hand['label'])))
     if pd.notna(hand['display_note']) and str(hand['display_note']).strip() != '':
         g.add((handinstance_uri, ARCH.display_note, Literal(hand['display_note'])))
-    if pd.notna(hand['relevant']):
-        g.add((handinstance_uri, ARCH.relevant, Literal(hand['relevant'])))
     if pd.notna(hand['latin_only']):
         g.add((handinstance_uri, ARCH.latin_only, Literal(hand['latin_only'])))
     if pd.notna(hand['gloss_only']):
@@ -799,19 +826,11 @@ for _, hand in data['hand'].iterrows():
         g.add((handinstance_uri, CRM.P3_has_note, Literal(hand['comments'])))
     if pd.notna(hand['display_label']):
         g.add((handinstance_uri, ARCH.display_label, Literal(hand['display_label'])))
-    if pd.notna(hand['locus']) and str(hand['locus']).strip() != '' and pd.notna(hand['item_part_id']):
-        locus_uri = get_locus_appellation_uri(hand['item_part_id'], hand['locus'])
-        g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
-        g.add((locus_uri, RDFS.label, Literal(hand['locus'])))
-        g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
-        g.add((handinstance_uri, CRM['P1_is_identified_by'], locus_uri))
-        itempart_uri = DATA[f"Item_Part_{int(hand['item_part_id'])}"]
-        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
-
+    
     if pd.notna(hand['ker']):
         g.add((handinstance_uri, ARCH.ker, Literal(hand['ker'])))
 
-    # NB no direct link from Writing to Item Part — relies on the transitive Writing—P108→Hand←P56—ItemPart path.
+    # NB no direct link from Writing to Item Part — relies on the transitive Writing—P108→HandInstance←P46—ItemPart path.
     # This is because Hand is a human-made feature so is already closely connected to the Item Part,
     # and is in a sense exactly the link between the Activity and the physical surface.
     writing_uri = DATA[f"Writing_{int(hand['id'])}"]
@@ -848,10 +867,22 @@ for _, hand in data['hand'].iterrows():
     if pd.notna(hand['script_id']):
         script_uri = DATA[f"Script_{int(hand['script_id'])}"]
         g.add((writing_uri, CRM.P33_used_specific_technique, script_uri))   # not TXP12, not handinstance_uri
+    # Where the hand has a locus, it is also part of the Surface Extent that locus identifies (shared with any
+    # Text Copy or Image citing the same locus). The direct Item_Part -P46-> link is always present.
+    # Item Part -> Hand Instance via P46 (not P56: P56 requires an E19 subject; Item_Part is F5 ⊑ E24 under LRMoo).
     if pd.notna(hand['item_part_id']):
-        itempart_uri = DATA[f"Item_Part_{int(hand['item_part_id'])}"] 
-        # PAS: Fixed itempart - hand relationship.
-        g.add((itempart_uri, CRM['P56_bears_feature'], handinstance_uri))
+        itempart_uri = DATA[f"Item_Part_{int(hand['item_part_id'])}"]
+        g.add((itempart_uri, CRM['P46_is_composed_of'], handinstance_uri))      # was P56_bears_feature
+        if pd.notna(hand['locus']) and str(hand['locus']).strip() != '':
+            extent_uri = get_surface_extent_uri(hand['item_part_id'], hand['locus'])
+            g.add((extent_uri, RDF.type, ARCH.Surface_Extent))
+            g.add((itempart_uri, CRM['P46_is_composed_of'], extent_uri))
+            g.add((extent_uri, CRM['P46_is_composed_of'], handinstance_uri))
+            locus_uri = get_locus_appellation_uri(hand['item_part_id'], hand['locus'])
+            g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
+            g.add((locus_uri, RDFS.label, Literal(hand['locus'])))
+            g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
+            g.add((extent_uri, CRM['P1_is_identified_by'], locus_uri))
     if pd.notna(hand['appearance_id']):
         appearance_uri = DATA[f"Appearance_{int(hand['appearance_id'])}"]
         g.add((handinstance_uri, CRM.P2_has_type, appearance_uri))
@@ -878,14 +909,20 @@ for _, image in data['image'].iterrows():
     image_uri = DATA[f"Image_{int(image['id'])}"]
     g.add((image_uri, RDF.type,      CRM.E36_Visual_Item))
 
+    # Image -> Surface Extent: the image shows the stretch of surface identified by its locus (not the locus itself,
+    # which is only its name). The extent is shared with any Text Copy or Hand citing the same locus. Images without
+    # a locus are linked only to the Item Part (Image -P138-> Item_Part, below).
     if pd.notna(image['locus']) and str(image['locus']).strip() != '' and pd.notna(image['item_part_id']):
+        itempart_uri = DATA[f"Item_Part_{int(image['item_part_id'])}"]
+        extent_uri = get_surface_extent_uri(image['item_part_id'], image['locus'])
+        g.add((extent_uri, RDF.type, ARCH.Surface_Extent))
+        g.add((itempart_uri, CRM['P46_is_composed_of'], extent_uri))
         locus_uri = get_locus_appellation_uri(image['item_part_id'], image['locus'])
         g.add((locus_uri, RDF.type, CRM['E41_Appellation']))
         g.add((locus_uri, RDFS.label, Literal(image['locus'])))
         g.add((locus_uri, CRM['P2_has_type'], LOCUS_TYPE))
-        g.add((image_uri, CRM['P138_represents'], locus_uri))
-        itempart_uri = DATA[f"Item_Part_{int(image['item_part_id'])}"]
-        g.add((itempart_uri, CRM['P1_is_identified_by'], locus_uri))
+        g.add((extent_uri, CRM['P1_is_identified_by'], locus_uri))
+        g.add((image_uri, CRM['P138_represents'], extent_uri))   # was: -> locus_uri (an appellation); Item_Part -P1-> locus dropped
 
     if pd.notna(image['caption']):
         g.add((image_uri, ARCH.caption, Literal(image['caption'])))

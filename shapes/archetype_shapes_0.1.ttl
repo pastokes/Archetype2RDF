@@ -17,7 +17,7 @@
 # No cardinalities are asserted.
 #
 # Generated from:
-#   - data_pstokes_turtle_202609222044.rdf (every resource-to-resource
+#   - data_digipal_turtle_202611151557.rdf (every resource-to-resource
 #     triple, grouped by subject kind / property / object kind);
 #   - creation_rdf.py (links the code can emit but which have no
 #     DigiPal data: marked "not populated in DigiPal");
@@ -31,7 +31,7 @@
 #     on the OTHER node, pointing at this one. The export materialises
 #     only the forward property, so a SPARQL query must use the forward
 #     property with the variables swapped (e.g. ?itempart
-#     crm:P56_bears_feature ?hand), NOT the CRM inverse (P56i_is_found_on),
+#     crm:P46_is_composed_of ?hand), NOT the CRM inverse (P46i_forms_part_of),
 #     unless a reasoner is used. The CRM inverse name is given in the
 #     description for reference only.
 #   - Shapes carry sh:targetClass only where the Archetype node kind has
@@ -67,7 +67,7 @@ archsh:CharacterShape
     ] ;
     sh:property [
         sh:path crm:P148_has_component ;
-        sh:class archetype:GenericComponent ;   # CHECK!!
+        sh:class archetype:GenericComponent ;
         sh:description "Outgoing: Character -P148_has_component-> Generic Component. Type level: the Components this Character is made up of."@en
     ] ;
     sh:property [
@@ -92,7 +92,7 @@ archsh:AllographShape
     ] ;
     sh:property [
         sh:path crm:P148_has_component ;
-        sh:class archetype:GenericComponent ;     # TO CHANGE: VisualComponent
+        sh:class archetype:GenericComponent ;
         sh:description "Outgoing: Allograph -P148_has_component-> Generic Component. Type level: the Components this Allograph is made up of (no Features recorded at this level)."@en
     ] ;
     sh:property [
@@ -188,7 +188,7 @@ archsh:VisualComponentShape
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P148_has_component ] ;
-        sh:class archetype:Idiograph ;          # Add also all Generic Allographs. Then can specify (e.g.) features for Caroline a, etc.
+        sh:class archetype:Idiograph ;
         sh:description "Incoming: Idiograph -P148_has_component-> this Visual Component. (CRM inverse P148i_is_component_of; not materialised in the export.)"@en
     ] .
 
@@ -197,7 +197,7 @@ archsh:GenericComponentShape
     sh:targetClass archetype:GenericComponent ;
     rdfs:label "Generic Component"@en ;
     sh:property [
-        sh:path crm:P2_has_type ;  # Change to 'archetype:permits feature'
+        sh:path crm:P2_has_type ;
         sh:class archetype:Feature ;
         sh:description "Outgoing: Generic Component -P2_has_type-> Feature. The Features this Component MAY bear (the permitted-feature list from component_features), not Features observed on any Graph."@en
     ] ;
@@ -206,7 +206,7 @@ archsh:GenericComponentShape
         sh:class archetype:VisualComponent ;
         sh:description "Incoming: Visual Component -P138_represents-> this Generic Component. (CRM inverse P138i_has_representation; not materialised in the export.)"@en
     ] ;
-    sh:property [ # Drop: force all Generalised Allographs to go through Visual Component for consistency
+    sh:property [
         sh:path [ sh:inversePath crm:P148_has_component ] ;
         sh:or ( [ sh:class archetype:Allograph ] [ sh:class archetype:Character ] ) ;
         sh:description "Incoming: Allograph or Character -P148_has_component-> this Generic Component. (CRM inverse P148i_is_component_of; not materialised in the export.)"@en
@@ -223,7 +223,7 @@ archsh:FeatureShape
     rdfs:label "Feature"@en ;
     sh:property [
         sh:path [ sh:inversePath crm:P2_has_type ] ;
-        sh:or ( [ sh:class archetype:GenericComponent ] [ sh:class archetype:GraphComponent ] [ sh:class archetype:VisualComponent ] ) ; # CHANGE GenericComponent
+        sh:or ( [ sh:class archetype:GenericComponent ] [ sh:class archetype:GraphComponent ] [ sh:class archetype:VisualComponent ] ) ;
         sh:description "Incoming: Generic Component or Graph Component or Visual Component -P2_has_type-> this Feature. (CRM inverse P2i_is_type_of; not materialised in the export.)"@en
     ] .
 
@@ -234,7 +234,7 @@ archsh:OntographShape
     sh:property [
         sh:path crm:P2_has_type ;
         sh:class crm:E55_Type ;
-        sh:description "Outgoing: Ontograph -P2_has_type-> Ontograph type (E55 Type)."@en # Represents Category in DigiPal
+        sh:description "Outgoing: Ontograph -P2_has_type-> Ontograph type (E55 Type)."@en
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P138_represents ] ;
@@ -251,11 +251,6 @@ archsh:HandInstanceShape
     a sh:NodeShape ;
     sh:targetClass archetype:HandInstance ;
     rdfs:label "Hand Instance"@en ;
-    sh:property [
-        sh:path crm:P1_is_identified_by ;
-        sh:class crm:E41_Appellation ;
-        sh:description "Outgoing: Hand Instance -P1_is_identified_by-> Locus. Locus of the hand within its Item Part."@en
-    ] ;
     sh:property [
         sh:path crm:P2_has_type ;
         sh:or ( [ sh:class archetype:Appearance ] [ sh:class crm:E55_Type ] ) ;
@@ -282,9 +277,9 @@ archsh:HandInstanceShape
         sh:description "Incoming: Hand date attribution or Hand place attribution -P140_assigned_attribute_to-> this Hand Instance. (CRM inverse P140i_was_attributed_by; not materialised in the export.)"@en
     ] ;
     sh:property [
-        sh:path [ sh:inversePath crm:P56_bears_feature ] ;
-        sh:class archetype:Item_Part ;
-        sh:description "Incoming: Item Part -P56_bears_feature-> this Hand Instance. (CRM inverse P56i_is_found_on; not materialised in the export.)"@en
+        sh:path [ sh:inversePath crm:P46_is_composed_of ] ;
+        sh:or ( [ sh:class archetype:Item_Part ] [ sh:class archetype:Surface_Extent ] ) ;
+        sh:description "Incoming: Item Part or Surface Extent -P46_is_composed_of-> this Hand Instance. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P67_refers_to ] ;
@@ -308,7 +303,7 @@ archsh:WritingEventShape
         sh:description "Outgoing: Writing event -P14_carried_out_by-> Scribe. The Scribe who carried out this Writing."@en
     ] ;
     sh:property [
-        sh:path crm:P33_used_specific_technique ;  # TO REVIEW: see discussion R6
+        sh:path crm:P33_used_specific_technique ;
         sh:class crm-tx:TX10_Style ;
         sh:description "Outgoing: Writing event -P33_used_specific_technique-> Latin Style (TX10 Style) or Script (TX10 Style). Script and Latin Style as techniques of the Writing (deliberately not CRMtex TXP12_has_style on the Hand Instance; see creation_rdf.py)."@en
     ] .
@@ -387,7 +382,7 @@ archsh:HistoricalItemShape
         sh:class crm:E54_Dimension ;
         sh:description "Outgoing: Historical Item -P43_has_dimension-> Dimension."@en
     ] ;
-    sh:property [ # How is Collation a 'physical thing'?
+    sh:property [
         sh:path crm:P46_is_composed_of ;
         sh:or ( [ sh:class crm:E18_Physical_Thing ] [ sh:class archetype:Item_Part ] ) ;
         sh:description "Outgoing: Historical Item -P46_is_composed_of-> Collation or Decoration or Item Part or Layout. The Item Parts that make up this Historical Item."@en
@@ -414,8 +409,8 @@ archsh:ItemPartShape
     rdfs:label "Item Part"@en ;
     sh:property [
         sh:path crm:P1_is_identified_by ;
-        sh:class crm:E41_Appellation ;   # NO: crm:E42_Identifier is a subclass of E41, but Locus is not an Identifier
-        sh:description "Outgoing: Item Part -P1_is_identified_by-> Locus. Every Locus cited within this Item Part (by Images, Hand Instances or Texts)."@en
+        sh:class crm:E41_Appellation ;
+        sh:description "Outgoing: Item Part -P1_is_identified_by-> Item Part locus. The Item Part's own locus in its Current Item (only); cited loci within the Item Part name Surface Extents instead."@en
     ] ;
     sh:property [
         sh:path crm:P43_has_dimension ;
@@ -424,13 +419,8 @@ archsh:ItemPartShape
     ] ;
     sh:property [
         sh:path crm:P46_is_composed_of ;
-        sh:class crm:E18_Physical_Thing ;   # Again, seems wrong here
-        sh:description "Outgoing: Item Part -P46_is_composed_of-> Layout. Emitted by creation_rdf.py when Layout.item_part_id is set; not populated in DigiPal (Layout attaches to Historical Item there)."@en
-    ] ;
-    sh:property [
-        sh:path crm:P56_bears_feature ;
-        sh:class archetype:HandInstance ;
-        sh:description "Outgoing: Item Part -P56_bears_feature-> Hand Instance. The Hand Instances found on this Item Part."@en
+        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Surface_Extent ] [ sh:class archetype:TextCopy ] [ sh:class crm:E18_Physical_Thing ] ) ;
+        sh:description "Outgoing: Item Part -P46_is_composed_of-> Hand Instance or Surface Extent or Text Copy or Layout. The Hand Instances found on this Item Part (P46, not P56: P56 requires an E19 subject). Always present, whether or not the hand has a Surface Extent. The cited stretches of surface (loci) within this Item Part. Where X is part of a Surface Extent, Item_Part -P46-> X is a shortcut of Item_Part -P46-> Surface_Extent -P46-> X. The Text Copies written in this Item Part. Always present, whether or not the copy has a Surface Extent. Emitted by creation_rdf.py when Layout.item_part_id is set; not populated in DigiPal (Layout attaches to Historical Item there)."@en
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P138_represents ] ;
@@ -467,13 +457,13 @@ archsh:CurrentItemShape
         sh:class crm:E74_Group ;
         sh:description "Outgoing: Current Item -P50_has_current_keeper-> Repository. The Repository that holds this Current Item."@en
     ] ;
-    sh:property [   # CHECK!
+    sh:property [
         sh:path owl:sameAs ;
         sh:nodeKind sh:IRI ;
         sh:description "Outgoing: Current Item -sameAs-> data:Item_<id> (untyped). SUSPECT: points to data:Item_<item part id>, a node with no other triples; see note."@en
     ] .
 
-archsh:LayoutShape          # Doesn't look right at all... Left off diagram for now
+archsh:LayoutShape
     a sh:NodeShape ;
     rdfs:label "Layout"@en ;
     rdfs:comment "Typed only crm:E18_Physical_Thing (shared with Collation and Decoration); identified by URI data:Layout_Historical_Item_<id>, or as the E18 that a Historical Item is composed of and that has no P2_has_type."@en ;
@@ -488,7 +478,7 @@ archsh:LayoutShape          # Doesn't look right at all... Left off diagram for 
         sh:description "Incoming: Historical Item or Item Part -P46_is_composed_of-> this Layout. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
     ] .
 
-archsh:CollationShape       # Doesn't look right at all... Left off diagram for now
+archsh:CollationShape
     a sh:NodeShape ;
     rdfs:label "Collation"@en ;
     rdfs:comment "Typed only crm:E18_Physical_Thing; identified by crm:P2_has_type data:Collation."@en ;
@@ -503,7 +493,7 @@ archsh:CollationShape       # Doesn't look right at all... Left off diagram for 
         sh:description "Incoming: Historical Item -P46_is_composed_of-> this Collation. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
     ] .
 
-archsh:DecorationShape       # Doesn't look right at all... Left off diagram for now
+archsh:DecorationShape
     a sh:NodeShape ;
     rdfs:label "Decoration"@en ;
     rdfs:comment "Typed only crm:E18_Physical_Thing; identified by crm:P2_has_type data:Decoration."@en ;
@@ -518,7 +508,7 @@ archsh:DecorationShape       # Doesn't look right at all... Left off diagram for
         sh:description "Incoming: Historical Item -P46_is_composed_of-> this Decoration. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
     ] .
 
-archsh:DimensionShape          # Doesn't look right at all... Left off diagram for now
+archsh:DimensionShape
     a sh:NodeShape ;
     sh:targetClass crm:E54_Dimension ;
     rdfs:label "Dimension"@en ;
@@ -538,24 +528,60 @@ archsh:DimensionShape          # Doesn't look right at all... Left off diagram f
         sh:description "Incoming: Historical Item or Item Part -P43_has_dimension-> this Dimension. (CRM inverse P43i_is_dimension_of; not materialised in the export.)"@en
     ] .
 
-archsh:LocusShape       # Doesn't look right at all... Left off diagram for now
+archsh:SurfaceExtentShape
+    a sh:NodeShape ;
+    sh:targetClass archetype:Surface_Extent ;
+    rdfs:label "Surface Extent"@en ;
+    rdfs:comment "A stretch of writing surface within an Item Part, identified by a locus. One per (Item Part, locus string), shared by every Text Copy, Hand Instance and Image citing that locus; created only where a locus is recorded."@en ;
+    sh:property [
+        sh:path crm:P1_is_identified_by ;
+        sh:class crm:E41_Appellation ;
+        sh:description "Outgoing: Surface Extent -P1_is_identified_by-> Locus. The locus string naming this stretch of surface."@en
+    ] ;
+    sh:property [
+        sh:path crm:P46_is_composed_of ;
+        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:TextCopy ] ) ;
+        sh:description "Outgoing: Surface Extent -P46_is_composed_of-> Hand Instance or Text Copy. Hand Instances on this stretch of surface (also linked directly to the Item Part). Text Copies written on this stretch of surface (also linked directly to the Item Part)."@en
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath crm:P138_represents ] ;
+        sh:class crm:E36_Visual_Item ;
+        sh:description "Incoming: Image -P138_represents-> this Surface Extent. (CRM inverse P138i_has_representation; not materialised in the export.)"@en
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath crm:P46_is_composed_of ] ;
+        sh:class archetype:Item_Part ;
+        sh:description "Incoming: Item Part -P46_is_composed_of-> this Surface Extent. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
+    ] .
+
+archsh:LocusShape
     a sh:NodeShape ;
     rdfs:label "Locus"@en ;
-    rdfs:comment "Typed crm:E41_Appellation (not targeted by class because crm:E42_Identifier is a subclass of E41); identified by crm:P2_has_type data:Type_Locus. One Locus node per (Item Part, locus string), shared by any Image, Hand Instance or Text-in-Item-Part that cites the same locus."@en ;
+    rdfs:comment "Typed crm:E41_Appellation (not targeted by class because crm:E42_Identifier is a subclass of E41, and Item Part loci are also E41); identified by crm:P2_has_type data:Type_Locus. One Locus node per (Item Part, locus string); each names exactly one Surface Extent."@en ;
     sh:property [
         sh:path crm:P2_has_type ;
         sh:in ( data:Type_Locus ) ;
         sh:description "Outgoing: Locus -P2_has_type-> data:Type_Locus."@en
     ] ;
     sh:property [
-        sh:path [ sh:inversePath crm:P138_represents ] ;
-        sh:class crm:E36_Visual_Item ;
-        sh:description "Incoming: Image -P138_represents-> this Locus. (CRM inverse P138i_has_representation; not materialised in the export.)"@en
+        sh:path [ sh:inversePath crm:P1_is_identified_by ] ;
+        sh:class archetype:Surface_Extent ;
+        sh:description "Incoming: Surface Extent -P1_is_identified_by-> this Locus. (CRM inverse P1i_identifies; not materialised in the export.)"@en
+    ] .
+
+archsh:ItemPartLocusShape
+    a sh:NodeShape ;
+    rdfs:label "Item Part locus"@en ;
+    rdfs:comment "Typed crm:E41_Appellation; identified by crm:P2_has_type data:Type_Locus_In_Current_Item (URIs data:Item_Part_Locus_<id>). The Item Part's own position in its Current Item (e.g. \"fols. 3-101\"); an Item Part with no locus comprises the whole Current Item."@en ;
+    sh:property [
+        sh:path crm:P2_has_type ;
+        sh:in ( data:Type_Locus_In_Current_Item ) ;
+        sh:description "Outgoing: Item Part locus -P2_has_type-> data:Type_Locus_In_Current_Item."@en
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P1_is_identified_by ] ;
-        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Item_Part ] [ sh:class crm-tx:TX7_Written_Text_Segment ] ) ;
-        sh:description "Incoming: Hand Instance or Item Part or Text in Item Part -P1_is_identified_by-> this Locus. (CRM inverse P1i_identifies; not materialised in the export.)"@en
+        sh:class archetype:Item_Part ;
+        sh:description "Incoming: Item Part -P1_is_identified_by-> this Item Part locus. (CRM inverse P1i_identifies; not materialised in the export.)"@en
     ] .
 
 
@@ -574,8 +600,8 @@ archsh:ImageShape
     ] ;
     sh:property [
         sh:path crm:P138_represents ;
-        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Item_Part ] [ sh:class crm:E41_Appellation ] ) ;
-        sh:description "Outgoing: Image -P138_represents-> Hand Instance or Item Part or Locus. The Hand Instances visible in this Image (from hand_images). The Item Part shown in this Image. The locus (folio/page) shown in this Image."@en
+        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Item_Part ] [ sh:class archetype:Surface_Extent ] ) ;
+        sh:description "Outgoing: Image -P138_represents-> Hand Instance or Item Part or Surface Extent. The Hand Instances visible in this Image (from hand_images). The Item Part shown in this Image. The stretch of surface (folio/page) shown in this Image, identified by the image's locus."@en
     ] ;
     sh:property [
         sh:path [ sh:inversePath oa:hasTarget ] ;
@@ -605,13 +631,9 @@ archsh:AnnotationShape
 
 archsh:TextShape
     a sh:NodeShape ;
+    sh:targetClass archetype:Text ;
     rdfs:label "Text"@en ;
-    rdfs:comment "Typed crm-tx:TX1_Written_Text (not targeted by class because TX7, and so Hand Instance and Graph, are subclasses of TX1 in CRMtex). Typing as TX1 is already flagged in creation_rdf.py as wrong (should be a conceptual text, e.g. E33)."@en ;
-    sh:property [
-        sh:path crm-tx:TXP4_has_segment ;
-        sh:class crm-tx:TX7_Written_Text_Segment ;
-        sh:description "Outgoing: Text -TXP4_has_segment-> Text in Item Part. The occurrences of this Text in particular Item Parts."@en
-    ] ;
+    rdfs:comment "The intellectual text (archetype:Text, subclass of E33 Linguistic Object), carried physically by one or more Text Copies."@en ;
     sh:property [
         sh:path crm:P2_has_type ;
         sh:class crm:E55_Type ;
@@ -623,24 +645,30 @@ archsh:TextShape
         sh:description "Outgoing: Text -P72_has_language-> Language."@en
     ] ;
     sh:property [
+        sh:path [ sh:inversePath crm:P128_carries ] ;
+        sh:class archetype:TextCopy ;
+        sh:description "Incoming: Text Copy -P128_carries-> this Text. (CRM inverse P128i_is_carried_by; not materialised in the export.)"@en
+    ] ;
+    sh:property [
         sh:path [ sh:inversePath crm:P70_documents ] ;
         sh:class crm:E31_Document ;
         sh:description "Incoming: Description (of Historical Item or Text) -P70_documents-> this Text. (CRM inverse P70i_is_documented_in; not materialised in the export.)"@en
     ] .
 
-archsh:TextInItemPartShape
+archsh:TextCopyShape
     a sh:NodeShape ;
-    rdfs:label "Text in Item Part"@en ;
-    rdfs:comment "Typed crm-tx:TX7_Written_Text_Segment (not targeted by class because Hand Instance and Graph are also TX7); identified as the object of crm-tx:TXP4_has_segment from a Text."@en ;
+    sh:targetClass archetype:TextCopy ;
+    rdfs:label "Text Copy"@en ;
+    rdfs:comment "A Text as physically written in a particular Item Part (original or copy); archetype:TextCopy, subclass of crm-tx:TX1_Written_Text. URIs data:TextCopy_<textitempart id>."@en ;
     sh:property [
-        sh:path crm:P1_is_identified_by ;
-        sh:class crm:E41_Appellation ;
-        sh:description "Outgoing: Text in Item Part -P1_is_identified_by-> Locus."@en
+        sh:path crm:P128_carries ;
+        sh:class archetype:Text ;
+        sh:description "Outgoing: Text Copy -P128_carries-> Text. The intellectual Text this physical copy carries."@en
     ] ;
     sh:property [
-        sh:path [ sh:inversePath crm-tx:TXP4_has_segment ] ;
-        sh:class crm-tx:TX1_Written_Text ;
-        sh:description "Incoming: Text -TXP4_has_segment-> this Text in Item Part."@en
+        sh:path [ sh:inversePath crm:P46_is_composed_of ] ;
+        sh:or ( [ sh:class archetype:Item_Part ] [ sh:class archetype:Surface_Extent ] ) ;
+        sh:description "Incoming: Item Part or Surface Extent -P46_is_composed_of-> this Text Copy. (CRM inverse P46i_forms_part_of; not materialised in the export.)"@en
     ] .
 
 
@@ -648,7 +676,7 @@ archsh:TextInItemPartShape
 # Attributions (E13) and dates
 #################################################################
 
-archsh:HandDateAttributionShape # Need also to add Dubitable type (even if not in the export yet) for attributions that are not accepted (see discussion R9)
+archsh:HandDateAttributionShape
     a sh:NodeShape ;
     rdfs:label "Hand date attribution"@en ;
     rdfs:comment "Typed only crm:E13_Attribute_Assignment (shared with Hand place, Item origin, Archive and Owner); identified as an E13 whose P140 is a Hand Instance and whose P141 is an E4_Period."@en ;
@@ -668,7 +696,7 @@ archsh:HandDateAttributionShape # Need also to add Dubitable type (even if not i
         sh:description "Outgoing: Hand date attribution -P2_has_type-> data:Type_Accepted."@en
     ] .
 
-archsh:HandPlaceAttributionShape    # Need also to add Dubitable type (even if not in the export yet) for attributions that are not accepted (see discussion R9)
+archsh:HandPlaceAttributionShape
     a sh:NodeShape ;
     rdfs:label "Hand place attribution"@en ;
     rdfs:comment "Typed only crm:E13_Attribute_Assignment; identified as an E13 whose P140 is a Hand Instance and whose P141 is an E53_Place."@en ;
@@ -901,7 +929,7 @@ archsh:DescriptionOfHistoricalItemOrTextShape
     rdfs:comment "Typed only crm:E31_Document (shared with Hand description, Source, Reference, Date evidence); URIs data:Description_<id>."@en ;
     sh:property [
         sh:path crm:P70_documents ;
-        sh:or ( [ sh:class archetype:Historical_Item ] [ sh:class crm-tx:TX1_Written_Text ] ) ;
+        sh:or ( [ sh:class archetype:Historical_Item ] [ sh:class archetype:Text ] ) ;
         sh:description "Outgoing: Description (of Historical Item or Text) -P70_documents-> Historical Item or Text."@en
     ] ;
     sh:property [
@@ -917,7 +945,7 @@ archsh:HandDescriptionShape
     sh:property [
         sh:path crm:P67_refers_to ;
         sh:class archetype:HandInstance ;
-        sh:description "Outgoing: Hand description -P67_refers_to-> Hand Instance. The Hand Instance described."@en     # No: should be P70_documents, but that is not in the export
+        sh:description "Outgoing: Hand description -P67_refers_to-> Hand Instance. The Hand Instance described."@en
     ] ;
     sh:property [
         sh:path crm:P70i_is_documented_in ;
@@ -936,7 +964,7 @@ archsh:CategoryShape
     ] ;
     sh:property [
         sh:path [ sh:inversePath crm:P2_has_type ] ;
-        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Historical_Item ] [ sh:class crm-tx:TX1_Written_Text ] ) ;
+        sh:or ( [ sh:class archetype:HandInstance ] [ sh:class archetype:Historical_Item ] [ sh:class archetype:Text ] ) ;
         sh:description "Incoming: Hand Instance or Historical Item or Text -P2_has_type-> this Category. (CRM inverse P2i_is_type_of; not materialised in the export.)"@en
     ] .
 

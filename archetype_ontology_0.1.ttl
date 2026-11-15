@@ -7,106 +7,63 @@
 @prefix rdf:       <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:      <http://www.w3.org/2004/02/skos/core#> .
 
 #################################################################
-# Archetype Ontology — first draft (v0.1)
+# Archetype Ontology — draft v0.1
 #
 # Formalises the Archetype palaeographical model (developed in the
 # DigiPal project, now used by Archetype, Models of Authority, Exon
-# Domesday and other projects) as a standalone OWL extension of
-# CIDOC-CRM, CRMtex, and LRMoo.
+# Domesday and other projects) as an OWL extension of CIDOC-CRM 7.1.3,
+# CRMtex 2.0 and LRMoo 1.1.1.
 #
-# Scope of this first draft (Phase 2, Step 8):
-#   - Classes: complete for this draft (18 archetype: classes).
-#   - Properties: complete for this draft. 1 object property
-#     (archetype:characterised_by) and 57 datatype properties,
-#     covering every custom archetype: property still live in the
-#     RDF export after the "everything else" batch review
-#     (datatype_properties_batch_v1.md) resolved which ones are
-#     genuine domain facts, which are interface/application plumbing
-#     (kept in the export, deliberately NOT formalised here — see
-#     that report's Bucket 2/3b), and which are dead fields dropped
-#     from the export entirely. See OWL_Formalisation_Log.md and
-#     datatype_properties_batch_v1.md for the full resolution history
-#     (including several genuine bugs found and fixed in
-#     creation_rdf.py along the way — empty-string and "undefined"
-#     literals, an invalid Image.size=0 default, unused vocabulary-
-#     specific flags, etc.).
-#   - Two properties (archetype:has_evidence_note, archetype:display_note)
-#     are declared WITHOUT an rdfs:domain: each genuinely applies to
-#     more than one unrelated class (has_evidence_note: Owner's and
-#     Date's crm:E13_Attribute_Assignment nodes, and Date's
-#     crm:E31_Document evidence-document node; display_note:
-#     archetype:Annotation and archetype:HandInstance — two
-#     legitimately distinct usages, not a modelling accident, same
-#     shape as the resolved archetype:vernacular case below). Multiple
-#     rdfs:domain triples on one property are an RDFS-semantics
-#     intersection, not a union, so asserting both classes as domain
-#     would be actively wrong here; leaving the domain undeclared is
-#     the safe, standard choice for a genuinely cross-class property.
-#   - archetype:vernacular: resolved to a SINGLE domain
-#     (archetype:Historical_Item) after the HistoricalItemDate table
-#     (which had briefly given it a second, unrelated usage) was
-#     dropped from the export entirely — see the log.
-#   - Domain note: archetype:Layout, archetype:Collation and
-#     archetype:Decoration data are NOT given their own archetype:
-#     classes in this draft — all three are typed directly as the
-#     shared crm:E18_Physical_Thing with no further ARCH-level
-#     distinction. Their datatype properties below are therefore all
-#     declared with domain crm:E18_Physical_Thing, even though they
-#     apply to conceptually distinct sub-kinds of physical thing
-#     (e.g. archetype:lines vs. archetype:illustrated). Not a new
-#     problem introduced by this pass — reflects how the RDF export
-#     already models these — but worth flagging as a possible future
-#     refinement (dedicated archetype:Layout/Collation/Decoration
-#     classes) rather than treated as settled.
-#   - No individuals / controlled-vocabulary instances (e.g.
-#     Type_Accepted, Category_Historical_Item) — deferred to a future
-#     SKOS vocabulary file, per the project's existing "on the
-#     horizon" plan.
-#   - Two classes intentionally NOT included in this draft despite
-#     having class-hierarchy scaffolding in the RDF export:
-#     archetype:Trace and archetype:Element_of_Style. Both are
-#     genuinely unpopulated in the current data (checked directly —
-#     zero instances) and are earmarked for future refinement, per
-#     the project lead — left out of this draft, not lost.
-#     (A third class, archetype:Scribal_Practice, was initially
-#     suspected of being in the same situation, but turned out to
-#     have 576 real instances that were simply missing their
-#     rdf:type — fixed in creation_rdf.py, and the class IS included
-#     below.)
+# Contents: 21 classes, 1 object property, 56 datatype properties.
+# Relationships between classes otherwise use CIDOC-CRM / CRMtex
+# properties directly; which property links which classes is
+# documented in the companion SHACL application profile
+# (archetype_shapes_0.1.ttl).
 #
-# TODO: https://w3id.org/archetype/ontology/ is NOT YET REGISTERED
-#       with w3id.org. This IRI does not currently resolve to
-#       anything. Registration (a small config file via a GitHub
-#       pull request to the w3id.org repo) is needed before this
-#       ontology is dereferenceable or shared outside the project.
+# Annotation conventions:
+#   - rdfs:comment       definition: what the class or property is.
+#   - skos:scopeNote     how it is used in the Archetype model (which
+#                        properties connect it, modelling conventions).
+#   - skos:editorialNote history, alignment decisions, open questions,
+#                        and pointers to the project reports.
 #
-# DECISION (2026-09-22): FRBRoo replaced with LRMoo. FRBRoo is being
-#       deprecated by IFLA in favour of LRMoo (formerly "FRBRoo"),
-#       which received formal IFLA approval as v1.0 and is current at
-#       v1.1.1. Checked directly against the LRMoo v1.1.1 spec and its
-#       published OWL file: unlike FRBRoo (whose IFLA vocabulary does
-#       not actually declare a class named F3_Manifestation — only the
-#       short-form F3, aliased to F3_Manifestation_Product_Type), LRMoo
-#       declares lrmoo:F3_Manifestation and lrmoo:F5_Item under exactly
-#       those local names, so no renaming was needed here beyond the
-#       prefix. LRMoo also imports CIDOC-CRM 7.1.3 — the same version
-#       already imported below — avoiding the version mismatch the
-#       Erlangen FRBRoo implementation would have introduced (it pins
-#       an older, separately-namespaced CIDOC-CRM 5.0.4).
+# General modelling notes:
+#   - Datatype property domains are the class actually asserted on the
+#     subject in the export: an archetype: class where one exists,
+#     otherwise the CIDOC-CRM class used (e.g. crm:E18_Physical_Thing
+#     for Layout, Collation and Decoration, which have no archetype:
+#     class yet).
+#   - Properties that genuinely apply to unrelated classes are declared
+#     without rdfs:domain (multiple domains would mean intersection, not
+#     union): archetype:has_evidence_note, archetype:display_note.
+#   - Interface/application data kept in the RDF export but deliberately
+#     not formalised here: sort_order, num (Hand Instance), date_sort
+#     (Text; a sort key for approximate dates, derived from a scholarly
+#     model of dating but not itself a domain fact), caption,
+#     custom_label, iipimage, quire, page_boundaries (Image), cutout,
+#     geo_json, rotation, holes, vector_id (Annotation), display_message,
+#     permission (Media permission), display_label, summary,
+#     full_reference.
+#   - No individuals: controlled vocabularies (types, categories, etc.)
+#     are deferred to a separate SKOS vocabulary.
+#   - Not included in this draft, though planned: archetype:Trace and
+#     archetype:Element_of_Style (no data yet).
 #
-#       Note, not just a rename: the two classes' CRM superclasses
-#       changed between FRBRoo and LRMoo — F3_Manifestation moves from
-#       ⊑ E55_Type to ⊑ E73_Information_Object, and F5_Item moves from
-#       ⊑ E84_Information_Carrier to ⊑ E24_Physical_Human-Made_Thing
-#       (a more concretely physical reading). Worth keeping in mind
-#       when revisiting the open Item_Part/F5_Item fit question flagged
-#       below and in domain_range_compliance_v3.md §7 — not resolved by
-#       this change, but the new superclass may bear on it.
+# TODO: https://w3id.org/archetype/ontology/ is NOT YET REGISTERED with
+#       w3id.org and does not resolve.
+# TODO: CHECK and REVISE all the class definitions
+# TODO: Review datatype properties for 'plumbing' interface elements and those that should be in SKOS vocabularies.
 #
-# Full decision log for this work: see OWL_Formalisation_Log.md.
+# Decision history: reports/OWL_Formalisation_Log.md,
+# reports/domain_range_compliance.md, reports/datatype_properties_batch.md,
+# reports/ex_properties_alignment.md.
 #################################################################
+
+skos:scopeNote     a owl:AnnotationProperty .
+skos:editorialNote a owl:AnnotationProperty .
 
 <https://w3id.org/archetype/ontology/>
     a owl:Ontology ;
@@ -114,107 +71,188 @@
     dcterms:description "A CIDOC-CRM/CRMtex/LRMoo-based ontology formalising the Archetype palaeographical model, originally developed within the DigiPal project and now shared across Archetype, Models of Authority, Exon Domesday and other projects."@en ;
     owl:versionInfo "0.1" ;
     owl:versionIRI <https://w3id.org/archetype/ontology/0.1/> ;
-    dcterms:created "2026-09-20"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    dcterms:created "2026-09-20"^^xsd:date ;
+    dcterms:modified "2026-11-15"^^xsd:date ;
     dcterms:creator <https://orcid.org/0000-0002-9060-9340>,
-                     <https://github.com/Grim22E> ;
+                    <https://github.com/Grim22E> ;
     owl:imports <https://cidoc-crm.org/rdfs/7.1.3/CIDOC_CRM_v7.1.3.rdf> ,
                 <https://cidoc-crm.org/extensions/crmtex/owl/2.0/CRMtex_v2.0.owl> ,
-                <https://cidoc-crm.org/extensions/lrmoo/owl/1.1.1/LRMoo_v1.1.1.owl> .
+                <https://cidoc-crm.org/extensions/lrmoo/owl/1.1.1/LRMoo_v1.1.1.owl> ;
+    skos:editorialNote "FRBRoo was replaced by LRMoo (2026-09-22): FRBRoo is being superseded by IFLA, and LRMoo imports the same CIDOC-CRM version (7.1.3) as this ontology. Note that LRMoo changed the superclasses of F3 Manifestation (now ⊑ E73 Information Object) and F5 Item (now ⊑ E24 Physical Human-Made Thing, no longer E84/E22/E19); one consequence is that crm:P56_bears_feature (domain E19) cannot be used from Item Part, so crm:P46_is_composed_of is used instead. See OWL_Formalisation_Log.md §4c and domain_range_compliance.md §2.21."@en .
 
 #################################################################
-# Classes
+# Classes — palaeographic core: letters, graphs, components
 #################################################################
 
 archetype:Generalised_Allograph
     a owl:Class ;
     rdfs:subClassOf crm:E36_Visual_Item ;
-    rdfs:label "Generalised Allograph"@en .
+    rdfs:label "Generalised Allograph"@en ;
+    rdfs:comment "A letter-form considered at some level of generality above the single written instance: as a Character, an Allograph or an Idiograph."@en ;
+    skos:scopeNote "Abstract superclass of Character, Allograph and Idiograph, which are linked from the more specific to the more general by crm:P138_represents (Idiograph → Allograph → Character). Each level may have Visual Components (crm:P148_has_component)."@en .
 
 archetype:Character
     a owl:Class ;
     rdfs:subClassOf archetype:Generalised_Allograph ;
-    rdfs:label "Character"@en .
+    rdfs:label "Character"@en ;
+    rdfs:comment "A letter or other sign considered independently of the particular form used to write it, e.g. the letter 'a'."@en ;
+    skos:scopeNote "Belongs to an Ontograph (crm:P138_represents) and may be typed by a character form (crm:P2_has_type)."@en .
 
 archetype:Allograph
     a owl:Class ;
     rdfs:subClassOf archetype:Generalised_Allograph ;
-    rdfs:label "Allograph"@en .
+    rdfs:label "Allograph"@en ;
+    rdfs:comment "A recognised form of a Character, as distinguished by palaeographers, e.g. Caroline 'a' or Insular 'a'."@en ;
+    skos:scopeNote "Represents its Character (crm:P138_represents)."@en .
 
 archetype:Idiograph
     a owl:Class ;
     rdfs:subClassOf archetype:Generalised_Allograph ;
-    rdfs:label "Idiograph"@en .
+    rdfs:label "Idiograph"@en ;
+    rdfs:comment "A particular scribe's way of writing an Allograph, generalised from the individual instances (Graphs) of that scribe's writing."@en ;
+    skos:scopeNote "Represents its Allograph (crm:P138_represents); belongs to the Scribal Practice of its Scribe (Scribal_Practice crm:P148_has_component Idiograph); shown by Graphs (Graph crm:P65_shows_visual_item Idiograph). Its Visual Components record the components and Features characteristic of the scribe's form."@en .
 
 archetype:Graph
     a owl:Class ;
     rdfs:subClassOf crm-tx:TX7_Written_Text_Segment ;
-    rdfs:label "Graph"@en .
-
-archetype:HandInstance
-    a owl:Class ;
-    rdfs:subClassOf crm-tx:TX7_Written_Text_Segment ;
-    rdfs:label "Hand Instance"@en .
+    rdfs:label "Graph"@en ;
+    rdfs:comment "A single physical instance of a written letter or sign on a writing surface."@en ;
+    skos:scopeNote "Part of a Hand Instance (HandInstance crm:P46_is_composed_of Graph); shows an Idiograph (crm:P65_shows_visual_item); composed of Graph Components (crm:P46_is_composed_of). Annotations record the Graph as their body (oa:hasBody), drawn on an Image (oa:hasTarget)."@en .
 
 archetype:GraphComponent
     a owl:Class ;
     rdfs:subClassOf crm:E25_Human-Made_Feature ;
-    rdfs:label "Graph Component"@en .
+    rdfs:label "Graph Component"@en ;
+    rdfs:comment "A physical part of a particular Graph, such as its ascender, bowl or minim."@en ;
+    skos:scopeNote "Shows a Generic Component (crm:P65_shows_visual_item) and is typed by the Features observed on it (crm:P2_has_type)."@en ;
+    skos:editorialNote "CRMtex TX9 Glyph was considered and rejected: a glyph is a whole letter, not part of one. The name ties the class to Graph, whereas the concept is more generally a component of a mark on a surface; alternative names (e.g. MarkComponent) remain open."@en .
 
 archetype:VisualComponent
     a owl:Class ;
     rdfs:subClassOf crm:E36_Visual_Item ;
-    rdfs:label "Visual Component"@en .
+    rdfs:label "Visual Component"@en ;
+    rdfs:comment "A component of a letter-form as realised at the level of a Generalised Allograph (e.g. the ascender of a particular scribe's 'd'), together with the Features recorded for it."@en ;
+    skos:scopeNote "Component of a Generalised Allograph (crm:P148_has_component); represents a Generic Component (crm:P138_represents); typed by Features (crm:P2_has_type). Currently populated only at Idiograph level (DigiPal idiographcomponent)."@en ;
+    skos:editorialNote "Agreed but not yet implemented (SHACL review R3): use this path at every level, so that Allograph and Character also reach Generic Components through a Visual Component rather than directly."@en .
 
 archetype:GenericComponent
     a owl:Class ;
     rdfs:subClassOf crm:E36_Visual_Item ;
-    rdfs:label "Generic Component"@en .
+    rdfs:label "Generic Component"@en ;
+    rdfs:comment "A named kind of letter part used in describing letter-forms in general, e.g. 'ascender', 'bowl', 'minim'."@en ;
+    skos:scopeNote "The vocabulary of components shared by Visual Components (crm:P138_represents) and Graph Components (crm:P65_shows_visual_item). Its permitted Features are currently given by crm:P2_has_type."@en ;
+    skos:editorialNote "Agreed but not yet implemented (SHACL review R4): a dedicated property for permitted Features (e.g. archetype:permits_feature), distinct from the Features actually observed on Visual and Graph Components."@en .
 
-archetype:Current_Item
+archetype:Feature
     a owl:Class ;
-    rdfs:subClassOf lrmoo:F5_Item ;
-    rdfs:label "Current Item"@en .
+    rdfs:subClassOf crm:E55_Type ;
+    rdfs:label "Feature"@en ;
+    rdfs:comment "A descriptive characteristic that a letter component may have, e.g. 'forked', 'wedged', 'split'."@en ;
+    skos:scopeNote "Applied by crm:P2_has_type to Graph Components and Visual Components (observed Features), and to Generic Components (permitted Features)."@en .
+
+archetype:Ontograph
+    a owl:Class ;
+    rdfs:subClassOf crm:E90_Symbolic_Object, crm-tx:TX8_Grapheme ;
+    rdfs:label "Ontograph"@en ;
+    rdfs:comment "An abstract graphemic unit under which Characters are grouped, classified by kind (e.g. letter, abbreviation, punctuation)."@en ;
+    skos:scopeNote "Characters represent their Ontograph (crm:P138_represents); its kind is given by crm:P2_has_type (DigiPal's ontograph type, i.e. its category)."@en .
+
+#################################################################
+# Classes — hands, scribes and writing
+#################################################################
+
+archetype:HandInstance
+    a owl:Class ;
+    rdfs:subClassOf crm-tx:TX7_Written_Text_Segment ;
+    rdfs:label "Hand Instance"@en ;
+    rdfs:comment "The writing of one scribe as it occurs in one Item Part."@en ;
+    skos:scopeNote "Part of its Item Part (crm:P46_is_composed_of), and of a Surface Extent where a locus is recorded; produced by a Writing event (crm-tx:TX2_Writing crm:P108_has_produced), which carries the Scribe, Script and Latin Style; composed of Graphs; dated and placed through E13 Attribute Assignments."@en ;
+    skos:editorialNote "Corresponds to DigiPal's Hand table (renamed from archetype:Hand). Separating the abstract scribal hand from its item-part-bound occurrence is agreed in principle but deferred."@en .
+
+archetype:Scribe
+    a owl:Class ;
+    rdfs:subClassOf crm:E21_Person ;
+    rdfs:label "Scribe"@en ;
+    rdfs:comment "A person who wrote one or more Hand Instances."@en ;
+    skos:scopeNote "Carries out Writing events (crm:P14_carried_out_by); characterised by a Scribal Practice (archetype:characterised_by); may be a member of an Institution (crm:P107_has_current_or_former_member)."@en .
+
+archetype:Scribal_Practice
+    a owl:Class ;
+    rdfs:subClassOf crm:E36_Visual_Item ;
+    rdfs:label "Scribal Practice"@en ;
+    rdfs:comment "The set of letter-forms characteristic of a Scribe's writing."@en ;
+    skos:scopeNote "Composed of the Scribe's Idiographs (crm:P148_has_component); one per Scribe."@en .
+
+archetype:Appearance
+    a owl:Class ;
+    rdfs:subClassOf crm:E55_Type ;
+    rdfs:label "Appearance"@en ;
+    rdfs:comment "A classification of the overall appearance of a hand."@en ;
+    skos:scopeNote "Applied to Hand Instances by crm:P2_has_type."@en ;
+    skos:editorialNote "Distinct from Script (an earlier version conflated them). Unifying Script, Latin Style and Appearance across Latin and the vernacular is planned future work."@en .
+
+archetype:Script
+    a owl:Class ;
+    rdfs:subClassOf crm:E29_Design_or_Procedure, crm-tx:TX10_Style ;
+    rdfs:label "Script"@en ;
+    rdfs:comment "A recognised type of writing as defined by palaeographers, e.g. Anglo-Caroline minuscule."@en ;
+    skos:scopeNote "Linked from the Writing event that produced a Hand Instance (crm:P33_used_specific_technique)."@en ;
+    skos:editorialNote "Not yet used in the export: Script nodes are currently typed only crm-tx:TX10_Style. Decided but not yet implemented (SHACL review R6): Writing crm:P32_used_general_technique Script, with Script typed E29 and E55, plus a separate E17 Type Assignment for the palaeographer's classification."@en .
+
+#################################################################
+# Classes — manuscripts: items, parts and surfaces
+#################################################################
 
 archetype:Historical_Item
     a owl:Class ;
     rdfs:subClassOf lrmoo:F3_Manifestation, lrmoo:F5_Item ;
-    rdfs:label "Historical Item"@en .
+    rdfs:label "Historical Item"@en ;
+    rdfs:comment "A manuscript, charter or other written object as it was produced and existed historically, whether or not it survives intact or is now divided between several Current Items."@en ;
+    skos:scopeNote "Composed of Item Parts (crm:P46_is_composed_of); dated and placed through E13 Attribute Assignments; documented by Descriptions (crm:P70_documents)."@en .
+
+archetype:Current_Item
+    a owl:Class ;
+    rdfs:subClassOf lrmoo:F5_Item ;
+    rdfs:label "Current Item"@en ;
+    rdfs:comment "A physical object as now held and identified by a repository, typically under a single shelfmark."@en ;
+    skos:scopeNote "Identified by its shelfmark (crm:P1_is_identified_by an E42 Identifier); held by a Repository (crm:P50_has_current_keeper); composed of Item Parts (crm:P46_is_composed_of)."@en .
 
 archetype:Item_Part
     a owl:Class ;
     rdfs:subClassOf lrmoo:F3_Manifestation, lrmoo:F5_Item ;
     rdfs:label "Item Part"@en ;
-    rdfs:comment "Open modelling question, not yet resolved: whether lrmoo:F5_Item is the right fit here has been raised (surfaced while tracing the Image→Repository chain for a MediaPermission fix) but not yet investigated. Left as asserted, matching the current RDF export, pending that review. See domain_range_compliance_v3.md. Note: F5_Item's CRM superclass changed under LRMoo (now ⊑ E24_Physical_Human-Made_Thing, a more concretely physical reading than FRBRoo's ⊑ E84_Information_Carrier) — may bear on this question when it's revisited."@en .
+    rdfs:comment "The portion of a Current Item that belongs to a given Historical Item: a codicological unit."@en ;
+    skos:scopeNote "Where an Item Part has a locus (crm:P1_is_identified_by an E41 Appellation typed 'Locus in Current Item'), it gives the Item Part's position in its Current Item. By convention, an Item Part with no locus comprises the whole of its Current Item; several Item Parts may do so where they share the same leaves (e.g. the lower and upper writing of a palimpsest recorded as separate Historical Items). Text Copies, Hand Instances and Surface Extents are linked to it by crm:P46_is_composed_of."@en ;
+    skos:editorialNote "Open question, not yet investigated: whether lrmoo:F5_Item is the right superclass. Raised while tracing the Image → Repository chain for the media-permission fix; LRMoo's change of F5 to ⊑ E24 may bear on it. See domain_range_compliance.md §7."@en .
 
-archetype:Scribe
+archetype:Surface_Extent
     a owl:Class ;
-    rdfs:subClassOf crm:E21_Person ;
-    rdfs:label "Scribe"@en .
+    rdfs:subClassOf crm:E24_Physical_Human-Made_Thing ;
+    rdfs:label "Surface Extent"@en ;
+    rdfs:comment "A stretch of writing surface within an Item Part, from one point to another, as identified by a locus. It may be less than a page or cross page and leaf boundaries, and is therefore distinct from an Item Part, which is a codicological unit."@en ;
+    skos:scopeNote "The locus is recorded as an E41 Appellation (crm:P1_is_identified_by). Whatever a Surface Extent is composed of is also linked directly to its Item Part with crm:P46_is_composed_of, so that Item_Part —P46→ X holds whether or not a Surface Extent is recorded; where one is, the direct link is a shortcut of Item_Part —P46→ Surface_Extent —P46→ X (an Archetype convention, not declared by CIDOC-CRM). Images showing it are linked by crm:P138_represents (Image —P138→ Surface_Extent)."@en ;
+    skos:editorialNote "Related to Biblissima's bibma:Folio_Extent (a group of whole folios sharing a common feature), which is narrower and subclasses E84 Information Carrier, deprecated in CIDOC-CRM 7.1; hence E24 here."@en ;
+    rdfs:seeAlso <https://w3id.org/bibma/Folio_Extent> .
 
-archetype:Scribal_Practice
-    a owl:Class ;
-    rdfs:subClassOf crm:E36_Visual_Item ;
-    rdfs:label "Scribal Practice"@en .
+#################################################################
+# Classes — texts
+#################################################################
 
-archetype:Appearance
+archetype:Text
     a owl:Class ;
-    rdfs:subClassOf crm:E55_Type ;
-    rdfs:label "Appearance"@en .
+    rdfs:subClassOf crm:E33_Linguistic_Object ;
+    rdfs:label "Text"@en ;
+    rdfs:comment "An intellectual text: the linguistic content as opposed to any physical writing of it. Close to a Work, but used more loosely, e.g. a text and its modern translation recorded side by side."@en ;
+    skos:scopeNote "Carried physically by one or more archetype:TextCopy (crm:P128_carries). A date on a Text is the date of the text itself (e.g. of a charter's issue), not of any copy."@en ;
+    skos:editorialNote "Deliberately not aligned with LRMoo F1 Work or F2 Expression, since Archetype-based projects use Text more loosely than either. Previously typed crm-tx:TX1_Written_Text (see domain_range_compliance.md §2.21)."@en .
 
-archetype:Feature
+archetype:TextCopy
     a owl:Class ;
-    rdfs:subClassOf crm:E55_Type ;
-    rdfs:label "Feature"@en .
-
-archetype:Ontograph
-    a owl:Class ;
-    rdfs:subClassOf crm:E90_Symbolic_Object, crm-tx:TX8_Grapheme ;
-    rdfs:label "Ontograph"@en .
-
-archetype:Script
-    a owl:Class ;
-    rdfs:subClassOf crm:E29_Design_or_Procedure, crm-tx:TX10_Style ;
-    rdfs:label "Script"@en .
+    rdfs:subClassOf crm-tx:TX1_Written_Text ;
+    rdfs:label "Text Copy"@en ;
+    rdfs:comment "A Text as physically written in a particular Item Part, whether an original or a copy: the marks on the writing surface that carry an archetype:Text."@en ;
+    skos:scopeNote "Carries its archetype:Text via crm:P128_carries. Linked to its Item Part, and to a Surface Extent where one is recorded, by crm:P46_is_composed_of. A date on a Text Copy is the date of this writing, not of the Text."@en ;
+    skos:editorialNote "Corresponds to DigiPal's TextItemPart table (previously exported as crm-tx:TX7_Written_Text_Segment linked by TXP4_has_segment; see domain_range_compliance.md §2.21)."@en .
 
 #################################################################
 # Object properties
@@ -224,310 +262,343 @@ archetype:characterised_by
     a owl:ObjectProperty ;
     rdfs:domain archetype:Scribe ;
     rdfs:range archetype:Scribal_Practice ;
-    rdfs:label "characterised by"@en .
+    rdfs:label "characterised by"@en ;
+    rdfs:comment "Links a Scribe to the Scribal Practice that characterises their writing."@en .
 
 #################################################################
 # Datatype properties
-#
-# Domains are given as the class actually asserted on the subject in
-# the RDF export (checked empirically, not assumed from the property
-# name) — an archetype: class where one exists for that resource, a
-# crm: class directly otherwise (see header note on Layout/Collation/
-# Decoration). Ranges are likewise the datatype actually produced by
-# creation_rdf.py, confirmed against real export values.
 #################################################################
 
-# --- Place ---
+# --- Place (crm:E53_Place) ---
 
 archetype:eastings
     a owl:DatatypeProperty ;
     rdfs:domain crm:E53_Place ;
     rdfs:range xsd:integer ;
-    rdfs:label "eastings"@en .
+    rdfs:label "eastings"@en ;
+    rdfs:comment "Easting coordinate of the place."@en .
 
 archetype:northings
     a owl:DatatypeProperty ;
     rdfs:domain crm:E53_Place ;
     rdfs:range xsd:integer ;
-    rdfs:label "northings"@en .
+    rdfs:label "northings"@en ;
+    rdfs:comment "Northing coordinate of the place."@en .
 
-# --- Layout / Collation / Decoration (all crm:E18_Physical_Thing — see header note) ---
+# --- Layout (crm:E18_Physical_Thing; no archetype: class yet) ---
 
 archetype:lines
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "lines"@en ;
-    rdfs:comment "Layout.lines in the source data."@en .
+    rdfs:comment "Number of written lines per page."@en ;
+    skos:editorialNote "DigiPal Layout.lines."@en .
 
 archetype:columns
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "columns"@en ;
-    rdfs:comment "Layout.columns in the source data."@en .
+    rdfs:comment "Number of columns of writing per page."@en ;
+    skos:editorialNote "DigiPal Layout.columns."@en .
 
 archetype:bilinear_ruling
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "bilinear ruling"@en ;
-    rdfs:comment "Layout.bilinear_ruling in the source data."@en .
+    rdfs:comment "Whether the leaves are ruled with bilinear (double) lines."@en ;
+    skos:editorialNote "DigiPal Layout.bilinear_ruling."@en .
 
 archetype:insular_pricking
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "insular pricking"@en ;
-    rdfs:comment "Layout.insular_pricking in the source data."@en .
+    rdfs:comment "Whether the leaves show Insular-style pricking for ruling."@en ;
+    skos:editorialNote "DigiPal Layout.insular_pricking."@en .
+
+# --- Collation (crm:E18_Physical_Thing; no archetype: class yet) ---
 
 archetype:leaves
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "leaves"@en ;
-    rdfs:comment "Collation.leaves in the source data."@en .
+    rdfs:comment "Number of leaves."@en ;
+    skos:editorialNote "DigiPal Collation.leaves."@en .
 
 archetype:front_flyleaves
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "front flyleaves"@en ;
-    rdfs:comment "Collation.front_flyleaves in the source data."@en .
+    rdfs:comment "Number of flyleaves at the front."@en ;
+    skos:editorialNote "DigiPal Collation.front_flyleaves."@en .
 
 archetype:back_flyleaves
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "back flyleaves"@en ;
-    rdfs:comment "Collation.back_flyleaves in the source data."@en .
+    rdfs:comment "Number of flyleaves at the back."@en ;
+    skos:editorialNote "DigiPal Collation.back_flyleaves."@en .
 
 archetype:fragment
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "fragment"@en ;
-    rdfs:comment "Collation.fragment in the source data."@en .
+    rdfs:comment "Whether the Historical Item is known to survive incompletely, even when all its known Item Parts are put together."@en ;
+    skos:editorialNote "DigiPal Collation.fragment, from the '(f)' marker in a catalogue description. A statement about the Historical Item's state of survival, not about any one Current Item or Item Part; candidate for moving to Historical Item (SHACL review R7)."@en .
+
+# --- Decoration (crm:E18_Physical_Thing; no archetype: class yet) ---
 
 archetype:illustrated
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "illustrated"@en ;
-    rdfs:comment "Decoration.illustrated in the source data."@en .
+    rdfs:comment "Whether the item contains illustrations."@en ;
+    skos:editorialNote "DigiPal Decoration.illustrated."@en .
 
 archetype:decorated
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "decorated"@en ;
-    rdfs:comment "Decoration.decorated in the source data."@en .
+    rdfs:comment "Whether the item contains decoration."@en ;
+    skos:editorialNote "DigiPal Decoration.decorated."@en .
 
 archetype:illuminated
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:boolean ;
     rdfs:label "illuminated"@en ;
-    rdfs:comment "Decoration.illuminated in the source data."@en .
+    rdfs:comment "Whether the item is illuminated."@en ;
+    skos:editorialNote "DigiPal Decoration.illuminated."@en .
 
 archetype:num_colours
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "number of colours"@en ;
-    rdfs:comment "Decoration.num_colours in the source data."@en .
+    rdfs:comment "Number of colours used in the decoration."@en ;
+    skos:editorialNote "DigiPal Decoration.num_colours."@en .
 
 archetype:num_inks
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:integer ;
     rdfs:label "number of inks"@en ;
-    rdfs:comment "Decoration.num_inks in the source data."@en .
+    rdfs:comment "Number of inks used."@en ;
+    skos:editorialNote "DigiPal Decoration.num_inks."@en .
 
 archetype:colours
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:string ;
     rdfs:label "colours"@en ;
-    rdfs:comment "Decoration.colours in the source data."@en .
+    rdfs:comment "Free-text description of the colours used in the decoration."@en ;
+    skos:editorialNote "DigiPal Decoration.colours."@en .
 
 archetype:inks
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:string ;
     rdfs:label "inks"@en ;
-    rdfs:comment "Decoration.inks in the source data."@en .
+    rdfs:comment "Free-text description of the inks used."@en ;
+    skos:editorialNote "DigiPal Decoration.inks."@en .
 
 archetype:style
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:string ;
     rdfs:label "style"@en ;
-    rdfs:comment "Decoration.style in the source data. Confirmed NOT redundant with rdfs:label (which is a generated ID-based label for this resource, unrelated to style's content) — see ex_properties_alignment_v1.1.md §4."@en .
+    rdfs:comment "Free-text description of the style of the decoration."@en ;
+    skos:editorialNote "DigiPal Decoration.style. Not redundant with rdfs:label, which is a generated ID-based label (ex_properties_alignment.md §4)."@en .
 
 archetype:catalogue_references
     a owl:DatatypeProperty ;
     rdfs:domain crm:E18_Physical_Thing ;
     rdfs:range xsd:string ;
     rdfs:label "catalogue references"@en ;
-    rdfs:comment "Decoration.catalogue_references in the source data. Free-text, comma-separated codes (e.g. \"T33\", \"T35, W54\") — not yet structured as individual references; flagged for future proper structuring once content can be analysed (ex_properties_alignment_v1.1.md §7)."@en .
+    rdfs:comment "References to catalogues of decoration, as free-text codes (e.g. \"T33\", \"T35, W54\")."@en ;
+    skos:editorialNote "DigiPal Decoration.catalogue_references. Comma-separated codes not yet structured as individual references; flagged for future structuring (ex_properties_alignment.md §7)."@en .
 
-# --- Date (crm:E4_Period) / Date_Time_Span (crm:E52_Time-Span) ---
+# --- Date (crm:E4_Period) and its time-span (crm:E52_Time-Span) ---
 
 archetype:weight
     a owl:DatatypeProperty ;
     rdfs:domain crm:E4_Period ;
     rdfs:range xsd:double ;
     rdfs:label "weight"@en ;
-    rdfs:comment "A single representative date (often a fractional midpoint, e.g. 887.5) on this project's date-weighting scale. Genuinely fractional — checked directly, not a float/integer-typing bug."@en .
+    rdfs:comment "A single representative year for the date, on the project's date-weighting scale (often a fractional midpoint, e.g. 887.5)."@en ;
+    skos:editorialNote "Genuinely fractional; checked, not a typing bug."@en .
 
 archetype:post_conquest
     a owl:DatatypeProperty ;
     rdfs:domain crm:E4_Period ;
     rdfs:range xsd:boolean ;
-    rdfs:label "post-Conquest"@en .
+    rdfs:label "post-Conquest"@en ;
+    rdfs:comment "Whether the date falls after the Norman Conquest (1066)."@en .
 
 archetype:s_xi
     a owl:DatatypeProperty ;
     rdfs:domain crm:E4_Period ;
     rdfs:range xsd:boolean ;
-    rdfs:label "saeculum XI"@en .
+    rdfs:label "saeculum XI"@en ;
+    rdfs:comment "Whether the date falls within the eleventh century."@en .
 
 archetype:band
     a owl:DatatypeProperty ;
     rdfs:domain crm:E4_Period ;
     rdfs:range xsd:integer ;
-    rdfs:label "band"@en .
+    rdfs:label "band"@en ;
+    rdfs:comment "The chronological band to which the date belongs, in the project's banding of dates."@en .
 
 archetype:additional_band
     a owl:DatatypeProperty ;
     rdfs:domain crm:E4_Period ;
     rdfs:range xsd:integer ;
-    rdfs:label "additional band"@en .
+    rdfs:label "additional band"@en ;
+    rdfs:comment "A second chronological band, for dates that span two bands."@en .
 
 archetype:min_weight
     a owl:DatatypeProperty ;
     rdfs:domain crm:E52_Time-Span ;
     rdfs:range xsd:double ;
     rdfs:label "minimum weight"@en ;
-    rdfs:comment "Earliest boundary on this project's date-weighting scale. Checked pairwise against max_weight across all 157 records: always min ≤ max, confirmed correct."@en .
+    rdfs:comment "Earliest boundary of the time-span, on the project's date-weighting scale."@en ;
+    skos:editorialNote "Checked pairwise against max_weight across all 157 records: always min ≤ max. Custom rather than CIDOC-CRM's own time-span boundary properties (logged in the spot-check report)."@en .
 
 archetype:max_weight
     a owl:DatatypeProperty ;
     rdfs:domain crm:E52_Time-Span ;
     rdfs:range xsd:double ;
     rdfs:label "maximum weight"@en ;
-    rdfs:comment "Latest boundary on this project's date-weighting scale. Checked pairwise against min_weight across all 157 records: always min ≤ max, confirmed correct."@en .
+    rdfs:comment "Latest boundary of the time-span, on the project's date-weighting scale."@en ;
+    skos:editorialNote "See archetype:min_weight."@en .
 
-# --- Historical_Item ---
+# --- Historical Item ---
 
 archetype:neumed
     a owl:DatatypeProperty ;
     rdfs:domain archetype:Historical_Item ;
     rdfs:range xsd:boolean ;
-    rdfs:label "neumed"@en .
+    rdfs:label "neumed"@en ;
+    rdfs:comment "Whether the item contains musical notation in neumes."@en .
 
 archetype:vernacular
     a owl:DatatypeProperty ;
     rdfs:domain archetype:Historical_Item ;
     rdfs:range xsd:boolean ;
     rdfs:label "vernacular"@en ;
-    rdfs:comment "Whether this item's text contains any vernacular material. Nominally true iff at least one associated writing event contains vernacular text, but this was never enforced or guaranteed consistent in the data — moot now in any case, since the HistoricalItemDate table this would have been checked against was dropped from the export entirely (confirmed an abandoned experiment, ~1% coverage). See OWL_Formalisation_Log.md §4a."@en .
+    rdfs:comment "Whether the item contains any vernacular text."@en ;
+    skos:editorialNote "Never enforced or guaranteed consistent with the item's texts or hands in the source data. The HistoricalItemDate table, which briefly gave this property a second domain, was dropped from the export as an abandoned experiment (OWL_Formalisation_Log.md §4a). Part of the planned language/vernacular unification."@en .
 
-# --- Item_Part ---
+# --- Item Part ---
 
 archetype:pagination
     a owl:DatatypeProperty ;
     rdfs:domain archetype:Item_Part ;
     rdfs:range xsd:boolean ;
     rdfs:label "pagination"@en ;
-    rdfs:comment "true = this item part is numbered by page; false = numbered by folio. Confirmed with the project lead — the boolean is not self-explanatory from the property name alone."@en .
+    rdfs:comment "true if the Item Part is numbered by page; false if numbered by folio."@en .
 
-# --- Owner (crm:E13_Attribute_Assignment) ---
+# --- Ownership attribution (crm:E13_Attribute_Assignment) ---
 
 archetype:annotated
     a owl:DatatypeProperty ;
     rdfs:domain crm:E13_Attribute_Assignment ;
     rdfs:range xsd:boolean ;
     rdfs:label "annotated"@en ;
-    rdfs:comment "Owner.annotated in the source data."@en .
+    rdfs:comment "Whether the owner in question annotated the item."@en ;
+    skos:editorialNote "DigiPal Owner.annotated. The Owner table records assertions of ownership, hence E13."@en .
 
 archetype:rebound
     a owl:DatatypeProperty ;
     rdfs:domain crm:E13_Attribute_Assignment ;
     rdfs:range xsd:boolean ;
     rdfs:label "rebound"@en ;
-    rdfs:comment "Owner.rebound in the source data."@en .
+    rdfs:comment "Whether the owner in question had the item rebound."@en ;
+    skos:editorialNote "DigiPal Owner.rebound."@en .
 
-# --- HandInstance ---
+# --- Hand Instance ---
 
 archetype:gloss_only
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:boolean ;
-    rdfs:label "gloss only"@en .
+    rdfs:label "gloss only"@en ;
+    rdfs:comment "Whether the hand writes only glosses."@en .
 
 archetype:latin_only
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:boolean ;
-    rdfs:label "Latin only"@en .
-
-archetype:relevant
-    a owl:DatatypeProperty ;
-    rdfs:domain archetype:HandInstance ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "relevant"@en .
+    rdfs:label "Latin only"@en ;
+    rdfs:comment "Whether the hand writes only Latin (no vernacular)."@en ;
+    skos:editorialNote "Part of the planned language/vernacular unification."@en .
 
 archetype:imitative
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:boolean ;
-    rdfs:label "imitative"@en .
+    rdfs:label "imitative"@en ;
+    rdfs:comment "Whether the hand imitates an earlier style of writing."@en .
 
 archetype:membra_disjecta
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:boolean ;
-    rdfs:label "membra disjecta"@en .
+    rdfs:label "membra disjecta"@en ;
+    rdfs:comment "Whether the hand is found in membra disjecta (dispersed fragments of a once-whole manuscript)."@en .
 
 archetype:scribble_only
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:boolean ;
-    rdfs:label "scribble only"@en .
+    rdfs:label "scribble only"@en ;
+    rdfs:comment "Whether the hand writes only scribbles or pen-trials."@en .
 
 archetype:num_glosses
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:integer ;
-    rdfs:label "number of glosses"@en .
+    rdfs:label "number of glosses"@en ;
+    rdfs:comment "Number of glosses written by the hand."@en .
 
 archetype:num_glossing_hands
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:integer ;
-    rdfs:label "number of glossing hands"@en .
+    rdfs:label "number of glossing hands"@en ;
+    rdfs:comment "Number of glossing hands recorded together with this hand."@en .
 
 archetype:ker
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:string ;
     rdfs:label "Ker reference"@en ;
-    rdfs:comment "Reference number in Ker's catalogue. Candidate for a future migration to dcterms:identifier alongside archetype:scragg — not yet actioned, see ex_properties_alignment_v1.1.md."@en .
+    rdfs:comment "Reference number in N. R. Ker's Catalogue of Manuscripts Containing Anglo-Saxon."@en ;
+    skos:editorialNote "Candidate for migration to dcterms:identifier alongside archetype:scragg; not yet actioned (ex_properties_alignment.md)."@en .
 
 archetype:scragg
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:string ;
     rdfs:label "Scragg reference"@en ;
-    rdfs:comment "Reference number in Scragg's conspectus of scribal hands. Candidate for a future migration to dcterms:identifier alongside archetype:ker — not yet actioned, see ex_properties_alignment_v1.1.md."@en .
+    rdfs:comment "Reference number in D. G. Scragg's conspectus of scribal hands."@en ;
+    skos:editorialNote "See archetype:ker."@en .
 
 archetype:em_title
     a owl:DatatypeProperty ;
     rdfs:domain archetype:HandInstance ;
     rdfs:range xsd:string ;
-    rdfs:label "EM title"@en .
+    rdfs:label "EM title"@en ;
+    rdfs:comment "Title of the hand in the 'English Manuscripts 1060 to 1220' catalogue."@en .
 
 # --- Character ---
 
@@ -536,7 +607,8 @@ archetype:unicode_point
     rdfs:domain archetype:Character ;
     rdfs:range xsd:string ;
     rdfs:label "Unicode point"@en ;
-    rdfs:comment "Mixed content in the source data — hex codepoints and literal characters both occur — so xsd:string, not a more specific numeric type."@en .
+    rdfs:comment "The Unicode code point (or the character itself) corresponding to the Character."@en ;
+    skos:editorialNote "Mixed content in the source data (hex code points and literal characters), hence xsd:string."@en .
 
 # --- Appearance ---
 
@@ -545,7 +617,8 @@ archetype:text
     rdfs:domain archetype:Appearance ;
     rdfs:range xsd:string ;
     rdfs:label "text"@en ;
-    rdfs:comment "Confirmed NOT redundant with rdfs:label (which is the prefixed form, e.g. \"Appearance {text}\") — text holds the bare value alone. See ex_properties_alignment_v1.1.md §4."@en .
+    rdfs:comment "The name of the Appearance, without the prefix used in its rdfs:label."@en ;
+    skos:editorialNote "Not redundant with rdfs:label, which is the prefixed form \"Appearance {text}\" (ex_properties_alignment.md §4)."@en .
 
 # --- Ontograph ---
 
@@ -553,7 +626,8 @@ archetype:nesting_level
     a owl:DatatypeProperty ;
     rdfs:domain archetype:Ontograph ;
     rdfs:range xsd:integer ;
-    rdfs:label "nesting level"@en .
+    rdfs:label "nesting level"@en ;
+    rdfs:comment "Level at which the Ontograph is nested within the hierarchy of Ontographs."@en .
 
 # --- Repository (crm:E74_Group) ---
 
@@ -562,14 +636,16 @@ archetype:comma
     rdfs:domain crm:E74_Group ;
     rdfs:range xsd:boolean ;
     rdfs:label "comma"@en ;
-    rdfs:comment "Repository.comma in the source data."@en .
+    rdfs:comment "Whether a comma separates the repository's place and name in citations (e.g. 'Paris, BnF' vs 'BL')."@en ;
+    skos:editorialNote "DigiPal Repository.comma. A display convention rather than a domain fact; candidate for reclassification as interface data."@en .
 
 archetype:british_isles
     a owl:DatatypeProperty ;
     rdfs:domain crm:E74_Group ;
     rdfs:range xsd:boolean ;
     rdfs:label "British Isles"@en ;
-    rdfs:comment "Repository.british_isles in the source data."@en .
+    rdfs:comment "Whether the repository is in the British Isles."@en ;
+    skos:editorialNote "DigiPal Repository.british_isles."@en .
 
 # --- Source (crm:E31_Document) ---
 
@@ -578,28 +654,32 @@ archetype:name
     rdfs:domain crm:E31_Document ;
     rdfs:range xsd:string ;
     rdfs:label "name"@en ;
-    rdfs:comment "Source.name in the source data. Confirmed NOT redundant with rdfs:label — name and label are two entirely different underlying fields (Source.name vs. Source.label). See ex_properties_alignment_v1.1.md §4."@en .
+    rdfs:comment "The full name of the source (e.g. the full title of a catalogue)."@en ;
+    skos:editorialNote "DigiPal Source.name. Distinct from rdfs:label, which comes from Source.label (ex_properties_alignment.md §4)."@en .
 
 archetype:priority
     a owl:DatatypeProperty ;
     rdfs:domain crm:E31_Document ;
     rdfs:range xsd:integer ;
     rdfs:label "priority"@en ;
-    rdfs:comment "Source.priority in the source data."@en .
+    rdfs:comment "Order of precedence of the source when several sources describe the same item."@en ;
+    skos:editorialNote "DigiPal Source.priority."@en .
 
 archetype:label_slug
     a owl:DatatypeProperty ;
     rdfs:domain crm:E31_Document ;
     rdfs:range xsd:string ;
     rdfs:label "label slug"@en ;
-    rdfs:comment "Source.label_slug in the source data."@en .
+    rdfs:comment "URL-safe form of the source's label."@en ;
+    skos:editorialNote "DigiPal Source.label_slug. An interface convention rather than a domain fact; candidate for reclassification as interface data."@en .
 
 archetype:label_styled
     a owl:DatatypeProperty ;
     rdfs:domain crm:E31_Document ;
     rdfs:range xsd:string ;
     rdfs:label "label (styled)"@en ;
-    rdfs:comment "Source.label_styled in the source data."@en .
+    rdfs:comment "The source's label with typographical styling (e.g. italic titles)."@en ;
+    skos:editorialNote "DigiPal Source.label_styled. An interface convention rather than a domain fact; candidate for reclassification as interface data."@en .
 
 # --- Image (crm:E36_Visual_Item) ---
 
@@ -608,40 +688,46 @@ archetype:folio_side
     rdfs:domain crm:E36_Visual_Item ;
     rdfs:range xsd:string ;
     rdfs:label "folio side"@en ;
-    rdfs:comment "Image.folio_side in the source data."@en .
+    rdfs:comment "Side of the leaf shown in the image (recto or verso)."@en ;
+    skos:editorialNote "DigiPal Image.folio_side."@en .
 
 archetype:width
     a owl:DatatypeProperty ;
     rdfs:domain crm:E36_Visual_Item ;
     rdfs:range xsd:integer ;
     rdfs:label "width"@en ;
-    rdfs:comment "Image.width (pixels) in the source data."@en .
+    rdfs:comment "Width of the image file, in pixels."@en .
 
 archetype:height
     a owl:DatatypeProperty ;
     rdfs:domain crm:E36_Visual_Item ;
     rdfs:range xsd:integer ;
     rdfs:label "height"@en ;
-    rdfs:comment "Image.height (pixels) in the source data."@en .
+    rdfs:comment "Height of the image file, in pixels."@en .
 
 archetype:size
     a owl:DatatypeProperty ;
     rdfs:domain crm:E36_Visual_Item ;
     rdfs:range xsd:integer ;
     rdfs:label "size"@en ;
-    rdfs:comment "Image.size (file size in bytes) in the source data. Always 0 in DigiPal specifically — an invalid default now excluded at export (creation_rdf.py checks != 0) — but genuinely populated in Models of Authority."@en .
+    rdfs:comment "Size of the image file, in bytes."@en ;
+    skos:editorialNote "Always 0 in DigiPal (an invalid default, excluded at export), but genuinely populated in Models of Authority."@en .
 
-# --- Properties spanning more than one class (see header note: no rdfs:domain asserted) ---
+# --- Properties spanning more than one class (no rdfs:domain; see header) ---
 
 archetype:has_evidence_note
     a owl:DatatypeProperty ;
     rdfs:subPropertyOf crm:P3_has_note ;
     rdfs:range xsd:string ;
     rdfs:label "has evidence note"@en ;
-    rdfs:comment "Evidentiary note, kept distinguishable from generic comments (crm:P3_has_note directly). Used on Owner's and Date's crm:E13_Attribute_Assignment nodes and on Date's crm:E31_Document evidence-document node — no single rdfs:domain asserted (see header note). Logged for future review with CIDOC-CRM domain experts: see ex_properties_alignment_v1.1.md §6."@en .
+    rdfs:comment "A note giving the evidence for an attribution or date, kept distinct from general comments (crm:P3_has_note)."@en ;
+    skos:scopeNote "Used on ownership and date attributions (crm:E13_Attribute_Assignment) and on a date's evidence document (crm:E31_Document)."@en ;
+    skos:editorialNote "Logged for future review with CIDOC-CRM experts (ex_properties_alignment.md §6)."@en .
 
 archetype:display_note
     a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     rdfs:label "display note"@en ;
-    rdfs:comment "Two legitimately distinct usages, not a modelling accident: on archetype:Annotation (a rare manual annotation-level note) and on archetype:HandInstance (a scholarly note about the hand). No single rdfs:domain asserted (see header note). Both usages had a data-quality bug (empty-string and, on Annotation, a literal \"undefined\" from a front-end JavaScript artifact) fixed in creation_rdf.py before this declaration — see datatype_properties_batch_v1.md §1."@en .
+    rdfs:comment "A short note intended for display alongside the resource."@en ;
+    skos:scopeNote "Two distinct usages: on oa:Annotation (a rare manual note on an annotation) and on archetype:HandInstance (a scholarly note about the hand)."@en ;
+    skos:editorialNote "Both usages had empty-string values (and, on annotations, a literal \"undefined\" from a front-end artefact) that are now excluded at export (datatype_properties_batch.md §1)."@en .

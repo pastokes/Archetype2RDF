@@ -4,6 +4,8 @@ A running record of natural-language queries posed during RDF spot-checks, paire
 
 RDF source: `data_rdf_digipal_cidoc_202609041816.rdf`
 
+**Note (2026-11-15):** the queries below are kept as logged. Against exports from `data_digipal_turtle_202611151131.rdf` onward, `?ip crm:P56_bears_feature ?hand` must be written `?ip crm:P46_is_composed_of ?hand` (P56 is no longer used; see `domain_range_compliance.md` §2.21). Text-in-Item-Part is now `archetype:TextCopy`, and loci name `archetype:Surface_Extent` nodes.
+
 ---
 
 ## Entry 1

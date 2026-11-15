@@ -1,5 +1,23 @@
 """Generate a descriptive SHACL application profile from the harvested edge table (edges.json)
 plus edges emitted by creation_rdf.py that have no data in the DigiPal export."""
+
+##### TODO ######
+# To check
+# - Character  - P148 Has Component - GenericComponent
+# - WritingEvent - P33 used specific technique - TX10 -> see discussion R6
+# - HistoricalItem - P46 - Collation -> How is Collation a 'physical thing'?
+# - Layout, Collation, Decoration, Dimension, Locus
+# 
+# To change
+# - AllographShape - P148 has Component - GenericComponent -> to VisualComponent
+# - VisualComponent - P148i component of - Idiograph -> Add also all Generic Allographs. Then can specify (e.g.) features for Caroline a, etc.
+# - GenericComponent - P2 has type - Feature -> Change property to 'archetype:permits feature'
+# - GenericComponent - P148i component of - Allograph -> Drop: force all Generalised Allographs to go through Visual Component for consistency
+# - Feature - P2i has as type - (GenericComponent | GraphComponent | VisualComponent) -> replace with GenericComponent
+# - Ontograph - P2 has type - E55 Type -> add scope note that represents digipal_category
+# - HandDateAttribution & HandPlaceAttribution -> need to add Dubitable type (even if not used in sample data)
+# - HandDescription - P67 refers to - HandInstance -> Should be P70 documents (need to change RDF export)
+
 import json, collections
 
 edges = json.load(open("edges.json"))  # [skind, stype, pred, okind, otype, count]
@@ -43,11 +61,13 @@ KINDS = {
  "Collation": ("Collation", None, "Typed only crm:E18_Physical_Thing; identified by crm:P2_has_type data:Collation.", G3),
  "Decoration": ("Decoration", None, "Typed only crm:E18_Physical_Thing; identified by crm:P2_has_type data:Decoration.", G3),
  "Dimension": ("Dimension", "crm:E54_Dimension", None, G3),
- "Locus": ("Locus", None, "Typed crm:E41_Appellation (not targeted by class because crm:E42_Identifier is a subclass of E41); identified by crm:P2_has_type data:Type_Locus. One Locus node per (Item Part, locus string), shared by any Image, Hand Instance or Text-in-Item-Part that cites the same locus.", G3),
+ "Surface_Extent": ("Surface Extent", "archetype:Surface_Extent", "A stretch of writing surface within an Item Part, identified by a locus. One per (Item Part, locus string), shared by every Text Copy, Hand Instance and Image citing that locus; created only where a locus is recorded.", G3),
+ "Locus": ("Locus", None, "Typed crm:E41_Appellation (not targeted by class because crm:E42_Identifier is a subclass of E41, and Item Part loci are also E41); identified by crm:P2_has_type data:Type_Locus. One Locus node per (Item Part, locus string); each names exactly one Surface Extent.", G3),
+ "Item_Part_Locus": ("Item Part locus", None, "Typed crm:E41_Appellation; identified by crm:P2_has_type data:Type_Locus_In_Current_Item (URIs data:Item_Part_Locus_<id>). The Item Part's own position in its Current Item (e.g. \"fols. 3-101\"); an Item Part with no locus comprises the whole Current Item.", G3),
  "Image": ("Image", None, "Typed only crm:E36_Visual_Item (not targeted by class because Idiograph, Allograph, Character, VisualComponent etc. are all subclasses of E36); identified as the target of an oa:Annotation, or by URI data:Image_<id>.", G4),
  "Annotation": ("Annotation", "oa:Annotation", None, G4),
- "Text": ("Text", None, "Typed crm-tx:TX1_Written_Text (not targeted by class because TX7, and so Hand Instance and Graph, are subclasses of TX1 in CRMtex). Typing as TX1 is already flagged in creation_rdf.py as wrong (should be a conceptual text, e.g. E33).", G4),
- "Text_Item_part": ("Text in Item Part", None, "Typed crm-tx:TX7_Written_Text_Segment (not targeted by class because Hand Instance and Graph are also TX7); identified as the object of crm-tx:TXP4_has_segment from a Text.", G4),
+ "Text": ("Text", "archetype:Text", "The intellectual text (archetype:Text, subclass of E33 Linguistic Object), carried physically by one or more Text Copies.", G4),
+ "TextCopy": ("Text Copy", "archetype:TextCopy", "A Text as physically written in a particular Item Part (original or copy); archetype:TextCopy, subclass of crm-tx:TX1_Written_Text. URIs data:TextCopy_<textitempart id>.", G4), 
  "HandDate": ("Hand date attribution", None, "Typed only crm:E13_Attribute_Assignment (shared with Hand place, Item origin, Archive and Owner); identified as an E13 whose P140 is a Hand Instance and whose P141 is an E4_Period.", G5),
  "HandPlace": ("Hand place attribution", None, "Typed only crm:E13_Attribute_Assignment; identified as an E13 whose P140 is a Hand Instance and whose P141 is an E53_Place.", G5),
  "ItemOrigin": ("Item origin attribution", None, "Typed only crm:E13_Attribute_Assignment; identified as an E13 whose P140 is a Historical Item (URIs data:ItemOrigin_<id>; indistinguishable by structure from Archive when P141 is a Place).", G5),
@@ -92,6 +112,7 @@ INVERSE = {  # CIDOC-CRM inverse property names, for documentation only (not mat
  "P74_has_current_or_former_residence": "P74i_is_current_or_former_residence_of", "P89_falls_within": "P89i_contains",
  "P91_has_unit": "P91i_is_unit_of", "P95_has_formed": "P95i_was_formed_by", "P104_is_subject_to": "P104i_applies_to",
  "P107_has_current_or_former_member": "P107i_is_current_or_former_member_of", "P108_has_produced": "P108i_was_produced_by",
+ "P128_carries": "P128i_is_carried_by",
  "P138_represents": "P138i_has_representation", "P140_assigned_attribute_to": "P140i_was_attributed_by",
  "P141_assigned": "P141i_was_assigned_by", "P148_has_component": "P148i_is_component_of",
 }
@@ -113,15 +134,20 @@ NOTES = {
  ("HandInstance", "crm:P46_is_composed_of", "Graph"): "The Graphs written in this Hand Instance.",
  ("HandInstance", "crm:P2_has_type", "Appearance"): "Appearance of the hand.",
  ("HandInstance", "crm:P2_has_type", "Category"): "Glossed-text category (from Hand.glossed_text_id).",
- ("HandInstance", "crm:P1_is_identified_by", "Locus"): "Locus of the hand within its Item Part.",
  ("Writing", "crm:P108_has_produced", "HandInstance"): "The Hand Instance produced by this Writing. Scribe, Script and Latin Style hang off the Writing, not the Hand Instance: HandInstance <-P108- Writing -P14-> Scribe.",
  ("Writing", "crm:P14_carried_out_by", "Scribe"): "The Scribe who carried out this Writing.",
  ("Writing", "crm:P33_used_specific_technique", "Script"): "Script and Latin Style as techniques of the Writing (deliberately not CRMtex TXP12_has_style on the Hand Instance; see creation_rdf.py).",
  ("Scribe", "archetype:characterised_by", "Scribal_Practice"): "The Scribe's Scribal Practice, which groups the Scribe's Idiographs: Scribe -characterised_by-> Scribal_Practice -P148-> Idiograph.",
  ("Scribe", "crm:P70i_is_documented_in", "Reference"): "Bibliographic References for this Scribe.",
  ("Scribal_Practice", "crm:P148_has_component", "Idiograph"): "The Idiographs that make up this Scribe's practice.",
- ("Item_Part", "crm:P56_bears_feature", "HandInstance"): "The Hand Instances found on this Item Part.",
- ("Item_Part", "crm:P1_is_identified_by", "Locus"): "Every Locus cited within this Item Part (by Images, Hand Instances or Texts).",
+ ("Item_Part", "crm:P46_is_composed_of", "HandInstance"): "The Hand Instances found on this Item Part (P46, not P56: P56 requires an E19 subject). Always present, whether or not the hand has a Surface Extent.",
+ ("Item_Part", "crm:P46_is_composed_of", "TextCopy"): "The Text Copies written in this Item Part. Always present, whether or not the copy has a Surface Extent.",
+ ("Item_Part", "crm:P46_is_composed_of", "Surface_Extent"): "The cited stretches of surface (loci) within this Item Part. Where X is part of a Surface Extent, Item_Part -P46-> X is a shortcut of Item_Part -P46-> Surface_Extent -P46-> X.",
+ ("Item_Part", "crm:P1_is_identified_by", "Item_Part_Locus"): "The Item Part's own locus in its Current Item (only); cited loci within the Item Part name Surface Extents instead.",
+ ("Surface_Extent", "crm:P1_is_identified_by", "Locus"): "The locus string naming this stretch of surface.",
+ ("Surface_Extent", "crm:P46_is_composed_of", "TextCopy"): "Text Copies written on this stretch of surface (also linked directly to the Item Part).",
+ ("Surface_Extent", "crm:P46_is_composed_of", "HandInstance"): "Hand Instances on this stretch of surface (also linked directly to the Item Part).",
+ ("TextCopy", "crm:P128_carries", "Text"): "The intellectual Text this physical copy carries.",
  ("Item_Part", "crm:P46_is_composed_of", "Layout"): "Emitted by creation_rdf.py when Layout.item_part_id is set; not populated in DigiPal (Layout attaches to Historical Item there).",
  ("Item_Part", "crm:P43_has_dimension", "Dimension"): "Emitted by creation_rdf.py when Layout.item_part_id is set; not populated in DigiPal.",
  ("Historical_Item", "crm:P46_is_composed_of", "Item_Part"): "The Item Parts that make up this Historical Item.",
@@ -132,7 +158,7 @@ NOTES = {
  ("Annotation", "oa:hasTarget", "Image"): "The Image on which the annotation is drawn.",
  ("Image", "crm:P138_represents", "Item_Part"): "The Item Part shown in this Image.",
  ("Image", "crm:P138_represents", "HandInstance"): "The Hand Instances visible in this Image (from hand_images).",
- ("Image", "crm:P138_represents", "Locus"): "The locus (folio/page) shown in this Image.",
+ ("Image", "crm:P138_represents", "Surface_Extent"): "The stretch of surface (folio/page) shown in this Image, identified by the image's locus.",
  ("HandDate", "crm:P140_assigned_attribute_to", "HandInstance"): "Accepted date of a Hand Instance: HandInstance <-P140- HandDate -P141-> Date.",
  ("HandPlace", "crm:P140_assigned_attribute_to", "HandInstance"): "Accepted place of a Hand Instance: HandInstance <-P140- HandPlace -P141-> Place.",
  ("Owner", "crm:P140_assigned_attribute_to", "Item_Part"): "The Item Part whose ownership is asserted.",
@@ -145,7 +171,6 @@ NOTES = {
  ("Date_Period", "crm:P70i_is_documented_in", "Date_Document"): "The node carrying the evidence note for this date.",
  ("Description", "crm:P70i_is_documented_in", "Source"): "The Source this description comes from.",
  ("HandDescription", "crm:P67_refers_to", "HandInstance"): "The Hand Instance described.",
- ("Text", "crm-tx:TXP4_has_segment", "Text_Item_part"): "The occurrences of this Text in particular Item Parts.",
 }
 
 # ---- build outgoing and incoming groupings ----
@@ -202,7 +227,7 @@ L.append("""@prefix sh:        <http://www.w3.org/ns/shacl#> .
 # No cardinalities are asserted.
 #
 # Generated from:
-#   - data_pstokes_turtle_202609222044.rdf (every resource-to-resource
+#   - data_digipal_turtle_202611151557.rdf (every resource-to-resource
 #     triple, grouped by subject kind / property / object kind);
 #   - creation_rdf.py (links the code can emit but which have no
 #     DigiPal data: marked "not populated in DigiPal");
@@ -216,7 +241,7 @@ L.append("""@prefix sh:        <http://www.w3.org/ns/shacl#> .
 #     on the OTHER node, pointing at this one. The export materialises
 #     only the forward property, so a SPARQL query must use the forward
 #     property with the variables swapped (e.g. ?itempart
-#     crm:P56_bears_feature ?hand), NOT the CRM inverse (P56i_is_found_on),
+#     crm:P46_is_composed_of ?hand), NOT the CRM inverse (P46i_forms_part_of),
 #     unless a reasoner is used. The CRM inverse name is given in the
 #     description for reference only.
 #   - Shapes carry sh:targetClass only where the Archetype node kind has

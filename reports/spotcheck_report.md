@@ -13,10 +13,10 @@ This report has two sections:
 ### 1.1 `Hand_1358` has empty `rdfs:label`, `ex:display_label`, and `ex:ker`
 Unlike its sibling Hands (e.g. `Hand_57`, `Hand_67`, `Hand_68` — all attached to the same manuscripts group), `Hand_1358` (num=3, on Item_Part_203 "BL Stowe Ch. 38") carries three empty-string/blank fields where comparable Hands have populated values. Flagged for checking against the source DB — status: **noted, not yet confirmed as bug** (Stowe Ch. 38 multi-hand structure itself was confirmed fine by Peter).
 
-### 1.2 `ex:relevant` field should not be exported at all
+### 1.2 `ex:relevant` field should not be exported at all — resolved
 Peter has confirmed that `digipal:relevant` is not a field that belongs in this RDF export. It currently appears on 1,458 of 1,478 `Hand` individuals (all Hand instances except 20).
 - **Action required:** remove all `ex:relevant` triples from `creation_rdf_pas.py` (Hand block).
-- **Status:** confirmed by Peter, pending implementation. Per working protocol, will be proposed as a single one-line diff and verified against regenerated RDF before moving on.
+- **Status: done (2026-11-15).** Removed from the Hand loop of `creation_rdf.py`, and the property dropped from the ontology. Verified on export `data_digipal_turtle_202611151713.rdf`: 1,018,486 triples (−1,458), `archetype:relevant` 0 (was 1,458), no other predicate count changed.
 
 ### 1.3 `Hand.num` contains implausible large values
 Distribution of `num` across all 1,478 Hands:
@@ -74,6 +74,13 @@ While checking Dubitable-type Attribute Assignments (HandDate/HandPlace) documen
 When asked for "Hands with type GLOSSED TEXT," searched exhaustively (case-insensitive) for any resource labeled "Glossed Text" — none exists. `Hand`'s only `P2_has_type` targets are `Appearance_*` (e.g. "Appearance Gloss (inked)", "Appearance Gloss (scratched)") and `Category_*` (various "Glosses..." labels, none named "Glossed Text"). Separately, `Hand` has a boolean `gloss_only` literal property unrelated to any typed category.
 - Peter's note: probably a misremembering of the actual property/vocabulary on his part, not a data issue.
 - **Status:** to check — confirm what Peter actually meant to query, and note the naming mismatch in case it recurs.
+
+### 1.9 Item Parts without a locus in Current Items with more than one Item Part (31 Current Items)
+*Model convention:* an Item Part with no locus comprises the whole of its Current Item. Where a Current Item has several Item Parts, normally each should have a locus — except where they genuinely occupy the same leaves (e.g. a palimpsest whose lower and upper writings are recorded as separate Historical Items).
+- *Query (2026-11-15, SQL against source DB):* Current Items with more than one Item Part where at least one Item Part has no locus. Result: 31 Current Items. In 5, no Item Part has a locus: 498 (Edinburgh, Advocates 18/07/08), 1185 (Gerleve s.n.), 41 (BL Harley Ch. 43.C.4), 1391 (Weinheim s.n.), 83 (Exeter 2527). In the other 26, exactly one Item Part lacks a locus (480 Durham B.III.10 has 4 parts; 297 CCCC 265 and 1018 Salisbury 10 have 3; the rest have 2).
+- Full list (Current Item ids): 480, 297, 1018, 498, 862, 1185, 1265, 675, 462, 1427, 441, 740, 930, 583, 932, 405, 927, 41, 825, 482, 866, 1391, 1023, 1034, 685, 79, 83, 1075, 216, 1044, 936 (full result: `Result_2026-11-15_10-58-17.csv`).
+- Peter's spot-check: some are outright data-entry errors; some are special cases (e.g. palimpsest upper/lower writing recorded as separate Historical Items, which is consistent with the convention). The model is judged correct; these are data issues.
+- **Status:** data to be fixed — review all 31 in the source data.
 
 ### 2.1 No typed distinction between administrative-unit Places and site-level Places
 `County` individuals (e.g. `County_39` "Worcestershire", `County_40` "Yorkshire", `County_41` "Yorkshire ER") carry `rdf:type crm:E53_Place` and **no other type** — there is no `County` class, and no `P2_has_type` (or equivalent) distinguishing them from ordinary site/settlement-level Places such as `Place_24` "Worcester" or `Place_46` "York". The only way to tell them apart currently is the `County_` URI-prefix convention and the label text itself.
