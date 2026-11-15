@@ -22,6 +22,10 @@ This work was completed in the context of [Biblissima+ Cluster 4](https://projet
 
 Note that the actual RDF exports are not stored in the GitHub repository but will be posted on Zenodo as related projects.
 
+All reports (i.e. `reports/*.md`) and also the scripts relevant to shape generation (`scripts/harvest_edges.py` and `scripts/gen_shapes.py`) were auto-generated. The resulting SHACKL shape file has been carefully checked, but other auto-generated files should be used with caution. The reports and script comments in particular may contain inconsistencies.
+
+The export script (`creation_rdf.py`) was written by hand and checked repeatedly, by hand and with the help of tools and automated processes, and the resulting RDF has also been checked automatically for consistency and via manual spot-checks against the original data. The model diagram has been generated entirely by hand from the ontology and SHACKL files. However, this is still a work in progress and inconsistencies remain likely. Issues and 'todos' are flagged in the code and reports, but GitHub Issues are extremely welcome.
+
 ---
 
 <p>
