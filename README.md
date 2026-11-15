@@ -11,11 +11,11 @@ The export has been developed primarily for [DigiPal project](https://digipal.eu
 This work was completed in the context of [Biblissima+ Cluster 4](https://projet.biblissima.fr/fr/projet/clusters-biblissima/cluster-4). The work benefited from financial support from the French state managed by the Agence Nationale de Recherche under the Programme d'investissements d'avenir integrated into France 2030, with grant no. ANR-21-ESRE-0005.
 
 <p>
-<img width="73" height="93" alt="EPHE 2026" src="https://github.com/user-attachments/assets/9f6e5069-639b-4d69-ab03-270404b46277" />
+<img width="73" height="93" alt="Logo of EPHE-PSL" src="logos/EPHE 2026.png" />
 &nbsp;&nbsp;&nbsp;&nbsp;
-<img width="251" height="78" alt="biblissima-baseline-sombre-france2030-small" src="https://github.com/user-attachments/assets/6fb22abf-9730-48ad-9c5f-6e80f2d38c8e" />
+<img width="251" height="78" alt="Logo of Biblissima+ and France 2030" src="logos/biblissima-baseline-sombre-france2030-small.png" />
 &nbsp;&nbsp;&nbsp;&nbsp;
-<img width="206" height="60" alt="logo_AOROCtutelles_RVB-small" src="https://github.com/user-attachments/assets/6ea628e8-3ebc-48dd-98c3-57ecfa32d879" />
+<img width="206" height="60" alt="Logo of AOROC (UMR 8546)" src="logo_AOROCtutelles_RVB-small.png" />
 </p>
 
 ---
