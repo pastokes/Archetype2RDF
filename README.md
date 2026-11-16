@@ -13,8 +13,8 @@ This work was completed in the context of [Biblissima+ Cluster 4](https://projet
 
 ## Structure
 
-- **archetype_ontology.ttl** gives the ontology in OWL format
-- **archetype_shapes.ttl** provides further definition of the model using SHACKL shapes
+- **archetype_ontology.ttl** gives the ontology in OWL format.
+- **archetype_shapes.ttl** provides further definition of the model using SHACKL shapes.
 - **scripts**: Python scripts and related files for generating the SHACKL shapes and the RDF export from an Archetype instance.
 - **reports**: Reports detailing the full process and decision-making behind the ontology, export and SHACKL shapes in their current state.
 - **schema**: Local copies of external ontologies (CIDOC-CRM, CRMtex, etc.). These are unchanged and saved here for purely for archival purposes.
@@ -39,5 +39,6 @@ The export script (`creation_rdf.py`) was written by hand and checked repeatedly
 ---
 # Model diagram
 
+The following diagram represents the ontology and shapes represented in the .ttl files here, as well as the RDF export. Note that it therefore shows the result **after** the alignment to CIDOC-CRM, **not** the Archetype v2 model used as input. For the Archetype v2, see the relevant [repository](https://github.com/kcl-ddh/digipal), especially the [main app `models.py`](https://github.com/kcl-ddh/digipal/blob/master/digipal/models.py) and [associated wiki](https://github.com/kcl-ddh/digipal/wiki). 
 
 ![Model diagram](diagram.drawio.svg)
